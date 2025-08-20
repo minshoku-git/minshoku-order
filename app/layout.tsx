@@ -4,13 +4,17 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import type { Metadata } from 'next';
 import React from 'react';
 
+import { DirtyProvider } from './_ui/dirty/dartyContext';
 import { notoSansJp } from './_ui/fonts';
 import ThemeProvider from './_ui/theme-provider';
 
 /** @type {Metadata} metadata */
 export const metadata: Metadata = {
-  title: 'みんなの社食 - オーダー',
-  description: 'みんなの社食 - オーダー',
+  title: {
+    default: 'みんなの社食',
+    template: '%s | みんなの社食',
+  },
+  description: 'みんなの社食',
 };
 
 /**
@@ -25,7 +29,9 @@ const Layout = ({ children }: Readonly<{ children: React.ReactNode }>) => {
     <html lang="ja">
       <body className={notoSansJp.variable}>
         <AppRouterCacheProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <DirtyProvider>{children}</DirtyProvider>
+          </ThemeProvider>
         </AppRouterCacheProvider>
       </body>
     </html>
