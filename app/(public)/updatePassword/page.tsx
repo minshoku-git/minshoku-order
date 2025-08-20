@@ -1,11 +1,19 @@
 import * as React from 'react';
+import { Suspense } from 'react';
 
 import { UpdatePasswordComponent } from './component';
 
 export const metadata = {
-  title: '認証',
+  title: 'パスワードの更新',
 };
 
 export default async function Page() {
-  return <UpdatePasswordComponent />;
+  return (
+    // MEMO:
+    // useSearchParams()がclient専用のHookなので
+    // page.tsxをServerComponent扱いするためにSuspenseでラップする
+    <Suspense fallback={<div></div>}>
+      <UpdatePasswordComponent />
+    </Suspense>
+  );
 }
