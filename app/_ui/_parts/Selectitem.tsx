@@ -36,7 +36,12 @@ export const SelectItem = (props: Props) => {
         control={props.control}
         variant="outlined"
         margin="normal"
-        sx={{ mt: 0 }}
+        sx={{
+          mt: 0,
+          '& .MuiFormHelperText-root': {
+            m: 0,
+          }
+        }}
         fullWidth
         required={props.required}
         disabled={props.disabled}

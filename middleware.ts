@@ -22,8 +22,7 @@ export const config = {
     '/userView/contact',
     '/userView/order',
     '/userView/orderHistory',
-    '/userView/password',
-    '/userView/passwordReset',
+    '/userView/resetPassword',
     '/userView/payment',
   ],
 };

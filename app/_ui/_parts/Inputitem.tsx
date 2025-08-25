@@ -1,4 +1,4 @@
-import { Box, InputLabel, Typography } from '@mui/material';
+import { Box, InputLabel, TextField, Typography } from '@mui/material';
 import React from 'react';
 import { TextFieldElement } from 'react-hook-form-mui';
 
@@ -12,9 +12,10 @@ type Props = {
   type?: string;
   disabled?: boolean;
   note?: string;
+  isNotFormValue?: string;
 };
 
-export const Inputitem = (props: Props) => {
+export const InputItem = (props: Props) => {
   return (
     <Box display="div" sx={{ pb: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -30,18 +31,43 @@ export const Inputitem = (props: Props) => {
         </Box>
         {props.required && <Typography sx={{ fontWeight: 'bold', fontSize: 16, color: '#ea5315' }}>必須</Typography>}
       </Box>
-      <TextFieldElement
-        name={props.name}
-        control={props.control}
-        variant="outlined"
-        margin="normal"
-        sx={{ mt: 0 }}
-        fullWidth
-        type={props.type}
-        required={props.required}
-        disabled={props.disabled}
-      />
       <Typography sx={{ fontSize: 12, color: '#252525' }}>{props.note}</Typography>
+      {props.isNotFormValue
+        ?
+        <TextField
+          value={props.isNotFormValue}
+          variant="outlined"
+          margin="normal"
+          sx={{
+            mt: 0,
+            '& .MuiInputBase-input.Mui-disabled': {
+              WebkitTextFillColor: props.disabled ? '#333' : undefined,
+
+            },
+          }}
+          fullWidth
+          required={props.required}
+          disabled={props.disabled}
+        />
+        :
+        <TextFieldElement
+          name={props.name}
+          control={props.control}
+          type={props.type}
+          variant="outlined"
+          margin="normal"
+          sx={{
+            mt: 0,
+            mb: 0,
+            '& .MuiFormHelperText-root': {
+              m: 0,
+            }
+          }}
+          fullWidth
+          required={props.required}
+          disabled={props.disabled}
+        />
+      }
     </Box>
   );
 };

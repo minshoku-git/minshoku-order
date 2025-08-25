@@ -20,7 +20,7 @@ export const UserLoginComp = (): JSX.Element => {
   /* functions 
   ------------------------------------------------------------------ */
   const moveSignUpPage = () => {
-    router.push(`/basic/${token}`);
+    router.push(`/signUp/${token}`);
   };
 
   /* JSX

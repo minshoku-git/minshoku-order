@@ -10,7 +10,7 @@ import { AlertType } from '@/app/_types/enum';
 import { QUERY_KEYS } from '@/app/_types/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { Btn } from '@/app/_ui/_parts/Btn';
-import { Inputitem } from '@/app/_ui/_parts/Inputitem';
+import { InputItem } from '@/app/_ui/_parts/Inputitem';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 
@@ -147,7 +147,7 @@ export const UpdatePasswordComponent = (): JSX.Element => {
               <Box sx={{ mt: 2 }}>
                 <form onSubmit={handleSubmit(updatePasswordHandler)}>
                   {/* 8文字以上、英数字の組み合わせ */}
-                  <Inputitem
+                  <InputItem
                     control={control}
                     label={`新しいパスワード`}
                     annotation="(8文字以上、半角英数字の組み合わせ)"
@@ -156,7 +156,7 @@ export const UpdatePasswordComponent = (): JSX.Element => {
                     type="password"
                   />
                   {/* 新しいパスワード(再入力) */}
-                  <Inputitem
+                  <InputItem
                     control={control}
                     label={`新しいパスワード(再入力)`}
                     name="confirm_new_signup_password"

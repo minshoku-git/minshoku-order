@@ -14,6 +14,23 @@ export const updatePassword = async (values: ApiRequest<PasswordResetRequest>): 
   const req = values.request;
 
   try {
+    /* AuthCheck
+  　------------------------------------------------------------------ */
+    const {
+      data: { session },
+      error: errorAuth,
+    } = await supabase.auth.getSession();
+
+    if (errorAuth) {
+      throw new CustomError(ErrorCodes.NOT_FOUND.code, 'ユーザー情報の取得' + ErrorCodes.NOT_FOUND.message);
+    }
+
+    if (!session || !session.user.email) {
+      throw new CustomError(ErrorCodes.NOT_FOUND.code, 'ログインしていません' + ErrorCodes.NOT_FOUND.message);
+    }
+    if (session.user.email !== req.email) {
+      throw new CustomError(ErrorCodes.NOT_FOUND.code, 'ログインが不正です' + ErrorCodes.NOT_FOUND.message);
+    }
     /* 新しいパスワードと新しいパスワード(再入力)の検証
   　------------------------------------------------------------------ */
     if (req.new_signup_password !== req.confirm_new_signup_password) {
@@ -23,7 +40,6 @@ export const updatePassword = async (values: ApiRequest<PasswordResetRequest>): 
     /* パスワード更新
   　------------------------------------------------------------------ */
     const { error } = await supabase.auth.updateUser({
-      email: req.email,
       password: req.new_signup_password,
     });
 

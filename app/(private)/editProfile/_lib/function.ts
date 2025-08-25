@@ -96,7 +96,7 @@ export const getUserProfileInitData = async (values: ApiRequest<number>): Promis
 
     // 雇用形態の選択肢
     const queryEmp = supabase
-      .from('t_companies_department')
+      .from('t_companies_employment_status')
       .select('id,employment_status_name')
       .eq('t_companies_id', data.t_companies_id)
       .eq('delete_flag', 0)

@@ -15,6 +15,20 @@ export const metadata: Metadata = {
     template: '%s | みんなの社食',
   },
   description: 'みんなの社食',
+  icons: {
+    icon: [
+      { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico' }, // default fallback
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180' },
+    ],
+  },
+  appleWebApp: {
+    title: 'みんしょく',
+  },
+  manifest: '/site.webmanifest',
 };
 
 /**

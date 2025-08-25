@@ -1,6 +1,7 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
-import { decrypt } from '@/app/_lib/encryption/crypto';
+import { decrypt, encrypt } from '@/app/_lib/encryption/crypto';
+import { isEmailDuplicate } from '@/app/_lib/isEmailDuplicate';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import {
   t_companies,
@@ -15,31 +16,40 @@ import { ApiRequest, ApiResponse, SelectOption } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
-import { UserBasicFormValues, UserBasicInitData, UserBasicInitRequest } from './types';
+import { SignUpDecrypt, SignUpInitData, SignUpInitRequest, SignUpRequest, SignUpResponse } from './types';
 
 /**
  * getInitData
  * 初期表示情報を取得する。
- * @param {ApiRequest<UserBasicInitRequest>} values - 取得条件
- * @returns {Promise<ApiResponse<UserBasicInitData>>} 初期表示情報
+ * @param {ApiRequest<SignUpInitRequest>} values - 取得条件
+ * @returns {Promise<ApiResponse<SignUpInitData>>} 初期表示情報
  */
-export const getInitData = async (
-  values: ApiRequest<UserBasicInitRequest>
-): Promise<ApiResponse<UserBasicInitData>> => {
+export const getSingUpInitData = async (
+  values: ApiRequest<SignUpInitRequest>
+): Promise<ApiResponse<SignUpInitData>> => {
   const supabase = await createClient();
-  const req = values.request;
+  const token = values.request;
 
   try {
     /* 復号化
     ------------------------------------------------------------------ */
-    const t_companies_id = decrypt(req.token);
+    const decryptToken: string = decrypt(token.token);
+    const req: SignUpDecrypt = JSON.parse(decryptToken);
+    console.log('復号化結果:' + req.t_companies_id);
 
     /* 会社情報取得
     ------------------------------------------------------------------ */
     const query = supabase
       .from('t_companies')
-      .select('company_name, branch_name')
-      .eq('id', t_companies_id)
+      .select(
+        `company_name,
+         branch_name,
+         optional_item_title_1,
+         optional_item_notes_1,
+         optional_item_title_2,
+         optional_item_notes_2`
+      )
+      .eq('id', req.t_companies_id)
       // .eq('delete_flag', 0) // TASK: 取得条件の確認
       .single();
 
@@ -58,7 +68,7 @@ export const getInitData = async (
     const queryDep = supabase
       .from('t_companies_department')
       .select('id, department_name')
-      .eq('t_companies_id', t_companies_id)
+      .eq('t_companies_id', req.t_companies_id)
       .eq('delete_flag', 0)
       .order('id', { ascending: true });
 
@@ -79,9 +89,9 @@ export const getInitData = async (
     /* 雇用形態の選択肢取得
     ------------------------------------------------------------------ */
     const queryEmp = supabase
-      .from('t_companies_department')
+      .from('t_companies_employment_status')
       .select('id, employment_status_name')
-      .eq('t_companies_id', t_companies_id)
+      .eq('t_companies_id', req.t_companies_id)
       .eq('delete_flag', 0)
       .order('id', { ascending: true });
 
@@ -104,13 +114,17 @@ export const getInitData = async (
 
     /* 返却
     ------------------------------------------------------------------ */
-    const res: UserBasicInitData = {
+    const res: SignUpInitData = {
       company_name: data.company_name!,
       branch_name: data.branch_name!,
       departmentOptions: depOpt,
       employmentStatusOptions: empOpt,
+      optional_item_notes_1: data.optional_item_notes_1 ?? '',
+      optional_item_notes_2: data.optional_item_notes_2 ?? '',
+      optional_item_title_1: data.optional_item_title_1 ?? '',
+      optional_item_title_2: data.optional_item_title_2 ?? '',
     };
-
+    console.log(res);
     return {
       success: true,
       data: res,
@@ -142,15 +156,26 @@ export const getInitData = async (
  * insertUserProfile
  * ユーザー情報を新規登録する。
  *
- * @param {shopDeteilRequestData} values - 入力情報
- * @returns {Promise<ApiResponse<null>>} 結果
+ * @param {SignUpRequest} values - 入力情報
+ * @returns {Promise<ApiResponse<SignUpResponse>>} 結果
  */
-export const insertUserProfile = async (values: UserBasicFormValues): Promise<ApiResponse<null>> => {
-  const req = values;
+export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Promise<ApiResponse<SignUpResponse>> => {
+  const req = values.request;
   const supabase = await createClient();
   const pgClient = createPgClient();
 
   try {
+    /* 復号化
+    ------------------------------------------------------------------ */
+    const decryptToken: string = decrypt(req.token);
+    const decryptRes: SignUpDecrypt = JSON.parse(decryptToken);
+    console.log('復号化結果:' + decryptRes.t_companies_id);
+    /* 暗号化
+    ------------------------------------------------------------------ */
+    const encryptPassword: string = encrypt(req.signup_password);
+
+    /* ユーザー新規登録
+    ------------------------------------------------------------------ */
     // connection Start
     await pgClient.connect();
     console.log('Connected to the database successfully');
@@ -158,27 +183,25 @@ export const insertUserProfile = async (values: UserBasicFormValues): Promise<Ap
     // Transaction Start
     await pgClient.query('BEGIN');
 
-    /* Select - t_companies_domain
+    /* Select - メールアドレスの重複確認
   　------------------------------------------------------------------ */
-    const domain = getDomain(req.user_email);
+    await isEmailDuplicate({ email: req.user_email, supabase: supabase });
+
+    /* Select - t_companies
+  　------------------------------------------------------------------ */
+    const domainName = getDomain(req.user_email);
     const selectSql = `
-      SELECT
-        user_email,
-        signup_password
-      From
-        t_companies_domain
-      WHERE
-        t_companies_id = ${req.t_companies_id}
-      AND
-        domain_name = ${domain};`;
+        SELECT *
+        FROM t_companies
+        WHERE id = $1
+        AND $2 = ANY(domain)`;
 
     // Insert
-    const domainCheck = await pgClient.query(selectSql);
+    const domainCheck = await pgClient.query(selectSql, [decryptRes.t_companies_id, domainName]);
     const isCompanyDomain: boolean = domainCheck.rowCount ? domainCheck.rowCount > 0 : false;
 
-    /* Insert - t_shops
+    /* Insert - t_user
   　------------------------------------------------------------------ */
-    // InsertData setting
     const insertValues: Omit<
       t_user,
       | 'id'
@@ -190,48 +213,65 @@ export const insertUserProfile = async (values: UserBasicFormValues): Promise<Ap
       | 'created_at'
       | 'updated_at'
     > = {
+      t_companies_id: decryptRes.t_companies_id,
+      t_companies_department_id: Number(req.t_companies_department_id),
+      t_companies_employment_status_id: Number(req.t_companies_employment_status_id),
       user_name: req.user_name,
       user_name_kana: req.user_name_kana,
       optional_item_answer_1: req.optional_item_answer_1,
       optional_item_answer_2: req.optional_item_answer_2,
-      master_usage_state: 0,
-      t_companies_id: Number(req.t_companies_id),
-      t_companies_department_id: Number(req.t_companies_department_id),
-      t_companies_employment_status_id: Number(req.t_companies_employment_status_id),
       user_email: req.user_email,
-      signup_password: '',
+      master_usage_state: 0,
+      signup_password: isCompanyDomain ? undefined : encryptPassword, // 承認待ち
       user_registration_status: isCompanyDomain
-        ? UserRegistrationStatus.WAITING_APPROVAL
-        : UserRegistrationStatus.WAITING_APPROVAL, // 承認待ちかメール承認待ち
+        ? UserRegistrationStatus.WAITING_EMAIL_VERIFICATION
+        : UserRegistrationStatus.WAITING_APPROVAL, // 承認待ちかメール認証待ち
       usage_status: UsageStatus.DEACTIVATION,
     };
     const { columns, placeholders, values } = getPostgreSqlItems(insertValues);
-    const insertShopText = `INSERT INTO t_shops (${columns.join(',')}) VALUES (${placeholders}) RETURNING id;`;
+    const insertUserText = `INSERT INTO t_user (${columns.join(',')}) VALUES (${placeholders}) RETURNING id;`;
 
     // Insert
-    const result = await pgClient.query(insertShopText, values);
+    const result = await pgClient.query(insertUserText, values);
     if (result.rowCount === 0) {
       throw new CustomError(
         ErrorCodes.NOT_FOUND.code,
-        '店舗情報の新規登録' + ErrorCodes.NOT_FOUND.message,
+        '会員情報の新規登録' + ErrorCodes.NOT_FOUND.message,
         ErrorCodes.NOT_FOUND.status
       );
     }
 
-    const newShopId: number = result.rows[0]?.id;
+    const newUserId: number = result.rows[0]?.id;
 
-    /* メール送信
+    /* 認証メール送信
   　------------------------------------------------------------------ */
-    // 認証メール送信
+    if (isCompanyDomain) {
+      // TODO: URL差し替え
+      console.log('送ってますがな！！！！');
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: req.user_email,
+        password: req.signup_password,
+        options: { emailRedirectTo: process.env.APP_URL_DEV + '/payment' },
+      });
+
+      if (signUpError) {
+        console.error('Error signing up:', signUpError);
+        throw new CustomError(
+          ErrorCodes.NOT_FOUND.code,
+          '認証メール送信' + ErrorCodes.NOT_FOUND.message,
+          ErrorCodes.NOT_FOUND.status
+        );
+      }
+    }
 
     /* --------------------------------------------------------------- */
     // throw new Error('疑似エラー:ロールバックを確認しました。');
 
     // Commit
     await pgClient.query('COMMIT');
-    console.log('Transaction completed, new company ID:', newShopId);
+    console.log('Transaction completed, new user ID:', newUserId);
 
-    return { success: true, data: null };
+    return { success: true, data: { isCompanyDomain } };
   } catch (e: unknown) {
     console.error('Transaction failed:', e);
     await rollbackWithLog(pgClient);

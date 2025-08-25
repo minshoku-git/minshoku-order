@@ -1,8 +1,9 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Box, Typography } from '@mui/material';
+import { Box, TextField, Typography } from '@mui/material';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
@@ -12,24 +13,32 @@ import { ApiRequest, ApiResponse, SelectOption } from '@/app/_types/types';
 import { Btn } from '@/app/_ui/_parts/Btn';
 import { InputItem } from '@/app/_ui/_parts/Inputitem';
 import { SelectItem } from '@/app/_ui/_parts/Selectitem';
+import UserCustomModal from '@/app/_ui/_parts/UserCustomModal';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 
-import { getUpdateProfileInitData, updateProfile } from './_lib/fetcher';
-import { UserBasicResult, UserProfileFormValues, UserProfileInitData, UserProfileSchema } from './_lib/types';
+import { SignUpFetcher, SignUpInitDataFetcher } from './_lib/fetcher';
+import { TermsComponent } from './_lib/terms';
+import {
+  SignUpFormValues,
+  SignUpInitData,
+  SignUpInitRequest,
+  SignUpRequest,
+  SignUpResponse,
+  SignUpSchema,
+} from './_lib/types';
 
 /**
- * 会員情報の変更Component
+ * 新規会員登録Component
  * @returns {JSX.Element} JSX
  */
-export const EditProfileComponent = (): JSX.Element => {
-  /* initialize
+export const SingUpComponent = (): JSX.Element => {
+  /* initComponenttialize
   ------------------------------------------------------------------ */
   const router = useRouter();
   const { openSnackbar } = useSnackBar();
   const { openProcessing, closeProcessing } = useProcessing();
-
-  const id: number = 1; //TODO:userParamsから取得した会社IDに差し替え
+  const token = useParams().id?.toString() ?? '';
 
   /* useState - モーダル開閉
   ------------------------------------------------------------------ */
@@ -37,8 +46,7 @@ export const EditProfileComponent = (): JSX.Element => {
   const [openPrivacypolicy, setOpenPrivacypolicy] = useState<boolean>(false);
   /* useState - 初期表示情報
   ------------------------------------------------------------------ */
-  const [departmentOptions, setDepartmentOptions] = useState<SelectOption[]>([{ id: '', label: '' }]);
-  const [employmentStatusOptions, setEmploymentStatusOptions] = useState<SelectOption[]>([{ id: '', label: '' }]);
+  const [initData, setInitData] = useState<SignUpInitData | null>();
   /* useState - 登録結果
   ------------------------------------------------------------------ */
   const [IsCompleted, setIsCompleted] = useState<boolean>(false);
@@ -46,34 +54,45 @@ export const EditProfileComponent = (): JSX.Element => {
 
   /* useForm
   ------------------------------------------------------------------ */
-  const { handleSubmit, control } = useForm<UserProfileFormValues>({
+  const { handleSubmit, control } = useForm<SignUpFormValues>({
     mode: 'onSubmit',
-    reValidateMode: 'onBlur',
-    resolver: zodResolver(UserProfileSchema),
+    reValidateMode: 'onChange',
+    resolver: zodResolver(SignUpSchema),
     defaultValues: {
-      user_name: '',
-      user_name_kana: '',
-      t_companies_department_id: '',
-      t_companies_employment_status_id: '',
-      optional_item_answer_1: '',
-      optional_item_answer_2: '',
-      user_email: '',
-      signup_password: '',
-      confirm_signup_password: '',
+      user_name: '阿部沙友里',
+      user_name_kana: 'アベサユリ',
+      t_companies_department_id: '1',
+      t_companies_employment_status_id: '1',
+      optional_item_answer_1: 'はい',
+      optional_item_answer_2: 'いいえ',
+      user_email: 's.abe@refact.co.jp',
+      signup_password: 'password1',
+      confirm_signup_password: 'password1',
     },
+    // defaultValues: {
+    //   user_name: '',
+    //   user_name_kana: '',
+    //   t_companies_department_id: '',
+    //   t_companies_employment_status_id: '',
+    //   optional_item_answer_1: '',
+    //   optional_item_answer_2: '',
+    //   user_email: '',
+    //   signup_password: '',
+    //   confirm_signup_password: '',
+    // },
   });
 
   /* useQuery - 初期表示情報取得
   ------------------------------------------------------------------ */
-  const UpdateProfileInitDataFetch = async () => {
-    const req: ApiRequest<null> = { request: null };
-    return getUpdateProfileInitData(req);
+  const signUpInitDataFetch = async () => {
+    const req: ApiRequest<SignUpInitRequest> = { request: { token: token } };
+    return SignUpInitDataFetcher(req);
   };
 
-  const { data: result, isLoading } = useQuery<ApiResponse<UserProfileInitData>>({
+  const { data: result, isLoading } = useQuery<ApiResponse<SignUpInitData>>({
     queryKey: [QUERY_KEYS.COMPANY_SEARCH_RESULT],
-    queryFn: UpdateProfileInitDataFetch,
-    enabled: false,
+    queryFn: signUpInitDataFetch,
+    refetchOnWindowFocus: false,
   });
 
   /* useEffect
@@ -87,23 +106,31 @@ export const EditProfileComponent = (): JSX.Element => {
       openSnackbar(AlertType.WARNING, result.error.message);
       router.push('/login');
     } else if (result.data) {
-      setDepartmentOptions(result.data.departmentOptions);
-      setEmploymentStatusOptions(result.data.employmentStatusOptions);
+      setInitData(result.data)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result]);
 
-  /* functions - 会員情報の更新
+  useEffect(() => {
+    if (isLoading) {
+      openProcessing();
+    } else {
+      closeProcessing();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
+
+  /* functions - Insert
   ------------------------------------------------------------------ */
-  const updateProfileHandler: SubmitHandler<UserProfileFormValues> = async (data) => {
-    insertUserBasicMutate.mutate(data);
+  const signUpHandler: SubmitHandler<SignUpFormValues> = async (data) => {
+    singUpMutate.mutate(data);
   };
 
-  const insertUserBasicMutate = useMutation({
-    mutationFn: async (data: UserProfileFormValues) => {
+  const singUpMutate = useMutation({
+    mutationFn: async (data: SignUpFormValues) => {
       openProcessing();
-      const req: ApiRequest<UserProfileFormValues> = { request: data };
-      return updateProfile(req) as unknown as ApiResponse<UserBasicResult>;
+      const req: ApiRequest<SignUpRequest> = { request: { ...data, token: token } };
+      return SignUpFetcher(req) as unknown as ApiResponse<SignUpResponse>;
     },
     onSuccess: (res) => {
       if (res.success) {
@@ -115,7 +142,7 @@ export const EditProfileComponent = (): JSX.Element => {
     },
     onError: (e) => {
       console.log(e.message);
-      openSnackbar(AlertType.ERROR, '会員情報の更新に失敗しました。再度お試しください。');
+      openSnackbar(AlertType.ERROR, '仮登録に失敗しました。再度お試しください。');
     },
     onSettled: () => {
       closeProcessing();
@@ -132,102 +159,124 @@ export const EditProfileComponent = (): JSX.Element => {
     setOpenPrivacypolicy(true);
   };
 
+  const testHandler = () => {
+    console.log('押下できています！')
+  };
+
   /* JSX
   ------------------------------------------------------------------ */
   return (
     <>
+      {/* 利用規約 */}
+      <UserCustomModal open={openTerms} onClose={() => setOpenTerms(false)} title="利用規約">
+        <TermsComponent />
+      </UserCustomModal>
+      {/* 利用規約 */}
+      <UserCustomModal
+        open={openPrivacypolicy}
+        onClose={() => setOpenPrivacypolicy(false)}
+        title="プライバシーポリシー"
+      >
+        <TermsComponent />
+      </UserCustomModal>
       <Box sx={{ pb: 8 }}>
         {/* 仮登録前 */}
         {!IsCompleted ? (
           <>
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 'bold', fontSize: 20 }}>
-                会員情報の変更
+                基本情報／新規会員登録
               </Typography>
             </Box>
-            {/* <Typography variant='body1'>会員登録に必要な情報をご入力・ご選択ください。</Typography> */}
-            <Box sx={{ mt: 2 }}>
-              <form onSubmit={handleSubmit(updateProfileHandler)}>
-                <InputItem control={control} label={`会社名`} name="cname" disabled={true} type="text" />
-                <InputItem control={control} label={`支店名`} name="cname" disabled={true} type="text" />
-                <InputItem control={control} label={`お名前`} name="user_name" required={true} />
-                <InputItem
-                  control={control}
-                  label={`お名前（フリガナ）`}
-                  name="user_name_kana"
-                  disabled={false}
-                  required={true}
-                />
-                <SelectItem
-                  control={control}
-                  label={`部署`}
-                  name="t_companies_department_id"
-                  required={true}
-                  options={[
-                    { id: '', label: '未選択' },
-                    { id: '1', label: '第一システム開発部' },
-                    { id: '2', label: '第二システム開発部' },
-                    { id: '3', label: '管理部' },
-                  ]}
-                // options={departmentOptions}
-                />
-                <SelectItem
-                  control={control}
-                  label={`雇用形態`}
-                  name="t_companies_employment_status_id"
-                  required={true}
-                  options={[
-                    { id: '', label: '未選択' },
-                    { id: '1', label: '正社員' },
-                    { id: '2', label: '準社員' },
-                    { id: '3', label: 'パート・アルバイト' },
-                  ]}
-                // options={employmentStatusOptions}
-                />
-                <InputItem
-                  control={control}
-                  label={`会社任意の情報1`}
-                  name="optional_item_answer_1"
-                  note={'※任意情報'}
-                />
-                <InputItem
-                  control={control}
-                  label={`会社任意の情報2`}
-                  name="optional_item_answer_2"
-                  note={'※任意情報'}
-                />
-                <InputItem
-                  control={control}
-                  label={`メールアドレス`}
-                  name="user_email"
-                  disabled={false}
-                  required={true}
-                  type="mail"
-                  note={'※会社ドメインと異なる場合は管理者の承認が必要となります。'}
-                />
-                <InputItem
-                  control={control}
-                  label={`パスワード`}
-                  annotation="※8文字以上、英数字の組み合わせ"
-                  name="signup_password"
-                  disabled={false}
-                  required={true}
-                  type="password"
-                />
-                <InputItem
-                  control={control}
-                  label={`確認のためパスワードを再入力してください`}
-                  name="confirm_signup_password"
-                  disabled={false}
-                  required={true}
-                  type="password"
-                />
-                {/* 変更ボタン */}
-                <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
-                  <Btn label={'変更'} isSubmit={true} />
-                </Box>
-              </form>
-            </Box>
+            <Typography variant="body1">会員登録に必要な情報をご入力・ご選択ください。</Typography>
+            {initData && <>
+              <Box sx={{ mt: 2 }}>
+                <form onSubmit={handleSubmit(signUpHandler)} noValidate>
+                  <InputItem control={control} label={`会社名`} name="cname" disabled={true} isNotFormValue={initData.company_name} type="text" />
+                  <InputItem control={control} label={`支店名`} name="cname" disabled={true} isNotFormValue={initData.branch_name} type="text" />
+                  <InputItem control={control} label={`お名前`} name="user_name" required={true} />
+                  <InputItem
+                    control={control}
+                    label={`お名前（フリガナ）`}
+                    name="user_name_kana"
+                    disabled={false}
+                    required={true}
+                  />
+                  <SelectItem
+                    control={control}
+                    label={`部署`}
+                    name="t_companies_department_id"
+                    required={true}
+                    options={initData.departmentOptions}
+                  />
+                  <SelectItem
+                    control={control}
+                    label={`雇用形態`}
+                    name="t_companies_employment_status_id"
+                    required={true}
+                    options={initData.employmentStatusOptions}
+                  />
+                  {initData.optional_item_title_1 &&
+                    <InputItem
+                      control={control}
+                      label={initData.optional_item_title_1}
+                      name="optional_item_answer_1"
+                      note={'※' + initData.optional_item_notes_1}
+                    />
+                  }
+                  {initData.optional_item_title_2 &&
+                    <InputItem
+                      control={control}
+                      label={initData.optional_item_title_2}
+                      name="optional_item_answer_2"
+                      note={'※' + initData.optional_item_notes_2}
+                    />
+                  }
+                  <InputItem
+                    control={control}
+                    label={`メールアドレス`}
+                    name="user_email"
+                    disabled={false}
+                    required={true}
+                    type="mail"
+                    note={'※会社ドメインと異なる場合は管理者の承認が必要となります。'}
+                  />
+                  <InputItem
+                    control={control}
+                    label={`パスワード`}
+                    annotation=""
+                    name="signup_password"
+                    disabled={false}
+                    required={true}
+                    type="password"
+                    note={'※8文字以上、英数字の組み合わせ'}
+                  />
+                  <InputItem
+                    control={control}
+                    label={`確認のためパスワードを再入力してください`}
+                    name="confirm_signup_password"
+                    disabled={false}
+                    required={true}
+                    type="password"
+                  />
+                  <Typography>
+                    「仮登録」ボタンをクリックすることで、
+                    <Link href={''} onClick={() => openTermsHandler()}>
+                      「利用規約」
+                    </Link>
+                    と
+                    <Link href={''} onClick={() => openPrivacypolicyHandler()}>
+                      「プライバシーポリシー」
+                    </Link>
+                    に同意いただいたものとみなされます。ご登録のメールアドレス宛に送信される認証用リンクをクリックすることで、本登録が完了します。
+                  </Typography>
+                  {/* 仮登録ボタン */}
+                  <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
+                    <Btn label={'仮登録'} isSubmit={true} />
+                  </Box>
+                </form>
+              </Box>
+            </>}
           </>
         ) : (
           <>

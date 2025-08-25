@@ -38,4 +38,9 @@ export const ErrorCodes = {
     message: '新しいパスワードは以前のパスワードと異なるものを設定してください。',
     status: 400,
   },
+  EMAIL_ALREADY_REGISTERED: {
+    code: 'E1008',
+    message: 'このメールアドレスは既に登録されています。',
+    status: 409, // CONFLICT（競合）
+  },
 } as const;

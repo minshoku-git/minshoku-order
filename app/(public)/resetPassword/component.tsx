@@ -9,7 +9,7 @@ import { SubmitHandler, useForm } from 'react-hook-form-mui';
 import { AlertType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { Btn } from '@/app/_ui/_parts/Btn';
-import { Inputitem } from '@/app/_ui/_parts/Inputitem';
+import { InputItem } from '@/app/_ui/_parts/Inputitem';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 
@@ -95,7 +95,7 @@ export const PaymentComponent = (): JSX.Element => {
           {/* 登録メールアドレス */}
           <Box sx={{ mt: 2 }}>
             <form onSubmit={handleSubmit(sendHandler)}>
-              <Inputitem control={control} label="登録メールアドレス" name="email" required={true} type="email" />
+              <InputItem control={control} label="登録メールアドレス" name="email" required={true} type="email" />
               {/* 送信ボタン */}
               <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
                 <Btn label={'送信'} isSubmit={true} isDisabled={!isDirty} />

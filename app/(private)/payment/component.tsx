@@ -151,7 +151,7 @@ export const PaymentComponent = (): JSX.Element => {
                     placeholder="例)123456781234"
                     variant="outlined"
                     onChange={handleInput}
-                    // margin="normal"
+                  // margin="normal"
                   />
                   <Typography variant="body2" fontWeight="bold" sx={{ mt: 2 }}>
                     有効期限
@@ -194,7 +194,7 @@ export const PaymentComponent = (): JSX.Element => {
                               inputMode: 'numeric',
                             },
                           }}
-                          // margin="normal"
+                        // margin="normal"
                         />
                       </Grid>
                       <Grid sx={{ xs: 6, mt: 2 }} alignSelf="center">

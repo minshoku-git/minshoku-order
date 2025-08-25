@@ -30,5 +30,5 @@ export async function createClient() {
  * @returns {Client} "pg"Client
  */
 export const createPgClient = (): InstanceType<typeof Client> => {
-  return new Client({ connectionString: process.env.SUPABASE_DB_CONNECTION_STRING });
+  return new Client({ connectionString: process.env.SUPABASE_DB_CONNECTION_STRING_DEV });
 };

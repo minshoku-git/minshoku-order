@@ -9,7 +9,7 @@ import { SubmitHandler, useForm } from 'react-hook-form-mui';
 import { AlertType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { Btn } from '@/app/_ui/_parts/Btn';
-import { Inputitem } from '@/app/_ui/_parts/Inputitem';
+import { InputItem } from '@/app/_ui/_parts/Inputitem';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 
@@ -71,7 +71,7 @@ export const LoginForm = (props: Props): JSX.Element => {
   /* functions 
     ------------------------------------------------------------------ */
   const movePasswordPage = () => {
-    router.push('/password');
+    router.push('/resetPassword');
   };
 
   /* JSX
@@ -87,9 +87,9 @@ export const LoginForm = (props: Props): JSX.Element => {
         </Box>
         <form onSubmit={handleSubmit(loginHandler)}>
           {/* メールアドレス */}
-          <Inputitem control={control} label="メールアドレス" name="email" required={true} type="mail" />
+          <InputItem control={control} label="メールアドレス" name="email" required={true} type="mail" />
           {/* パスワード */}
-          <Inputitem control={control} label="パスワード" name="password" required={true} type="password" />
+          <InputItem control={control} label="パスワード" name="password" required={true} type="password" />
           {/* ログインボタン */}
           <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
             <Btn label={'ログイン'} isSubmit={true} />

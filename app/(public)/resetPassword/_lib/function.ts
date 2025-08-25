@@ -52,7 +52,10 @@ export const sendPasswordResetMail = async (req: ApiRequest<PasswordFormValues>)
 
     /* パスワードリセット送信
   　------------------------------------------------------------------ */
-    const { error: signInError } = await supabase.auth.resetPasswordForEmail(email);
+    // TODO:URL差し替え
+    const { error: signInError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: process.env.APP_URL_DEV + '/updatePassword',
+    });
 
     if (signInError) {
       console.error('Error signing in:', signInError);

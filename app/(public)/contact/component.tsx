@@ -33,7 +33,7 @@ export const ContactComponent = (): JSX.Element => {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [dialogMessage, setDialogMessage] = useState<string>('');
   const [dialogActionHandler, setDialogActionHandler] = useState<() => void>(() => {
-    return () => {};
+    return () => { };
   });
 
   /* useForm
@@ -123,7 +123,7 @@ export const ContactComponent = (): JSX.Element => {
                 />
                 {/* 送信ボタン */}
                 <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
-                  <Btn label={'送信'} eventhandler={() => {}} isSubmit={true} />
+                  <Btn label={'送信'} eventhandler={() => { }} isSubmit={true} />
                 </Box>
               </form>
             </Box>

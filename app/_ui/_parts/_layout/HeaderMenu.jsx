@@ -65,7 +65,7 @@ const HeaderMenu = ({ open, closeEvent }) => {
               },
               {
                 text: '会員情報の変更',
-                link: '/basic',
+                link: '/editProfile',
               },
               {
                 text: '支払い情報の変更',

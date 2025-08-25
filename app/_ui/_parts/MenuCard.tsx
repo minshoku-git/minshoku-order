@@ -29,7 +29,7 @@ export default function MenuCard(props: Props) {
   const menuDate = '5月23日（金）';
   const REST_OF_ORDER = 32;
 
-  const orderhandler = () => {};
+  const orderhandler = () => { };
 
   return (
     <>
@@ -239,7 +239,7 @@ export default function MenuCard(props: Props) {
                   注文済み：1食
                 </Typography>
                 <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
-                  <Btn label="キャンセル" bgc="#afafaf" eventhandler={() => {}} />
+                  <Btn label="キャンセル" bgc="#afafaf" eventhandler={() => { }} />
                 </Box>
               </Grid>
             </>

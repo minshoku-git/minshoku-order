@@ -11,10 +11,6 @@ export async function POST(req: NextRequest) {
   const token_hash = body.request.token;
   const type = body.request.type as EmailOtpType | null;
 
-  console.log('メール来てますよ？');
-  console.log(token_hash);
-  console.log(type);
-
   if (!token_hash || !type) {
     const res: ApiResponse<null> = {
       success: false,
@@ -45,7 +41,6 @@ export async function POST(req: NextRequest) {
     };
     return NextResponse.json(res);
   } else {
-    console.log('上手く行きました！');
     const res: ApiResponse<CheckTokenResponse> = {
       success: true,
       data: { email: data.user!.email! },
