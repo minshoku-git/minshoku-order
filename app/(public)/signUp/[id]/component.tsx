@@ -17,8 +17,8 @@ import UserCustomModal from '@/app/_ui/_parts/UserCustomModal';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 
-import { SignUpFetcher, SignUpInitDataFetcher } from './_lib/fetcher';
-import { TermsComponent } from './_lib/terms';
+import { SignUpFetcher, SignUpInitDataFetcher } from '../_lib/fetcher';
+import { TermsComponent } from '../_lib/terms';
 import {
   SignUpFormValues,
   SignUpInitData,
@@ -26,7 +26,7 @@ import {
   SignUpRequest,
   SignUpResponse,
   SignUpSchema,
-} from './_lib/types';
+} from '../_lib/types';
 
 /**
  * 新規会員登録Component
