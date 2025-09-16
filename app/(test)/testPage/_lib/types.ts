@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { PaymentType } from '@/app/_types/enum';
+
 /**
  * パスワード再設定 Schema
  */
@@ -12,6 +14,8 @@ export const PasswordResetSchema = z.object({
   angou0: z.string().optional(),
   /** 新しいパスワード(再入力) */
   hukugou0: z.string().optional(),
+  /** 新しいパスワード(再入力) */
+  payment_type: z.string(),
 });
 
 /**

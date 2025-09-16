@@ -1,6 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
 import { EXPIRES_IN_TIME } from '@/app/_types/constants';
+import { CustomError } from '@/app/errors/customError';
+import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 /**
  * 画像URLを取得する
@@ -10,18 +12,28 @@ import { EXPIRES_IN_TIME } from '@/app/_types/constants';
  * @returns {string} - imageUrl
  */
 export const getImageUrl = (client: SupabaseClient, bucketName: string, filePath: string): string => {
-  const {
-    data: { publicUrl },
-  } = client.storage.from(bucketName).getPublicUrl(filePath);
+  try {
+    const {
+      data: { publicUrl },
+    } = client.storage.from(bucketName).getPublicUrl(filePath);
 
-  if (!publicUrl) {
-    console.error('Error getting image URL:');
+    if (!publicUrl) {
+      throw new CustomError(
+        ErrorCodes.NOT_FOUND.code,
+        '店舗画像の取得' + ErrorCodes.NOT_FOUND.message,
+        ErrorCodes.NOT_FOUND.status
+      );
+    }
 
-    return '';
+    // 取得した画像のURLを返す
+    return publicUrl;
+  } catch (e) {
+    console.error(e);
+    if (e instanceof CustomError) {
+      throw e;
+    }
+    throw new CustomError(ErrorCodes.INTERNAL_SERVER_ERROR);
   }
-
-  // 取得した画像のURLを返す
-  return publicUrl;
 };
 
 /**
@@ -45,15 +57,23 @@ export const getImageSignedUrl = async (
 ): Promise<string> => {
   try {
     // 署名付きURLを生成
+    console.log(bucketName, filePath);
     const { data, error } = await client.storage.from(bucketName).createSignedUrl(filePath, EXPIRES_IN_TIME);
 
     if (error) {
       console.error(error);
-      throw new Error('Error getting image signed URL:' + error.message);
+      throw new CustomError(
+        ErrorCodes.NOT_FOUND.code,
+        '店舗画像の取得' + ErrorCodes.NOT_FOUND.message,
+        ErrorCodes.NOT_FOUND.status
+      );
     }
     return data.signedUrl;
   } catch (e) {
+    if (e instanceof CustomError) {
+      throw e;
+    }
     console.error(e);
-    throw new Error('Error getting image signed URL:' + (e as Error).message);
+    throw new CustomError(ErrorCodes.INTERNAL_SERVER_ERROR);
   }
 };

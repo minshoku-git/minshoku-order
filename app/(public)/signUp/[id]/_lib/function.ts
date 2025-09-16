@@ -16,7 +16,14 @@ import { ApiRequest, ApiResponse, SelectOption } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
-import { SignUpDecrypt, SignUpInitData, SignUpInitRequest, SignUpRequest, SignUpResponse } from './types';
+import {
+  SignUpDecrypt,
+  SignUpEncrypt,
+  SignUpInitData,
+  SignUpInitRequest,
+  SignUpRequest,
+  SignUpResponse,
+} from './types';
 
 /**
  * getInitData
@@ -24,7 +31,7 @@ import { SignUpDecrypt, SignUpInitData, SignUpInitRequest, SignUpRequest, SignUp
  * @param {ApiRequest<SignUpInitRequest>} values - 取得条件
  * @returns {Promise<ApiResponse<SignUpInitData>>} 初期表示情報
  */
-export const getSingUpInitData = async (
+export const getSignUpInitData = async (
   values: ApiRequest<SignUpInitRequest>
 ): Promise<ApiResponse<SignUpInitData>> => {
   const supabase = await createClient();
@@ -170,6 +177,7 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
     const decryptToken: string = decrypt(req.token);
     const decryptRes: SignUpDecrypt = JSON.parse(decryptToken);
     console.log('復号化結果:' + decryptRes.t_companies_id);
+
     /* 暗号化
     ------------------------------------------------------------------ */
     const encryptPassword: string = encrypt(req.signup_password);
@@ -221,8 +229,7 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
       optional_item_answer_1: req.optional_item_answer_1,
       optional_item_answer_2: req.optional_item_answer_2,
       user_email: req.user_email,
-      master_usage_state: 0,
-      signup_password: isCompanyDomain ? undefined : encryptPassword, // 承認待ち
+      signup_password: encryptPassword,
       user_registration_status: isCompanyDomain
         ? UserRegistrationStatus.WAITING_EMAIL_VERIFICATION
         : UserRegistrationStatus.WAITING_APPROVAL, // 承認待ちかメール認証待ち
@@ -243,15 +250,19 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
 
     const newUserId: number = result.rows[0]?.id;
 
+    /* 暗号化
+    ------------------------------------------------------------------ */
+    const signUpEncrypt: SignUpEncrypt = { id: newUserId };
+    const signUpEncryptReq: string = encrypt(JSON.stringify(signUpEncrypt));
+
     /* 認証メール送信
   　------------------------------------------------------------------ */
     if (isCompanyDomain) {
       // TODO: URL差し替え
-      console.log('送ってますがな！！！！');
       const { error: signUpError } = await supabase.auth.signUp({
         email: req.user_email,
         password: req.signup_password,
-        options: { emailRedirectTo: process.env.APP_URL_DEV + '/payment' },
+        options: { emailRedirectTo: process.env.APP_URL_DEV + '/pre-registration/' + signUpEncryptReq },
       });
 
       if (signUpError) {

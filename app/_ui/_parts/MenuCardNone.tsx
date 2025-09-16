@@ -5,7 +5,7 @@ export default function MenuCardNone() {
   return (
     <>
       {/* カード */}
-      <Card sx={{ borderRadius: 4 }}>
+      <Card sx={{ borderRadius: 4, mt: 2 }}>
         <CardContent>
           <Typography sx={{ fontSize: 16 }}>
             いつもご利用ありがとうございます。

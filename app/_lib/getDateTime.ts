@@ -1,4 +1,5 @@
-import { format, startOfMonth, subDays, subMonths } from 'date-fns';
+import { format, formatISO, startOfMonth, subDays, subMonths } from 'date-fns';
+import { ja } from 'date-fns/locale/ja';
 import { toZonedTime } from 'date-fns-tz';
 
 /**
@@ -96,4 +97,70 @@ export function getDateString(date: Date): string {
  */
 export function getDatetimeString(date: Date): string {
   return format(date, 'yyyy/MM/dd HH:mm');
+}
+
+/**
+ * toUTCDateFromJSTDate
+ * JSTをUTCに変換します
+ * @param jstDate - 日付
+ * @returns {string} 'yyyy/MM/dd HH:mm'
+ */
+export function toUTCDateFromJSTDate(jstDate: Date): Date {
+  const utcDate = new Date(jstDate.getTime());
+  utcDate.setHours(jstDate.getHours() - 9); // JSTはUTC+9
+  return utcDate;
+}
+
+/**
+ * formatJST
+ * UTCを'yyyy年M月d日(E)'に変換します
+ * @param jstDate - 日付
+ * @returns {string} 'yyyy年M月d日(E)'
+ */
+export function formatJstDate(utcDate: Date): string {
+  const jstDate = toZonedTime(utcDate, 'Asia/Tokyo');
+  return format(jstDate, 'yyyy年M月d日(E)', { locale: ja });
+}
+
+/**
+ * formatJST
+ * UTCを'yyyy年M月d日(E)'に変換します
+ * @param jstDate - 日付
+ * @returns {string} 'yyyy年M月d日(E)'
+ */
+export function formatJstDateTime(utcDate: Date): string {
+  const jstDate = toZonedTime(utcDate, 'Asia/Tokyo');
+  return format(jstDate, 'yyyy年M月d日(E) HH:mm:ss', { locale: ja });
+}
+
+/**
+ * getCancelDeadlineUTC
+ * 納品日からキャンセル日時を取得します
+ * @param jstDate - 日付
+ * @returns {Date}
+ */
+export function getCancelDeadlineUTC(
+  deliveryDay: Date | string,
+  cancelDaysBefore: number,
+  cancelTime: string // 例: "10:30:00"
+): Date {
+  const newDeliveryDay = new Date(deliveryDay);
+
+  // 納品日（UTC）から、キャンセル可能日数を引いた日付を計算
+  const cancelDeadlineUTC = new Date(
+    newDeliveryDay.getUTCFullYear(),
+    newDeliveryDay.getUTCMonth(),
+    newDeliveryDay.getUTCDate() - cancelDaysBefore
+  );
+
+  // 指定されたJSTの時刻情報を取得
+  const [hourStr, minuteStr] = cancelTime.split(':');
+  const jstHour = Number(hourStr);
+  const minute = Number(minuteStr);
+
+  // UTCへのタイムゾーン変換
+  // JSTはUTC+9なので、9時間引いてUTC時刻をセットする
+  cancelDeadlineUTC.setUTCHours(jstHour - 9, minute, 0, 0);
+
+  return cancelDeadlineUTC;
 }

@@ -27,24 +27,15 @@ function StoreModal({ open, handleClose, storeInfo }) {
         <IconButton onClick={handleClose} sx={{ position: 'absolute', width: 56, height: 56, right: -20, top: -20 }}>
           <Image component="img" src={closeIcon} alt="閉じる" width="100%" />
         </IconButton>
-        <Image
-          src={storeInfo.logo}
-          alt={storeInfo.alt}
-          style={{
-            display: 'block',
-            margin: 'auto',
-            maxWidth: '100%',
-          }}
-        />
         <Typography
           id="modal-modal-title"
           variant="h6"
           component="h2"
-          sx={{ fontSize: 20, color: '#333', fontWeight: 'bold', mt: 2 }}
+          sx={{ fontSize: 20, color: '#333', fontWeight: 'bold' }}
         >
           {storeInfo.name}
         </Typography>
-        <Typography id="modal-modal-description" sx={{ mt: 2, color: '#333', fontSize: 16 }}>
+        <Typography id="modal-modal-description" sx={{ mt: 2, color: '#333', fontSize: 16, whiteSpace: 'pre-wrap' }}>
           {storeInfo.desc}
         </Typography>
       </Box>

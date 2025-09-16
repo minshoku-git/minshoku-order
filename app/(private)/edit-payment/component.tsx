@@ -1,21 +1,19 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { AddCard } from '@mui/icons-material';
 import {
   Box,
+  Button,
   Divider,
   FormControl,
   FormControlLabel,
   Radio,
   RadioGroup,
-  TextField,
-  Tooltip,
   Typography,
 } from '@mui/material';
-import Grid from '@mui/material/Grid2';
 import { useRouter } from 'next/navigation';
 import { JSX, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { SelectElement, TextFieldElement } from 'react-hook-form-mui';
 
 import { getNow } from '@/app/_lib/getDateTime';
 import { Btn } from '@/app/_ui/_parts/Btn';
@@ -127,87 +125,18 @@ export const PaymentComponent = (): JSX.Element => {
                       key={i}
                       value={`card${i}`}
                       control={<Radio />}
+                      sx={{ ml: 1, }}
                       label={<Typography fontWeight="bold">カード番号{card}</Typography>}
                     />
                   ))}
-                  <FormControlLabel
-                    value="new"
-                    sx={{ border: '1px solid #ddd', mr: 1, background: '#fff', borderRadius: 1 }}
-                    control={<Radio />}
-                    label={<Typography fontWeight="bold">新しいクレジットカードを登録する</Typography>}
-                  />
+                  <Button
+                    startIcon={<AddCard />}
+                    sx={{ border: '1px solid #ddd', fontWeight: 'bold', mr: 3, ml: 1, pl: 2, background: '#fff', borderRadius: 1, justifyContent: 'flex-start' }}
+                  >
+                    新しいクレジットカードを登録する
+                  </Button>
                 </RadioGroup>
               </Box>
-              {creditOption === 'new' && (
-                <Box sx={{ border: '1px solid #ddd', p: 2, mt: 2, ml: 1, borderRadius: 1, background: '#fff' }}>
-                  <Typography variant="body2" fontWeight="bold">
-                    カード番号
-                  </Typography>
-                  <TextFieldElement
-                    control={control}
-                    type="credit"
-                    name="creditcard_number"
-                    fullWidth
-                    placeholder="例)123456781234"
-                    variant="outlined"
-                    onChange={handleInput}
-                  // margin="normal"
-                  />
-                  <Typography variant="body2" fontWeight="bold" sx={{ mt: 2 }}>
-                    有効期限
-                  </Typography>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                    <Box sx={{ xs: 6, display: 'flex', alignItems: 'center' }}>
-                      <SelectElement
-                        control={control}
-                        name={'creditcard_month'}
-                        options={[{ id: '-1', label: '月を選択' }, ...month]}
-                        fullWidth
-                      />
-                      <Typography ml={2}>月</Typography>
-                    </Box>
-                    <Box sx={{ xs: 6, display: 'flex', alignItems: 'center' }}>
-                      <SelectElement
-                        control={control}
-                        name={'creditcard_year'}
-                        options={[{ id: '-1', label: '年を選択' }, ...years]}
-                        fullWidth
-                      />
-                      <Typography ml={2}>年</Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                    <Grid container spacing={0}>
-                      <Box sx={{ xs: 12 }}>
-                        <Typography variant="body2" fontWeight="bold" sx={{ mt: 2 }}>
-                          セキュリティコード
-                        </Typography>
-                      </Box>
-                      <Grid sx={{ xs: 6 }}>
-                        <TextField
-                          placeholder="例)123"
-                          variant="outlined"
-                          fullWidth
-                          slotProps={{
-                            htmlInput: { maxLength: 3, pattern: '[0-9]*' },
-                            input: {
-                              inputMode: 'numeric',
-                            },
-                          }}
-                        // margin="normal"
-                        />
-                      </Grid>
-                      <Grid sx={{ xs: 6, mt: 2 }} alignSelf="center">
-                        <Tooltip title="カード裏面に記載されているセキュリティコードをご入力ください。">
-                          <Typography variant="body2" color="primary" sx={{ whiteSpace: 'nowrap' }}>
-                            セキュリティコードについて
-                          </Typography>
-                        </Tooltip>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                </Box>
-              )}
             </>
           )}
           <Divider sx={{ my: 2 }} />
@@ -225,7 +154,7 @@ export const PaymentComponent = (): JSX.Element => {
         <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
           <Btn label={'支払い方法を登録'} eventhandler={() => console.log('click')} />
         </Box>
-      </FormControl>
+      </FormControl >
     </>
   );
 };

@@ -11,6 +11,12 @@
 export const PAGE_MAX_COUNT: number = 30;
 
 /**
+ * 注文履歴画面の一頁あたりの表示上限件数
+ * @returns {number} - 最大表示件数(10件/日)
+ */
+export const ORDER_HISTORY_PAGE_MAX_COUNT: number = 10;
+
+/**
  * 1KBのByte数(1024Byte)
  * @returns {number} - 1024
  */

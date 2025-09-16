@@ -32,7 +32,7 @@ import {
  * 新規会員登録Component
  * @returns {JSX.Element} JSX
  */
-export const SingUpComponent = (): JSX.Element => {
+export const SignUpComponent = (): JSX.Element => {
   /* initComponenttialize
   ------------------------------------------------------------------ */
   const router = useRouter();
@@ -123,10 +123,10 @@ export const SingUpComponent = (): JSX.Element => {
   /* functions - Insert
   ------------------------------------------------------------------ */
   const signUpHandler: SubmitHandler<SignUpFormValues> = async (data) => {
-    singUpMutate.mutate(data);
+    signUpMutate.mutate(data);
   };
 
-  const singUpMutate = useMutation({
+  const signUpMutate = useMutation({
     mutationFn: async (data: SignUpFormValues) => {
       openProcessing();
       const req: ApiRequest<SignUpRequest> = { request: { ...data, token: token } };

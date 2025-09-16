@@ -1,9 +1,14 @@
+import { Box, Card, CardContent, Divider, Typography } from '@mui/material';
 import React from 'react';
-import { Box, Typography, IconButton, Card, CardContent, Divider } from '@mui/material';
+
 import { Btn } from './Btn';
 
-export default function MenuCardConfirm() {
-  const menuDate = '5月23日（金）';
+type Props = {
+  backHandler: () => Promise<void>
+  orderHandler: () => Promise<void>
+}
+
+export default function MenuCardConfirm(props: Props) {
   return (
     <>
       {/* カード */}
@@ -42,9 +47,9 @@ export default function MenuCardConfirm() {
           <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
             キャンセル：当日9:45まで
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', flexFlow: 'column', gap: 2, mt: 4 }}>
-            <Btn label="確定" />
-            <Btn bgc="#afafaf" label="戻る" />
+          <Box sx={{ display: 'flex', alignItems: 'center', flexFlow: 'column', gap: 2, mt: 4 }} >
+            <Btn label="確定" eventhandler={() => props.orderHandler()} />
+            <Btn bgc="#afafaf" label="戻る" eventhandler={() => props.backHandler()} />
           </Box>
         </CardContent>
       </Card>

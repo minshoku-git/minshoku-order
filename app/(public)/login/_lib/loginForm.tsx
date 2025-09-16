@@ -26,13 +26,13 @@ type Props = {
  */
 export const LoginForm = (props: Props): JSX.Element => {
   /* initialize
-    ------------------------------------------------------------------ */
+  ------------------------------------------------------------------ */
   const router = props.router;
   const { openSnackbar } = useSnackBar();
   const { openProcessing, closeProcessing } = useProcessing();
 
   /* useForm
-    ------------------------------------------------------------------ */
+  ------------------------------------------------------------------ */
   const { control, handleSubmit } = useForm<UserLoginFormValues>({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
@@ -41,7 +41,7 @@ export const LoginForm = (props: Props): JSX.Element => {
   });
 
   /* functions - send
-    ------------------------------------------------------------------ */
+  ------------------------------------------------------------------ */
   const loginHandler: SubmitHandler<UserLoginFormValues> = async (data) => {
     loginMutate.mutate(data);
   };
@@ -69,9 +69,9 @@ export const LoginForm = (props: Props): JSX.Element => {
   });
 
   /* functions 
-    ------------------------------------------------------------------ */
+  ------------------------------------------------------------------ */
   const movePasswordPage = () => {
-    router.push('/resetPassword');
+    router.push('/reset-password');
   };
 
   /* JSX

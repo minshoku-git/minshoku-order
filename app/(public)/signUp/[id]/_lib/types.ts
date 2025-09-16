@@ -83,6 +83,14 @@ export type SignUpDecrypt = {
 };
 
 /**
+ * 仮登録完了 initRequest
+ */
+export type SignUpEncrypt = {
+  /** メールアドレス */
+  id: number;
+};
+
+/**
  * ユーザー基本情報 初期表示情報
  */
 export type SignUpInitData = {

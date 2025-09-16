@@ -8,10 +8,10 @@ import { UserProfileFormValues, UserProfileInitData } from './types';
  * @param {ApiRequest<null>} condition
  * @returns {Promise<ApiResponse<UserProfileInitData>>}
  */
-export const getUpdateProfileInitData = async (
+export const getEditProfileInitDataFetcher = async (
   condition: ApiRequest<null> | null
 ): Promise<ApiResponse<UserProfileInitData>> => {
-  return fetcher<ApiResponse<UserProfileInitData>>('/api/sendPasswordResetMail', {
+  return fetcher<ApiResponse<UserProfileInitData>>('/api/edit-profile/getInit', {
     method: 'POST',
     body: JSON.stringify(condition),
     headers: {
@@ -25,11 +25,11 @@ export const getUpdateProfileInitData = async (
  * @param {ApiRequest<UserProfileFormValues>} condition
  * @returns {Promise<ApiResponse<null>>}
  */
-export const updateProfile = async (
+export const updateProfileFetcher = async (
   condition: ApiRequest<UserProfileFormValues> | null
 ): Promise<ApiResponse<null>> => {
-  return fetcher<ApiResponse<null>>('/api/sendPasswordResetMail', {
-    method: 'POST',
+  return fetcher<ApiResponse<null>>('/api/edit-profile/update', {
+    method: 'PUT',
     body: JSON.stringify(condition),
     headers: {
       'Content-Type': 'application/json',

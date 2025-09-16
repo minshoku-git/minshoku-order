@@ -12,8 +12,8 @@ interface ProcessingContextType {
 }
 
 const ProcessingContext = createContext<ProcessingContextType | null>({
-  openProcessing: () => {},
-  closeProcessing: () => {},
+  openProcessing: () => { },
+  closeProcessing: () => { },
   processingState: { open: false },
 });
 

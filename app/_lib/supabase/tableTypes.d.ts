@@ -30,8 +30,6 @@ export type t_user = {
   payment_type?: number;
   /** メモ（マスタ） */
   master_memo?: string;
-  /** マスター利用ステータス */
-  master_usage_state?: number;
   /** クレジット_メンバーID */
   credit_member_id?: string;
   /** クレジット連番 */
@@ -126,8 +124,14 @@ export type t_shops = {
   shop_image_file_name?: string;
   /** 店舗イメージ_ファイルサイズ(byte) */
   shop_image_file_bytesize?: number;
+  /** 店舗イメージ_セーフファイル名 */
+  shop_image_safe_file_name?: string;
+  /** 食べログURL */
+  tabelog_url?: string;
+  /** 店舗紹介文 */
+  shop_description?: string;
   /** 店舗利用制限ステータス */
-  usage_status?: UsageStatus;
+  usage_status?: number;
   /** gmoショップコード */
   gmo_shop_code?: string;
   /** gmoショップパスワード */
@@ -152,6 +156,10 @@ export type t_order = {
   t_user_id?: number;
   /** スケジュールID */
   t_menu_schedule_id?: number;
+  /** 企業部署ID */
+  t_companies_department_id?: number;
+  /** 企業雇用形態ID */
+  t_companies_employment_status_id?: number;
   /** 注文日時 */
   order_datetime?: Date;
   /** 納品日 */
@@ -169,7 +177,7 @@ export type t_order = {
   /** 支払い種別 */
   payment_type?: number;
   /** オーダーステータス */
-  order_status?: number;
+  order_status_type?: number;
   /** キャンセル日時 */
   cancel_datetime?: Date;
   /** クレジット取引ID */
@@ -266,14 +274,14 @@ export type t_menu_schedule = {
   delivery_day?: Date;
   /** メニュー名 */
   menu_name?: string;
+  /** メニュー紹介 */
+  menu_description?: string;
   /** アレルギー表記 */
   allergen_labelling?: string;
   /** 辛さレベル */
   spice_level?: number;
   /** 在庫数 */
   stock_count?: number;
-  /** 注文数 */
-  order_count?: number;
   /** 単価 */
   list_price?: number;
   /** 売価 */

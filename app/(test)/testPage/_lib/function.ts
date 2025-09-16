@@ -24,8 +24,6 @@ export const getAuth = async (values: ApiRequest<null>): Promise<ApiResponse<Get
     return { success: true, data: { id: data.user.id ?? '', email: data.user.email ?? '' } };
     // return { success: true, data: { id: data.session?.user.id ?? '', email: data.session?.user.email ?? '' } };
   } catch (e: unknown) {
-    console.error('Transaction failed:', e);
-
     if (e instanceof CustomError) {
       return {
         success: false,

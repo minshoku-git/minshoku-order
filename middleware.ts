@@ -8,21 +8,14 @@ export async function middleware(request: NextRequest) {
 export const config = {
   // 認証時、閲覧可能なページ
   matcher: [
-    '/company',
-    '/companyDetail/:path*',
     '/order',
-    '/schedule',
-    '/scheduleRegistration',
-    '/shop',
-    '/shopDetail/:path*',
-    '/user',
-    '/userDetail/:path*',
-    '/userDetailMock/:path*',
-    '/decisionResult',
-    '/userView/contact',
-    '/userView/order',
-    '/userView/orderHistory',
-    '/userView/resetPassword',
-    '/userView/payment',
+    '/order-history',
+    '/edit-payment',
+    '/edit-profile',
+    '/register-payment', // MEMO: updateSessionでチェック済み(含めると無限リダイレクト発生します)
+    '/contact',
+    // ログインページにもミドルウェアを適用するため、'/login' を追加
+    '/login',
+    '/',
   ],
 };

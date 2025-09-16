@@ -4,10 +4,10 @@ import { Box, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form-mui';
+import { RadioButtonGroup, useForm } from 'react-hook-form-mui';
 
 import { decrypt, encrypt } from '@/app/_lib/encryption/crypto';
-import { AlertType } from '@/app/_types/enum';
+import { AlertType, PaymentType } from '@/app/_types/enum';
 import { QUERY_KEYS } from '@/app/_types/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { Btn } from '@/app/_ui/_parts/Btn';
@@ -51,6 +51,7 @@ export const TestPageComponent = (): JSX.Element => {
       hukugou: 'baee3c5a4a9f18c60f6e4da5e12f5abde13eed6729c4d1e1a5a031abd8506fee',
       angou0: '',
       hukugou0: '',
+      payment_type: '0',
     },
   });
 
@@ -182,6 +183,40 @@ export const TestPageComponent = (): JSX.Element => {
           <Btn label={'ログアウト'} eventhandler={() => logoutHandler()} />
         </Box>
       </Box>
+      <form >
+        <RadioButtonGroup
+          control={control}
+          label="payment_type"
+          name='payment_type'
+          options={[
+            {
+              id: PaymentType.SALAEY_DEDUCTIONS.toString(),
+              label: (
+                <>
+                  <Typography fontWeight="bold">
+                    給与天引き（毎月の給与から天引き）
+                  </Typography>
+                </>
+              ),
+            },
+            {
+              id: '1',
+              label: (
+                <Typography fontWeight="bold">
+                  PayPayオンライン決済
+                </Typography>
+              ),
+            },
+            {
+              id: '2',
+              label: (
+                <Typography fontWeight="bold">
+                  クレジットカード決済
+                </Typography>
+              ),
+            },
+          ]} />
+      </form>
     </>
   );
 };

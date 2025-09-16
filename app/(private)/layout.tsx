@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Footer } from '../_ui/_parts/_layout/Footer';
 import Header from '../_ui/_parts/_layout/Header';
 import { OpenProcessing } from '../_ui/processing/processing';
+import { ProcessingProvider } from '../_ui/processing/processingContext';
 import { OpenSnackBar } from '../_ui/snackBar/snackBar';
 import { SnackBarProvider } from '../_ui/snackBar/snackbarContext';
 
@@ -43,34 +44,36 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <SnackBarProvider>
-        <QueryClientProvider client={queryClient}>
-          {/* snackバー表示 */}
-          <OpenSnackBar />
-          {/* 読込中表示 */}
-          <OpenProcessing />
-          <Box
-            sx={{
-              background: '#efe9de',
-              flexDirection: 'column',
-              minHeight: '100vh',
-              overflowX: 'hidden',
-            }}
-          >
-            <Header isLogin={true} />
+        <ProcessingProvider>
+          <QueryClientProvider client={queryClient}>
+            {/* snackバー表示 */}
+            <OpenSnackBar />
+            {/* 読込中表示 */}
+            <OpenProcessing />
             <Box
               sx={{
-                width: '90%',
-                maxWidth: 640,
-                pt: '20px',
-                mx: 'auto',
-                pb: 8,
+                background: '#efe9de',
+                flexDirection: 'column',
+                minHeight: '100vh',
+                overflowX: 'hidden',
               }}
             >
-              {children}
+              <Header isLogin={true} />
+              <Box
+                sx={{
+                  width: '90%',
+                  maxWidth: 640,
+                  pt: '20px',
+                  mx: 'auto',
+                  pb: 8,
+                }}
+              >
+                {children}
+              </Box>
+              <Footer />
             </Box>
-            <Footer />
-          </Box>
-        </QueryClientProvider>
+          </QueryClientProvider>
+        </ProcessingProvider>
       </SnackBarProvider>
     </ThemeProvider>
   );

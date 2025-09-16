@@ -57,8 +57,6 @@ export const updatePassword = async (values: ApiRequest<PasswordResetRequest>): 
 
     return { success: true, data: null };
   } catch (e: unknown) {
-    console.error('Transaction failed:', e);
-
     if (e instanceof CustomError) {
       return {
         success: false,

@@ -43,4 +43,9 @@ export const ErrorCodes = {
     message: 'このメールアドレスは既に登録されています。',
     status: 409, // CONFLICT（競合）
   },
+  LOGGED_OUT: {
+    code: 'E1009',
+    message: 'セッションが存在しません。再度ログインしてください。',
+    status: 401, // 認証必須
+  },
 } as const;

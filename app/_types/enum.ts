@@ -84,8 +84,24 @@ export enum PaymentType {
   PAYPAY = 2,
 }
 
+/**
+ * ユーザー登録ステータスの論理名を取得します。
+ * @param {UserRegistrationStatus} value - 締め切り番号
+ * @returns {string} - 論理名
+ */
+export const convertPaymentTypeName = (value: PaymentType): string => {
+  switch (value) {
+    case PaymentType.SALAEY_DEDUCTIONS:
+      return '会社清算';
+    case PaymentType.CREDITCARD:
+      return 'クレジットカード';
+    case PaymentType.PAYPAY:
+      return 'PayPay';
+  }
+};
+
 /** オーダーステータス */
-export enum OrderStatus {
+export enum OrderStatusType {
   /** 0:有効 */
   VALID = 0,
   /** 1:キャンセル */

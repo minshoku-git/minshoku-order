@@ -7,7 +7,7 @@ import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 import HeaderMenu from './HeaderMenu';
@@ -19,12 +19,11 @@ type Props = {
 
 export default function Header(props: Props) {
   const router = useRouter();
-  const currentPathname = usePathname();
   const [open, setOpen] = useState(false);
 
   /** TopPage遷移 */
   const moveToTopPage = () => {
-    return router.push('/order');
+    return router.push('/login');
   };
 
   return (
@@ -52,7 +51,7 @@ export default function Header(props: Props) {
           )}
         </Toolbar>
       </AppBar>
-      <HeaderMenu open={open} closeEvent={() => setOpen(false)} />
+      <HeaderMenu open={open} closeEvent={() => setOpen(false)} router={router} openSnackbar={undefined} />
     </Box>
   );
 }

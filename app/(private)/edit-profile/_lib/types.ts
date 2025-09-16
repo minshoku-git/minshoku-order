@@ -27,26 +27,6 @@ export const UserProfileSchema = z.object({
   optional_item_answer_1: z.string().optional(),
   /** 任意項目_回答2 */
   optional_item_answer_2: z.string().optional(),
-  /** メールアドレス */
-  user_email: z
-    .string()
-    .nonempty({ message: formatString(MSG_REQUIRED, 'メールアドレス') })
-    .email(formatString(MSG_EMAIL, 'メールアドレス')),
-  /** 現在のパスワード */
-  current_signup_password: z
-    .string()
-    .nonempty({ message: formatString(MSG_REQUIRED, '現在のパスワード') })
-    .regex(REG_PASSWORD, MSG_PASSWORD),
-  /** パスワード */
-  signup_password: z
-    .string()
-    .nonempty({ message: formatString(MSG_REQUIRED, '新しいパスワード') })
-    .regex(REG_PASSWORD, MSG_PASSWORD),
-  /** パスワード(再入力) */
-  confirm_signup_password: z
-    .string()
-    .nonempty({ message: formatString(MSG_REQUIRED, '新しいパスワード(再入力)') })
-    .regex(REG_PASSWORD, MSG_PASSWORD),
 });
 
 /**
