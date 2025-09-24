@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { insertUserProfile } from '@/app/(public)/signup/_lib/function';
+import { insertUserProfile } from '@/app/(public)/signup/[id]/_lib/function';
 
 export async function PUT(req: NextRequest) {
   const body = await req.json();
