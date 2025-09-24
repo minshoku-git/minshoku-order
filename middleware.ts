@@ -16,6 +16,7 @@ export const config = {
     '/contact',
     // ログインページにもミドルウェアを適用するため、'/login' を追加
     '/login',
+    '/login/:id*',
     '/',
   ],
 };

@@ -36,8 +36,11 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const currentPath = request.nextUrl.pathname;
+
+  // /login/[id] を許可するためのロジック
   const publicPaths = ['/', '/login', '/error', '/register-payment'];
-  const isProtectedPath = !publicPaths.some((path) => currentPath === path);
+  const isLoginPath = currentPath.startsWith('/login/'); // /login/[id] を識別
+  const isProtectedPath = !publicPaths.some((path) => currentPath === path) && !isLoginPath;
 
   // 認証済みユーザーが公開パスにアクセスした場合、/orderにリダイレクト
   if (session && (currentPath === '/' || currentPath === '/login')) {
@@ -47,10 +50,15 @@ export async function updateSession(request: NextRequest) {
   }
 
   // 認証チェック
-  // セッションが存在しない、かつ保護されたパスにアクセスしている場合のみ/loginにリダイレクト
+  // セッションが存在しない、かつ保護されたパスにアクセスしている場合のみ/login/[id]にリダイレクト
   if (!session && isProtectedPath) {
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
+    // /login/[id] にリダイレクトするか、/login にリダイレクトするかを決定
+    if (isLoginPath) {
+      url.pathname = currentPath; // /login/[id] のまま
+    } else {
+      url.pathname = '/login'; // /login のまま
+    }
     return NextResponse.redirect(url);
   }
   if (!session && currentPath === '/register-payment') {

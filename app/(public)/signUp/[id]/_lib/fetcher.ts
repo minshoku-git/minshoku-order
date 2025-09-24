@@ -11,7 +11,7 @@ import { SignUpInitData, SignUpInitRequest, SignUpRequest, SignUpResponse } from
 export const SignUpInitDataFetcher = async (
   condition: ApiRequest<SignUpInitRequest> | null
 ): Promise<ApiResponse<SignUpInitData>> => {
-  return fetcher<ApiResponse<SignUpInitData>>('/api/signup/getInit', {
+  return fetcher<ApiResponse<SignUpInitData>>('/api/kakunin/getInit', {
     method: 'POST',
     body: JSON.stringify(condition),
     headers: {
@@ -28,7 +28,7 @@ export const SignUpInitDataFetcher = async (
 export const SignUpFetcher = async (
   condition: ApiRequest<SignUpRequest> | null
 ): Promise<ApiResponse<SignUpResponse>> => {
-  return fetcher<ApiResponse<SignUpResponse>>('/api/signup/insert', {
+  return fetcher<ApiResponse<SignUpResponse>>('/api/kakunin/insert', {
     method: 'PUT',
     body: JSON.stringify(condition),
     headers: {

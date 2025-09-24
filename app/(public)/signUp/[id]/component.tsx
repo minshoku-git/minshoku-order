@@ -274,6 +274,9 @@ export const SignUpComponent = (): JSX.Element => {
                   <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
                     <Btn label={'仮登録'} isSubmit={true} />
                   </Box>
+                  <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
+                    <Btn label={'戻る'} isSubmit={false} eventhandler={() => router.back()} />
+                  </Box>
                 </form>
               </Box>
             </>}
