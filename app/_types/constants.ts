@@ -46,6 +46,12 @@ export const HYPHEN: string = '-';
  */
 export const TEMP_HYPHEN: string = 'temp-';
 
+/**
+ * 仮ID用文字列('temp-')
+ * @returns {string} - 'temp-'
+ */
+export const PublicPaths = ['/', '/login', '/error', '/register-payment'];
+
 /* Supabase Storage
 ------------------------------------------------------------------ */
 /**

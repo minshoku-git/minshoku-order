@@ -1,0 +1,153 @@
+'use client';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Box,
+  Typography,
+} from '@mui/material';
+import { useMutation as registerPaymentTypeMutate, useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { JSX, useEffect, useState } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form-mui';
+
+import { AlertType, PaymentType } from '@/app/_types/enum';
+import { QUERY_KEYS } from '@/app/_types/queryKeys';
+import { ApiRequest, ApiResponse, CreditCardData } from '@/app/_types/types';
+import { PaymentForm } from '@/app/_ui/_parts/paymentForm';
+import { useProcessing } from '@/app/_ui/processing/processingContext';
+import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { getEditPaymentTypeInitDataFetcher } from '@/app/(private)/edit-payment/_lib/fetcher';
+
+import { getRegisterPaymentTypeInitDataFetcher, registerPaymentTypeFetcher } from './_lib/fetcher';
+import { RegisterPaymentInitData, UserPaymentFormValues, UserPaymentSchema } from './_lib/types';
+
+/**
+ * 支払方法登録Component
+ * @returns {JSX.Element} JSX
+ */
+export const PaymentComponent = (): JSX.Element => {
+  /* initialize
+  ------------------------------------------------------------------ */
+  const router = useRouter();
+  const { openSnackbar } = useSnackBar();
+  const { openProcessing, closeProcessing } = useProcessing();
+
+  /* useState
+  ------------------------------------------------------------------ */
+  const [creditCardOptions, setCreditCardOptions] = useState<CreditCardData[] | undefined>();
+
+  /* useForm
+  ------------------------------------------------------------------ */
+  const {
+    control,
+    handleSubmit,
+    watch,
+    reset,
+  } = useForm<UserPaymentFormValues>({
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
+    resolver: zodResolver(UserPaymentSchema),
+    defaultValues: {
+      paymentType: PaymentType.SALAEY_DEDUCTIONS,
+      creditcard: '',
+    },
+  });
+  const paymentMethod = watch('paymentType');
+
+  /* useQuery - 初期表示情報取得
+  ------------------------------------------------------------------ */
+  const RegisterPaymentInitDataFetch = async () => {
+    const req: ApiRequest<null> = { request: null };
+    return getRegisterPaymentTypeInitDataFetcher(req);
+  };
+
+  const { data: result, isLoading } = useQuery<ApiResponse<RegisterPaymentInitData>>({
+    queryKey: [QUERY_KEYS.REGISTER_PAYMENT_INIT_RESULT],
+    queryFn: RegisterPaymentInitDataFetch,
+  });
+
+  /* functions - send
+  ------------------------------------------------------------------ */
+  const registerHandler: SubmitHandler<UserPaymentFormValues> = async (data) => {
+    registerMutate.mutate(data);
+  };
+
+  const registerMutate = registerPaymentTypeMutate({
+    mutationFn: async (data: UserPaymentFormValues) => {
+      openProcessing();
+      const req: ApiRequest<UserPaymentFormValues> = { request: data };
+      return registerPaymentTypeFetcher(req) as unknown as ApiResponse<null>;
+    },
+    onSuccess: (res) => {
+      if (res.success) {
+        sessionStorage.setItem('snackbar', '支払い方法登録の登録が完了しました。');
+        router.replace('/order');
+      } else {
+        openSnackbar(AlertType.ERROR, res.error.message);
+      }
+    },
+    onError: (e) => {
+      console.log(e.message);
+      openSnackbar(AlertType.ERROR, '支払い方法登録に失敗しました。再度お試しください。');
+    },
+    onSettled: () => {
+      closeProcessing();
+    },
+  });
+
+
+  /* useEffect 初期表示情報取得
+  ------------------------------------------------------------------ */
+  useEffect(() => {
+    if (!result) {
+      return;
+    }
+    if (!result.success) {
+      openSnackbar(AlertType.WARNING, result.error.message);
+      router.push('/login');
+    } else if (result.data) {
+      setCreditCardOptions(result.data.creditCardDatas);
+      reset({
+        paymentType: result.data.currentPaymentType as PaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
+        creditcard: result.data.currentCardDataId,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
+
+  useEffect(() => {
+    if (isLoading) {
+      openProcessing();
+    } else {
+      closeProcessing();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
+
+  /* JSX
+  ------------------------------------------------------------------ */
+
+  return (
+    <>
+      {/* 上部リンク */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', fontSize: 20 }}>
+          支払い方法／新規会員登録
+        </Typography>
+      </Box>
+      <Typography variant="body1">支払い方法をご選択ください。</Typography>
+      {result?.success && <>
+        <PaymentForm
+          handleSubmit={handleSubmit}
+          submitHandler={registerHandler}
+          control={control}
+          paymentMethod={paymentMethod}
+          cards={creditCardOptions}
+          isRegister={true}
+          deduction_flag={result.data.deduction_flag}
+          credit_flag={result.data.credit_flag}
+          paypay_flag={result.data.paypay_flag}
+        />
+      </>}
+    </>
+  );
+};

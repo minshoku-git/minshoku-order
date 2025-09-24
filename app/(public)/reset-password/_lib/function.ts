@@ -54,7 +54,7 @@ export const sendPasswordResetMail = async (req: ApiRequest<PasswordFormValues>)
   　------------------------------------------------------------------ */
     // TODO:URL差し替え
     const { error: signInError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: process.env.APP_URL_DEV + '/updatePassword',
+      redirectTo: process.env.APP_URL_DEV + '/update-password',
     });
 
     if (signInError) {

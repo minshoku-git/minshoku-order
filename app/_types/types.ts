@@ -62,3 +62,10 @@ export type SelectOption = {
   /** ラベル */
   label: string;
 };
+
+export type CreditCardData = {
+  /** id */
+  creditcardId: string;
+  /** マスク済みカード番号 */
+  maskedCardNumber: string;
+};

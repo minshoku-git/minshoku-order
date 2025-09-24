@@ -65,7 +65,13 @@ export async function updateSession(request: NextRequest) {
 
     const { data: userData, error } = await supabase
       .from('t_user')
-      .select('user_registration_status')
+      .select(
+        `user_name,
+        user_registration_status,
+        t_companies!inner(
+          restaurant_name
+      )`
+      )
       .eq('user_email', userEmail)
       .single();
 

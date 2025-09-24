@@ -85,6 +85,15 @@ export const EditProfileComponent = (): JSX.Element => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result]);
 
+  useEffect(() => {
+    if (isLoading) {
+      openProcessing();
+    } else {
+      closeProcessing();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
+
   /* functions - 会員情報の更新
   ------------------------------------------------------------------ */
   const updateProfileHandler: SubmitHandler<UserProfileFormValues> = async (data) => {
@@ -125,50 +134,52 @@ export const EditProfileComponent = (): JSX.Element => {
           </Typography>
         </Box>
         {/* <Typography variant='body1'>会員登録に必要な情報をご入力・ご選択ください。</Typography> */}
-        <Box sx={{ mt: 2 }}>
-          <form onSubmit={handleSubmit(updateProfileHandler)}>
-            <InputItem control={control} label={`会社名`} name="cname" disabled={true} isNotFormValue={"株式会社リファクト"} type="text" />
-            <InputItem control={control} label={`支店名`} name="cname" disabled={true} isNotFormValue={"第一システム開発本部"} type="text" />
-            <InputItem control={control} label={`登録メールアドレス`} name="cname" disabled={true} isNotFormValue={"s.abe@refact.co.jp"} type="text" />
-            <InputItem control={control} label={`お名前`} name="user_name" required={true} />
-            <InputItem
-              control={control}
-              label={`お名前（フリガナ）`}
-              name="user_name_kana"
-              required={true}
-            />
-            <SelectItem
-              control={control}
-              label={`部署`}
-              name="t_companies_department_id"
-              required={true}
-              options={departmentOptions}
-            />
-            <SelectItem
-              control={control}
-              label={`雇用形態`}
-              name="t_companies_employment_status_id"
-              required={true}
-              options={employmentStatusOptions}
-            />
-            <InputItem
-              control={control}
-              label={`会社任意の情報1`}
-              name="optional_item_answer_1"
-              note={'※任意情報'}
-            />
-            <InputItem
-              control={control}
-              label={`会社任意の情報2`}
-              name="optional_item_answer_2"
-              note={'※任意情報'}
-            />
-            {/* 変更ボタン */}
-            <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
-              <Btn label={'変更'} isSubmit={true} />
-            </Box>
-          </form>
-        </Box>
+        {!isLoading &&
+          <Box sx={{ mt: 2 }}>
+            <form onSubmit={handleSubmit(updateProfileHandler)}>
+              <InputItem control={control} label={`会社名`} name="cname" disabled={true} isNotFormValue={"株式会社リファクト"} type="text" />
+              <InputItem control={control} label={`支店名`} name="cname" disabled={true} isNotFormValue={"第一システム開発本部"} type="text" />
+              <InputItem control={control} label={`登録メールアドレス`} name="cname" disabled={true} isNotFormValue={"s.abe@refact.co.jp"} type="text" />
+              <InputItem control={control} label={`お名前`} name="user_name" required={true} />
+              <InputItem
+                control={control}
+                label={`お名前（フリガナ）`}
+                name="user_name_kana"
+                required={true}
+              />
+              <SelectItem
+                control={control}
+                label={`部署`}
+                name="t_companies_department_id"
+                required={true}
+                options={departmentOptions}
+              />
+              <SelectItem
+                control={control}
+                label={`雇用形態`}
+                name="t_companies_employment_status_id"
+                required={true}
+                options={employmentStatusOptions}
+              />
+              <InputItem
+                control={control}
+                label={`会社任意の情報1`}
+                name="optional_item_answer_1"
+                note={'※任意情報'}
+              />
+              <InputItem
+                control={control}
+                label={`会社任意の情報2`}
+                name="optional_item_answer_2"
+                note={'※任意情報'}
+              />
+              {/* 変更ボタン */}
+              <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
+                <Btn label={'変更'} isSubmit={true} />
+              </Box>
+            </form>
+          </Box>
+        }
       </Box>
     </>
   );

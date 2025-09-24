@@ -5,6 +5,8 @@ import React, { JSX } from 'react';
 import { AlertType } from '@/app/_types/enum';
 import { ApiResponse } from '@/app/_types/types';
 
+import { Nameplate } from './Nameplate';
+
 type Props = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   router: any;
@@ -17,7 +19,7 @@ type Props = {
 const HeaderMenu = (props: Props): JSX.Element => {
   const translucentWhiteBg = { bgcolor: 'rgba(255,255,255,0.5)' };
   const logoutHandler = async () => {
-    const response = await fetch('/api//logout', {
+    const response = await fetch('/api/logout', {
       method: 'POST',
     });
     const res = await response.json() as ApiResponse<null>;
@@ -72,9 +74,7 @@ const HeaderMenu = (props: Props): JSX.Element => {
             }}
           >
             {/* ユーザー名（リンクでない） */}
-            <Typography variant="h6" sx={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#fff' }}>
-              ◯◯ ◯◯さま
-            </Typography>
+            <Nameplate />
             <Divider sx={translucentWhiteBg} />
 
             {/* メニューリンク */}
@@ -101,6 +101,26 @@ const HeaderMenu = (props: Props): JSX.Element => {
                 sx={{ color: '#fff', fontSize: '1rem', display: 'block', py: 1 }}
               >
                 {'会員情報の変更'}
+              </Link>
+              <Divider sx={translucentWhiteBg} />
+            </Box>
+            <Box>
+              <Link
+                href={'/edit-payment'}
+                underline="none"
+                sx={{ color: '#fff', fontSize: '1rem', display: 'block', py: 1 }}
+              >
+                {'支払い方法の変更'}
+              </Link>
+              <Divider sx={translucentWhiteBg} />
+            </Box>
+            <Box>
+              <Link
+                href={'/edit-password'}
+                underline="none"
+                sx={{ color: '#fff', fontSize: '1rem', display: 'block', py: 1 }}
+              >
+                {'パスワードの変更'}
               </Link>
               <Divider sx={translucentWhiteBg} />
             </Box>

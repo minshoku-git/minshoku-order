@@ -8,18 +8,19 @@ import { Footer } from '../_ui/_parts/_layout/Footer';
 import Header from '../_ui/_parts/_layout/Header';
 import { OpenProcessing } from '../_ui/processing/processing';
 import { ProcessingProvider } from '../_ui/processing/processingContext';
+import { createQueryClient } from '../_ui/queryClient';
 import { OpenSnackBar } from '../_ui/snackBar/snackBar';
 import { SnackBarProvider } from '../_ui/snackBar/snackbarContext';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   /* initialize
-    ------------------------------------------------------------------ */
-  const queryClient = new QueryClient();
+  ------------------------------------------------------------------ */
+  const queryClient = createQueryClient;
 
   /* functions
-    ------------------------------------------------------------------ */
+  ------------------------------------------------------------------ */
   /* Theme
-    ------------------------------------------------------------------ */
+  ------------------------------------------------------------------ */
   const theme = createTheme({
     typography: {
       fontFamily: ['Noto Sans JP', 'Yu Gothic', '游ゴシック体', 'YuGothic', 'sans-serif'].join(','),
@@ -58,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 overflowX: 'hidden',
               }}
             >
-              <Header isLogin={true} />
+              <Header />
               <Box
                 sx={{
                   width: '90%',

@@ -48,4 +48,14 @@ export const ErrorCodes = {
     message: 'セッションが存在しません。再度ログインしてください。',
     status: 401, // 認証必須
   },
+  CURRENT_PASSWORD_INCORRECT: {
+    code: 'E1010',
+    message: '現在のパスワードが正しくありません。',
+    status: 401, // 認証失敗
+  },
+  PASSWORD_CONFIRMATION_MISMATCH: {
+    code: 'E1011',
+    message: '新しいパスワードと確認用パスワードが一致しません。',
+    status: 400, // Bad Request（入力値の不正）
+  },
 } as const;

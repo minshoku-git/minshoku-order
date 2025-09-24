@@ -17,13 +17,20 @@ const options: SMTPTransport.Options = {
 /** transport */
 const transporter = nodemailer.createTransport(options);
 
+type Props = {
+  mailType: 'contact';
+  senderEmail: string;
+  senderUserName: string;
+  text: string;
+};
+
 /* send
 ------------------------------------------------------------------ */
 /**
  * メールを送信します。
  * @param {ApiRequest<string>} req - 差出人
  */
-export const send = async (req: ApiRequest<string>): Promise<ApiResponse<string>> => {
+export const sendMail = async (req: Props): Promise<ApiResponse<null>> => {
   return await transporter
     .sendMail({
       to: 's.abe@refact.co.jp',
@@ -39,14 +46,14 @@ export const send = async (req: ApiRequest<string>): Promise<ApiResponse<string>
       // `,
     })
     .then(() => {
-      const result: ApiResponse<string> = { success: true, data: '' };
+      const result: ApiResponse<null> = { success: true, data: null };
       return result;
     })
     .catch((error) => {
       console.error((error as Error).message);
       const result: ApiResponse<string> = {
         success: false,
-        error: { code: ErrorCodes.EMAIL_SEND_FAILED.code, message: ErrorCodes.EMAIL_SEND_FAILED.message },
+        error: ErrorCodes.EMAIL_SEND_FAILED,
       };
       return result;
     });

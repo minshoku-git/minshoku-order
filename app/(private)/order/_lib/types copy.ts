@@ -19,7 +19,7 @@ export type UserData = {
   /** 利用ステータス */
   usage_status: UsageStatus;
   /** 支払種別 */
-  payment_type?: number;
+  payment_type?: string;
   /** 会社ID */
   t_companies_id: number;
   /** 企業部署ID */

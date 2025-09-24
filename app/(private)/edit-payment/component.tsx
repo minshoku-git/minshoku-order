@@ -1,160 +1,157 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AddCard } from '@mui/icons-material';
 import {
   Box,
-  Button,
-  Divider,
-  FormControl,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
   Typography,
 } from '@mui/material';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { JSX, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { JSX, useEffect, useState } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
 
-import { getNow } from '@/app/_lib/getDateTime';
-import { Btn } from '@/app/_ui/_parts/Btn';
+import { AlertType, PaymentType, SelectType } from '@/app/_types/enum';
+import { QUERY_KEYS } from '@/app/_types/queryKeys';
+import { ApiRequest, ApiResponse } from '@/app/_types/types';
+import { PaymentForm } from '@/app/_ui/_parts/paymentForm';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 
-import { UserPaymentFormValues, UserPaymentSchema } from './_lib/types';
-
-/* ページ名 */
-const pageName = '支払設定';
+import { getEditPaymentTypeInitDataFetcher, updatePaymentTypeFetcher } from './_lib/fetcher';
+import { CreditCardData, EditPaymentFormValues, EditPaymentInitData, EditPaymentSchema } from './_lib/types';
 
 /**
- * 会社一覧Component
+ * 支払い方法の更新Component
  * @returns {JSX.Element} JSX
  */
-export const PaymentComponent = (): JSX.Element => {
+export const EditPaymentComponent = (): JSX.Element => {
   /* initialize
   ------------------------------------------------------------------ */
   const router = useRouter();
   const { openSnackbar } = useSnackBar();
   const { openProcessing, closeProcessing } = useProcessing();
 
+  /* useState
+  ------------------------------------------------------------------ */
+  const [creditCardOptions, setCreditCardOptions] = useState<CreditCardData[] | undefined>();
+
   /* useForm
   ------------------------------------------------------------------ */
   const {
     control,
     handleSubmit,
-    setValue,
+    watch,
+    reset,
     formState: { isDirty },
-  } = useForm<UserPaymentFormValues>({
+  } = useForm<EditPaymentFormValues>({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
-    resolver: zodResolver(UserPaymentSchema),
+    resolver: zodResolver(EditPaymentSchema),
     defaultValues: {
-      payment_type: 1,
-      creditcard_year: '-1',
-      creditcard_month: '-1',
-      creditcard_number: '',
-      security_code: '',
+      paymentType: PaymentType.SALAEY_DEDUCTIONS,
+      creditcard: '',
     },
   });
+  const paymentMethod = watch('paymentType');
+  console.log(paymentMethod)
 
-  /* useState
+  /* useQuery - 初期表示情報取得
   ------------------------------------------------------------------ */
-  /* useEffect
-  ------------------------------------------------------------------ */
-  /* mockData ※のちすて
-  ------------------------------------------------------------------ */
-  const month = Array.from({ length: 12 }, (_, i) => {
-    const num = String(i + 1).padStart(2, '0');
-    return {
-      id: num,
-      label: num,
-    };
-  });
-  const years = Array.from({ length: 21 }, (_, i) => {
-    const currentYear = getNow().getFullYear() - 1;
-    const num = String(currentYear + i + 1);
-    return {
-      id: num,
-      label: num,
-    };
+  const EditPaymentInitDataFetch = async () => {
+    const req: ApiRequest<null> = { request: null };
+    return getEditPaymentTypeInitDataFetcher(req);
+  };
+
+  const { data: result, isLoading } = useQuery<ApiResponse<EditPaymentInitData>>({
+    queryKey: [QUERY_KEYS.EDIT_PAYMENT_INIT_RESULT],
+    queryFn: EditPaymentInitDataFetch,
   });
 
-  const handleInput = (event: { target: { value: string } }) => {
-    const newValue = event.target.value.replace(/[^0-9]/g, ''); // 半角英数字以外の文字を削除
-    setValue('creditcard_number', newValue);
+  /* useEffect 初期表示情報取得
+  ------------------------------------------------------------------ */
+  useEffect(() => {
+    if (!result) {
+      return;
+    }
+    if (!result.success) {
+      openSnackbar(AlertType.WARNING, result.error.message);
+      router.push('/login');
+    } else if (result.data) {
+      setCreditCardOptions(result.data.creditCardDatas);
+      reset({
+        paymentType: result.data.currentPaymentType as PaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
+        creditcard: result.data.currentCardDataId,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
+
+  useEffect(() => {
+    if (isLoading) {
+      openProcessing();
+    } else {
+      closeProcessing();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
+
+  /* functions - 支払い方法の更新
+  ------------------------------------------------------------------ */
+  const updateHandler: SubmitHandler<EditPaymentFormValues> = async (data) => {
+    updateMutate.mutate(data);
+  };
+
+  const updateMutate = useMutation({
+    mutationFn: async (data: EditPaymentFormValues) => {
+      openProcessing();
+      const req: ApiRequest<EditPaymentFormValues> = { request: data };
+      return updatePaymentTypeFetcher(req);
+    },
+    onSuccess: (res) => {
+      if (res.success) {
+        sessionStorage.setItem('snackbar', '支払い方法登録の更新が完了しました。');
+        router.replace('/order');
+      } else {
+        openSnackbar(AlertType.ERROR, res.error.message);
+      }
+    },
+    onError: (e) => {
+      console.log(e.message);
+      openSnackbar(AlertType.ERROR, '支払い方法の更新に失敗しました。再度お試しください。');
+    },
+    onSettled: () => {
+      closeProcessing();
+    },
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onError = (errors: any) => {
+    console.error('バリデーションエラー:', errors);
   };
 
   /* JSX
   ------------------------------------------------------------------ */
-  const [paymentMethod, setPaymentMethod] = useState('credit');
-  const [creditOption, setCreditOption] = useState('');
-  const [cards, setCards] = useState(['************1111', '************2222']);
-
   return (
     <>
       {/* 上部リンク */}
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', fontSize: 20 }}>
-          支払い方法／新規会員登録
+          支払い方法の変更
         </Typography>
       </Box>
       <Typography variant="body1">支払い方法をご選択ください。</Typography>
-      <Divider sx={{ mb: 2, mt: 4 }} />
-      {/* 給与天引き */}
-      <FormControl component="fieldset" sx={{ width: '100%' }}>
-        <RadioGroup name="payment" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-          <FormControlLabel
-            value="salary"
-            control={<Radio />}
-            label={<Typography fontWeight="bold">給与天引き（毎月の給与から天引き）</Typography>}
-          />
-          <Divider sx={{ my: 2 }} />
-
-          {/* クレジットカード決済 */}
-          <FormControlLabel
-            value="credit"
-            control={<Radio />}
-            label={<Typography fontWeight="bold">クレジットカード決済</Typography>}
-          />
-
-          {paymentMethod === 'credit' && (
-            <>
-              <Box sx={{ pl: 2 }}>
-                <RadioGroup name="credit-option" value={creditOption} onChange={(e) => setCreditOption(e.target.value)}>
-                  {cards.map((card, i) => (
-                    <FormControlLabel
-                      key={i}
-                      value={`card${i}`}
-                      control={<Radio />}
-                      sx={{ ml: 1, }}
-                      label={<Typography fontWeight="bold">カード番号{card}</Typography>}
-                    />
-                  ))}
-                  <Button
-                    startIcon={<AddCard />}
-                    sx={{ border: '1px solid #ddd', fontWeight: 'bold', mr: 3, ml: 1, pl: 2, background: '#fff', borderRadius: 1, justifyContent: 'flex-start' }}
-                  >
-                    新しいクレジットカードを登録する
-                  </Button>
-                </RadioGroup>
-              </Box>
-            </>
-          )}
-          <Divider sx={{ my: 2 }} />
-
-          {/* PayPay */}
-          <FormControlLabel
-            value="paypay"
-            control={<Radio />}
-            label={<Typography fontWeight="bold">PayPayオンライン決済</Typography>}
-          />
-        </RadioGroup>
-        {/* 支払い方法を登録ボタン */}
-
-        <Divider sx={{ my: 2 }} />
-        <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
-          <Btn label={'支払い方法を登録'} eventhandler={() => console.log('click')} />
-        </Box>
-      </FormControl >
+      {result?.success && <>
+        <PaymentForm
+          handleSubmit={handleSubmit}
+          onError={onError}
+          submitHandler={updateHandler}
+          control={control}
+          paymentMethod={paymentMethod}
+          cards={creditCardOptions}
+          isRegister={false}
+          deduction_flag={result.data.deduction_flag}
+          credit_flag={result.data.credit_flag}
+          paypay_flag={result.data.paypay_flag}
+        />
+      </>}
     </>
   );
 };

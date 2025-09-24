@@ -1,32 +1,62 @@
 import { z } from 'zod';
 
-import { formatString } from '@/app/_lib/utill';
-import { MSG_MIN_TO_MAX, MSG_REQUIRED, REG_HANKAKU_NUM } from '@/app/_types/constants';
-import { PaymentType } from '@/app/_types/enum';
-import { SelectOption } from '@/app/_types/types';
+import { PaymentType, SelectType } from '@/app/_types/enum';
 
 /**
- * ユーザー支払い情報 Schema
+ * 支払い方法の更新 Schema
  */
-export const UserPaymentSchema = z.object({
+export const EditPaymentSchema = z.object({
   /** 支払い種別 */
-  payment_type: z.nativeEnum(PaymentType),
+  paymentType: z.enum(PaymentType),
   /** クレジットカード番号 */
-  creditcard_number: z
-    .string()
-    .nonempty({ message: formatString(MSG_REQUIRED, 'クレジットカード番号') })
-    .regex(new RegExp(REG_HANKAKU_NUM), 'は半角数字を入力してください。')
-    .min(14, formatString(MSG_MIN_TO_MAX, 'クレジットカード番号', '14', '16'))
-    .max(16, formatString(MSG_MIN_TO_MAX, 'クレジットカード番号', '14', '16')),
-  /** 有効期限(年) */
-  creditcard_year: z.string().optional(),
-  /** 有効期限(月) */
-  creditcard_month: z.string().optional(),
-  /** セキュリティコード */
-  security_code: z.string().optional(),
+  creditcard: z.string().optional(),
 });
 
 /**
- * ユーザー支払い情報 FormValues
+ * 支払い方法の更新 FormValues
  */
-export type UserPaymentFormValues = z.infer<typeof UserPaymentSchema>;
+export type EditPaymentFormValues = z.infer<typeof EditPaymentSchema>;
+
+/**
+ * 支払い方法の更新 初期表示情報
+ */
+export type EditPaymentInitData = {
+  /** 現在の支払い種別 */
+  currentPaymentType: PaymentType;
+  /** 現在のクレジットカード */
+  currentCardDataId?: string;
+  /** クレジットカード情報 */
+  creditCardDatas?: CreditCardData[];
+  /** 給与天引きFlag ※0:非/1:可 */
+  deduction_flag: SelectType;
+  /** クレジットカードFlag ※0:非/1:可 */
+  credit_flag: SelectType;
+  /** PaypayFlag ※0:非/1:可 */
+  paypay_flag: SelectType;
+};
+
+export type CreditCardData = {
+  /** id */
+  creditcardId: string;
+  /** マスク済みカード番号 */
+  maskedCardNumber: string;
+};
+
+/**
+ * 支払い方法の更新 初期表示情報
+ */
+export type UserAndCompaniesEmploymentStatus = {
+  /** 支払種別 */
+  payment_type: PaymentType;
+  /** クレジット_メンバーID */
+  credit_member_id?: string;
+  /** 企業雇用形態 */
+  t_companies_employment_status: {
+    /** 給与天引きFlag ※0:非/1:可 */
+    deduction_flag?: number;
+    /** クレジットカードFlag ※0:非/1:可 */
+    credit_flag?: number;
+    /** PaypayFlag ※0:非/1:可 */
+    paypay_flag?: number;
+  };
+};

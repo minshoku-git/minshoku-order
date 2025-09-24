@@ -175,7 +175,7 @@ export type t_order = {
   /** 個人負担額 */
   user_burden_amount?: number;
   /** 支払い種別 */
-  payment_type?: number;
+  payment_type?: string;
   /** オーダーステータス */
   order_status_type?: number;
   /** キャンセル日時 */
@@ -288,6 +288,26 @@ export type t_menu_schedule = {
   sale_price?: number;
   /** キャンセルフラグ */
   cancel_flag?: number;
+  /** 登録日時 */
+  created_at?: date;
+  /** 更新日時 */
+  updated_at?: date;
+};
+
+/** 会社テーブル */
+export type t_contact = {
+  /** ID（ユーザーID） */
+  id?: number;
+  /** 企業ID */
+  t_companies_id?: number;
+  /** 企業部署ID */
+  t_companies_department_id?: number;
+  /** 企業雇用形態ID */
+  t_companies_employment_status_id?: number;
+  /** ユーザーID */
+  t_user_id?: number;
+  /** 問い合わせ内容 */
+  contact_message?: string;
   /** 登録日時 */
   created_at?: date;
   /** 更新日時 */

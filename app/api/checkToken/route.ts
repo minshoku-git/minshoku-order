@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { createClient } from '@/app/_lib/supabase/server';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import { CheckTokenRequest, CheckTokenResponse } from '@/app/(public)/updatePassword/_lib/types';
+import { CheckTokenRequest, CheckTokenResponse } from '@/app/(public)/update-password/_lib/types';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 export async function POST(req: NextRequest) {

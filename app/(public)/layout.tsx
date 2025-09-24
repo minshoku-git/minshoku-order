@@ -63,7 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 overflowX: 'hidden',
               }}
             >
-              <Header isLogin={false} />
+              <Header />
               {isLoginPage &&
                 <Box
                   sx={{
