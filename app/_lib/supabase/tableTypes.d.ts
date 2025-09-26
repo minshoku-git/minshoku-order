@@ -292,7 +292,7 @@ export type t_menu_schedule = {
   updated_at?: date;
 };
 
-/** 会社テーブル */
+/** 問い合わせテーブル */
 export type t_contact = {
   /** ID（ユーザーID） */
   id?: number;

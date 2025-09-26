@@ -73,18 +73,12 @@ export async function updateSession(request: NextRequest) {
 
     const { data: userData, error } = await supabase
       .from('t_user')
-      .select(
-        `user_name,
-        user_registration_status,
-        t_companies!inner(
-          restaurant_name
-      )`
-      )
+      .select(`user_name, user_registration_status`)
       .eq('user_email', userEmail)
       .maybeSingle();
 
     if (error || !userData) {
-      console.log('userEmail', userEmail);
+      console.log('無効なログイン状態のEmail:', userEmail);
       console.error('Failed to fetch user from t_user:', error);
       const url = request.nextUrl.clone();
       url.pathname = '/login';
