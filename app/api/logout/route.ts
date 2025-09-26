@@ -25,7 +25,7 @@ export async function POST(_req: Request) {
     const req: ApiResponse<null> = { success: true, data: null };
 
     return NextResponse.json(req);
-  } catch (error) {
+  } catch (e) {
     const req: ApiResponse<null> = {
       success: false,
       error: { code: ErrorCodes.INTERNAL_SERVER_ERROR.code, message: ErrorCodes.INTERNAL_SERVER_ERROR.message },

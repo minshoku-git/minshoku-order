@@ -35,7 +35,7 @@
     "react-hook-form": "^7.62.0",
     "react-hook-form-mui": "^7.6.2",
     "sass": "^1.90.0",
-    "zod": "^4.0.17"
+    "zod": "4.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

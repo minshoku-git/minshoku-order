@@ -1,5 +1,3 @@
-import { UsageStatus, UserRegistrationStatus } from '@/app/_types/enum';
-
 /** ユーザーテーブル */
 export type t_user = {
   /** ID（ユーザーID） */
@@ -19,15 +17,15 @@ export type t_user = {
   /** 任意項目_回答2 */
   optional_item_answer_2?: string;
   /** ユーザー登録ステータス */
-  user_registration_status?: number;
+  user_registration_status?: string;
   /** 利用ステータス */
-  usage_status?: number;
+  usage_status?: string;
   /** メールアドレス */
   user_email?: string;
   /** パスワード */
   signup_password?: string;
   /** 支払種別 */
-  payment_type?: number;
+  payment_type?: string;
   /** メモ（マスタ） */
   master_memo?: string;
   /** クレジット_メンバーID */
@@ -91,7 +89,7 @@ export type t_companies = {
   /** urlキー */
   url_key?: string;
   /** 利用ステータス */
-  usage_status: number;
+  usage_status: string;
   /** 登録日時 */
   created_at?: Date;
   /** 更新日時 */
@@ -131,7 +129,7 @@ export type t_shops = {
   /** 店舗紹介文 */
   shop_description?: string;
   /** 店舗利用制限ステータス */
-  usage_status?: number;
+  usage_status?: string;
   /** gmoショップコード */
   gmo_shop_code?: string;
   /** gmoショップパスワード */
@@ -177,7 +175,7 @@ export type t_order = {
   /** 支払い種別 */
   payment_type?: string;
   /** オーダーステータス */
-  order_status_type?: number;
+  order_status_type?: string;
   /** キャンセル日時 */
   cancel_datetime?: Date;
   /** クレジット取引ID */
@@ -205,7 +203,7 @@ export type t_companies_department = {
   /** 部署名 */
   department_name?: string;
   /** 削除フラグ 0:有効/1:削除 */
-  delete_flag?: number;
+  delete_flag?: string;
   /** 登録日時 */
   created_at?: DATE;
   /** 更新日時 */
@@ -223,13 +221,13 @@ export type t_companies_employment_status = {
   /** 負担額 */
   set_meal_burden?: number;
   /** 削除フラグ ※0:有効/1:削除 */
-  delete_flag?: number;
+  delete_flag?: string;
   /** 給与天引きFlag ※0:非/1:可 */
-  deduction_flag?: number;
+  deduction_flag?: string;
   /** クレジットカードFlag ※0:非/1:可 */
-  credit_flag?: number;
+  credit_flag?: string;
   /** PaypayFlag ※0:非/1:可 */
-  paypay_flag?: number;
+  paypay_flag?: string;
   /** 登録日時 */
   created_at?: DATE;
   /** 更新日時 */
@@ -259,7 +257,7 @@ export type t_administrator = {
   /** メールアドレス */
   email?: string;
   /** 利用ステータス */
-  usage_state?: number;
+  usage_state?: string;
 };
 
 /** スケジュールテーブル */
@@ -287,7 +285,7 @@ export type t_menu_schedule = {
   /** 売価 */
   sale_price?: number;
   /** キャンセルフラグ */
-  cancel_flag?: number;
+  cancel_flag?: string;
   /** 登録日時 */
   created_at?: date;
   /** 更新日時 */

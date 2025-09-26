@@ -53,10 +53,10 @@ export type UserAndCompaniesEmploymentStatus = {
   /** 企業雇用形態 */
   t_companies_employment_status: {
     /** 給与天引きFlag ※0:非/1:可 */
-    deduction_flag?: number;
+    deduction_flag?: string;
     /** クレジットカードFlag ※0:非/1:可 */
-    credit_flag?: number;
+    credit_flag?: string;
     /** PaypayFlag ※0:非/1:可 */
-    paypay_flag?: number;
+    paypay_flag?: string;
   };
 };

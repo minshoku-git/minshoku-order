@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-import { DirectionType } from '@/app/_types/enum';
-
 /**
  * 注文情報 Schema
  */

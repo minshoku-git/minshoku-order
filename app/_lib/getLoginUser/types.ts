@@ -7,7 +7,7 @@ export type LoginUserResponse = {
   /** 食堂名 */
   restaurantName?: string;
   /** ユーザー登録ステータス */
-  userRegistrationStatus?: UserRegistrationStatus;
+  userRegistrationStatus?: string;
 };
 
 /** ユーザー情報 Response */
@@ -15,7 +15,7 @@ export type UserAndCompanies = {
   /** ユーザー名 */
   user_name: string;
   /** ユーザー登録ステータス */
-  user_registration_status: number;
+  user_registration_status: string;
   /** 会社情報 */
   t_companies: {
     /** 食堂名 */

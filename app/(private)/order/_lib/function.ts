@@ -577,7 +577,7 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
   　------------------------------------------------------------------ */
     const { error: orderCheckError } = await client
       .from('t_order')
-      .update<t_order>({ order_status_type: OrderStatusType.CANCEL, cancel_datetime: now })
+      .update<t_order>({ order_status_type: OrderStatusType.USER_CANCEL, cancel_datetime: now })
       .eq('t_menu_schedule_id', req.t_menu_schedule_id)
       .eq('t_user_id', user.id)
       .eq('order_status_type', OrderStatusType.VALID)

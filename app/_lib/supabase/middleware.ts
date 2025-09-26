@@ -81,12 +81,16 @@ export async function updateSession(request: NextRequest) {
       )`
       )
       .eq('user_email', userEmail)
-      .single();
+      .maybeSingle();
 
     if (error || !userData) {
+      console.log('userEmail', userEmail);
       console.error('Failed to fetch user from t_user:', error);
       const url = request.nextUrl.clone();
       url.pathname = '/login';
+      // MEMO: セッション有り&ユーザー情報がないパターンが存在するので、強制ログアウトする。
+      // マスタ管理でログインした後にユーザー画面を開いた場合、セッションは維持されるし、管理者はユーザー情報を持たない。
+      await supabase.auth.signOut();
       return NextResponse.redirect(url);
     }
 

@@ -80,21 +80,3 @@ export const REG_HANKAKU_NUM = '^\\d+$';
 export const REG_ZENKAKU_KANA = '^[\u30A0-\u30FF]+$';
 export const REG_DOMAIN = /^(?=.{1,253}$)(?!\-)(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$/;
 export const REG_PASSWORD = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z0-9]{8,}$/;
-
-export const MAX_IMAGE_SIZE = 5; // 5MB
-
-export const ERROR_MSG_UNEXPECTED = '予期せぬエラーが発生しました。再度お試しください。';
-
-/**
- * エラーメッセージ
- */
-export const ERROR_MESSAGE = {
-  /**
-   * ERROR_MESSAGE.UNEXPECTED
-   * 予期せぬエラーが発生しました。再度お試しください。 */
-  UNEXPECTED: '予期せぬエラーが発生しました。再度お試しください。',
-  /**
-   * ERROR_MESSAGE.TEMPLATE
-   * に失敗しました。再度お試しください。 */
-  TEMPLATE: 'に失敗しました。再度お試しください。',
-};
