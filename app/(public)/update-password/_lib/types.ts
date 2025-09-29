@@ -38,24 +38,6 @@ export type PasswordResetFormValues = z.infer<typeof PasswordResetSchema>;
  * パスワード再設定 Request
  */
 export type PasswordResetRequest = {
-  /** メールアドレス */
-  email: string;
-} & PasswordResetFormValues;
-
-/**
- * パスワード再設定(認証) Request
- */
-export type CheckTokenRequest = {
   /** 暗号 */
   token: string;
-  /** 種別 */
-  type: string;
-};
-
-/**
- * パスワード再設定(認証) Response
- */
-export type CheckTokenResponse = {
-  /** メールアドレス */
-  email: string;
-};
+} & PasswordResetFormValues;

@@ -24,6 +24,8 @@ export type OrderData = {
   user_burden_amount: number;
   /** 支払い種別 */
   payment_type: string | number;
+  /** 注文日時 */
+  order_datetime?: Date;
   /** オーダーステータス */
   order_status_type?: number;
   /** キャンセル日時 */

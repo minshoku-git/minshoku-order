@@ -12,29 +12,26 @@ import { PasswordResetRequest } from './types';
 export const updatePassword = async (values: ApiRequest<PasswordResetRequest>): Promise<ApiResponse<null>> => {
   const supabase = await createClient();
   const req = values.request;
+  const token_hash = req.token;
 
   try {
-    /* AuthCheck
-  　------------------------------------------------------------------ */
-    const {
-      data: { session },
-      error: errorAuth,
-    } = await supabase.auth.getSession();
-
-    if (errorAuth) {
-      throw new CustomError(ErrorCodes.NOT_FOUND.code, 'ユーザー情報の取得' + ErrorCodes.NOT_FOUND.message);
-    }
-
-    if (!session || !session.user.email) {
-      throw new CustomError(ErrorCodes.NOT_FOUND.code, 'ログインしていません' + ErrorCodes.NOT_FOUND.message);
-    }
-    if (session.user.email !== req.email) {
-      throw new CustomError(ErrorCodes.NOT_FOUND.code, 'ログインが不正です' + ErrorCodes.NOT_FOUND.message);
-    }
     /* 新しいパスワードと新しいパスワード(再入力)の検証
   　------------------------------------------------------------------ */
     if (req.new_signup_password !== req.confirm_new_signup_password) {
-      throw new CustomError(ErrorCodes.NOT_FOUND.code, '' + ErrorCodes.NOT_FOUND.message, ErrorCodes.NOT_FOUND.status);
+      throw new CustomError(ErrorCodes.PASSWORD_CONFIRMATION_MISMATCH);
+    }
+
+    /* AuthCheck
+  　------------------------------------------------------------------ */
+    console.log('token_hash', token_hash);
+
+    const { error: errorVerifyOtp } = await supabase.auth.verifyOtp({
+      type: 'recovery',
+      token_hash,
+    });
+    if (errorVerifyOtp) {
+      console.log(errorVerifyOtp);
+      throw new CustomError(ErrorCodes.AUTH_CODE_EXPIRED);
     }
 
     /* パスワード更新
@@ -54,6 +51,10 @@ export const updatePassword = async (values: ApiRequest<PasswordResetRequest>): 
         ErrorCodes.NOT_FOUND.status
       );
     }
+
+    /* ログアウト
+  　------------------------------------------------------------------ */
+    await supabase.auth.signOut();
 
     return { success: true, data: null };
   } catch (e: unknown) {

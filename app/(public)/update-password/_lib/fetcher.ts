@@ -1,24 +1,7 @@
 import { fetcher } from '@/app/_lib/fetcher';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 
-import { CheckTokenRequest, CheckTokenResponse, PasswordResetFormValues } from './types';
-
-/**
- * checkToken
- * @param {ApiRequest<CheckTokenRequest>} condition
- * @returns {Promise<ApiResponse<null>>}
- */
-export const checkToken = async (
-  condition: ApiRequest<CheckTokenRequest> | null
-): Promise<ApiResponse<CheckTokenResponse>> => {
-  return fetcher<ApiResponse<CheckTokenResponse>>('/api/checkToken', {
-    method: 'POST',
-    body: JSON.stringify(condition),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-};
+import { PasswordResetFormValues } from './types';
 
 /**
  * updatePasswordFetcher

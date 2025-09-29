@@ -1,7 +1,7 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Typography } from '@mui/material';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
@@ -14,6 +14,7 @@ import { InputItem } from '@/app/_ui/_parts/Inputitem';
 import { SelectItem } from '@/app/_ui/_parts/Selectitem';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
 
 import { getEditProfileInitDataFetcher, updateProfileFetcher } from './_lib/fetcher';
 import { UserBasicResult, UserProfileFormValues, UserProfileInitData, UserProfileSchema } from './_lib/types';
@@ -100,23 +101,15 @@ export const EditProfileComponent = (): JSX.Element => {
     insertUserBasicMutate.mutate(data);
   };
 
-  const insertUserBasicMutate = useMutation({
+  const insertUserBasicMutate = useApiMutation({
     mutationFn: async (data: UserProfileFormValues) => {
       openProcessing();
       const req: ApiRequest<UserProfileFormValues> = { request: data };
       return updateProfileFetcher(req) as unknown as ApiResponse<UserBasicResult>;
     },
     onSuccess: (res) => {
-      if (res.success) {
-        refetch();
-        openSnackbar(AlertType.SUCCESS, '会員情報を更新しました。');
-      } else {
-        openSnackbar(AlertType.ERROR, res.error.message);
-      }
-    },
-    onError: (e) => {
-      console.log(e.message);
-      openSnackbar(AlertType.ERROR, '会員情報の更新に失敗しました。再度お試しください。');
+      refetch();
+      openSnackbar(AlertType.SUCCESS, '会員情報を更新しました。');
     },
     onSettled: () => {
       closeProcessing();

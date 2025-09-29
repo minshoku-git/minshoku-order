@@ -4,7 +4,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { useMutation as registerPaymentTypeMutate, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
@@ -15,6 +15,7 @@ import { ApiRequest, ApiResponse, CreditCardData } from '@/app/_types/types';
 import { PaymentForm } from '@/app/_ui/_parts/paymentForm';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
 import { getEditPaymentTypeInitDataFetcher } from '@/app/(private)/edit-payment/_lib/fetcher';
 
 import { getRegisterPaymentTypeInitDataFetcher, registerPaymentTypeFetcher } from './_lib/fetcher';
@@ -71,23 +72,15 @@ export const PaymentComponent = (): JSX.Element => {
     registerMutate.mutate(data);
   };
 
-  const registerMutate = registerPaymentTypeMutate({
+  const registerMutate = useApiMutation({
     mutationFn: async (data: UserPaymentFormValues) => {
       openProcessing();
       const req: ApiRequest<UserPaymentFormValues> = { request: data };
       return registerPaymentTypeFetcher(req) as unknown as ApiResponse<null>;
     },
     onSuccess: (res) => {
-      if (res.success) {
-        sessionStorage.setItem('snackbar', '支払い方法登録の登録が完了しました。');
-        router.replace('/order');
-      } else {
-        openSnackbar(AlertType.ERROR, res.error.message);
-      }
-    },
-    onError: (e) => {
-      console.log(e.message);
-      openSnackbar(AlertType.ERROR, '支払い方法登録に失敗しました。再度お試しください。');
+      sessionStorage.setItem('snackbar', '支払い方法登録の登録が完了しました。');
+      router.replace('/order');
     },
     onSettled: () => {
       closeProcessing();

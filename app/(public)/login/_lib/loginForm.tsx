@@ -1,7 +1,6 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Button, Typography } from '@mui/material';
-import { useMutation } from '@tanstack/react-query';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { JSX } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
@@ -12,6 +11,7 @@ import { Btn } from '@/app/_ui/_parts/Btn';
 import { InputItem } from '@/app/_ui/_parts/Inputitem';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
 
 import { userlogin } from './fetcher';
 import { UserLoginFormValues, UserLoginSchema } from './types';
@@ -46,22 +46,14 @@ export const LoginForm = (props: Props): JSX.Element => {
     loginMutate.mutate(data);
   };
 
-  const loginMutate = useMutation({
+  const loginMutate = useApiMutation({
     mutationFn: async (data: UserLoginFormValues) => {
       openProcessing();
       const req: ApiRequest<UserLoginFormValues> = { request: data };
       return userlogin(req) as unknown as ApiResponse<null>;
     },
-    onSuccess: (res) => {
-      if (res.success) {
-        router.push('/order');
-      } else {
-        openSnackbar(AlertType.ERROR, res.error.message);
-      }
-    },
-    onError: (e) => {
-      console.log(e.message);
-      openSnackbar(AlertType.ERROR, 'ログインに失敗しました。再度お試しください。');
+    onSuccess: () => {
+      router.push('/order');
     },
     onSettled: () => {
       closeProcessing();

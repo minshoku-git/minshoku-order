@@ -49,24 +49,24 @@ export default function Header() {
     const isLoginPath = pathname.startsWith('/login/'); // /login/[id] を識別
     const isProtectedPath = !PublicPaths.some((path) => pathname === path) && !isLoginPath;
 
-    if (!result) {
-      return
-    }
-    if (!result.success || isError) {
-      if (!isLoginPath) {
-        router.push('/login');
-        return;
-      }
-    } else if (result.success && !result.data.userName && !isProtectedPath) {
-      if (isLoginPath) {
-        // /login/[id] の場合、そのままリダイレクト（idを保持）
-        router.push(pathname);
-        return;
-      } else {
-        router.push('/login');
-        return;
-      }
-    }
+    // if (!result) {
+    //   return
+    // }
+    // if (!result.success || isError) {
+    //   if (!isLoginPath) {
+    //     router.push('/login');
+    //     return;
+    //   }
+    // } else if (result.success && !result.data.userName && !isProtectedPath) {
+    //   if (isLoginPath) {
+    //     // /login/[id] の場合、そのままリダイレクト（idを保持）
+    //     router.push(pathname);
+    //     return;
+    //   } else {
+    //     router.push('/login');
+    //     return;
+    //   }
+    // }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result]);

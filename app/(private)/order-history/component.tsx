@@ -83,7 +83,7 @@ export const OrderHistoryComponent = (): JSX.Element => {
                   {/* 日付ヘッダー */}
                   <Typography
                     variant="h3"
-                    sx={{ fontSize: 16, mb: 2, fontWeight: 'bold', borderRadius: 2, background: '#ffb59a', py: 1, px: 2 }}
+                    sx={{ fontSize: 16, mb: 1, fontWeight: 'bold', borderRadius: 2, background: '#ffb59a', py: 1, px: 2 }}
                   >
                     {order.delivery_day}
                   </Typography>
@@ -98,7 +98,7 @@ export const OrderHistoryComponent = (): JSX.Element => {
                           variant="h3"
                           sx={{
                             fontSize: 16,
-                            mb: 2,
+                            mb: 1,
                             borderRadius: 2,
                             fontWeight: 'bold',
                             background: '#afafaf',
@@ -111,22 +111,34 @@ export const OrderHistoryComponent = (): JSX.Element => {
                         </Typography>
                       )}
 
-                      {/* 各注文の詳細 */}
-                      <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
-                        店舗：{item.t_shops.shop_name}
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
-                        商品：{item.t_menu_schedule.menu_name}
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
-                        数量：{item.count}食
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
-                        金額：{item.user_burden_amount}円(税込)
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
-                        支払い方法：{item.payment_type}
-                      </Typography>
+                      <Box ml={2}>
+                        {/* 各注文の詳細 */}
+                        {item.cancel_datetime &&
+                          <>
+                            <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
+                              キャンセル日時：
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontSize: 14, mb: 1, fontWeight: 'bold' }}>
+                              {item.cancel_datetime as string}
+                            </Typography>
+                          </>
+                        }
+                        <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
+                          店舗：{item.t_shops.shop_name}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
+                          商品：{item.t_menu_schedule.menu_name}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
+                          数量：{item.count}食
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
+                          金額：{item.user_burden_amount}円(税込)
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: 16, mb: 0, fontWeight: 'bold' }}>
+                          支払い方法：{item.payment_type}
+                        </Typography>
+                      </Box>
                     </Box>
                   ))}
                 </CardContent>

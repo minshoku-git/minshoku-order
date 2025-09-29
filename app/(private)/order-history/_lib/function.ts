@@ -29,6 +29,7 @@ export const getOrderHistory = async (
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
     const user = await getAuth(client);
+    console.log(user.id);
 
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
@@ -45,7 +46,7 @@ export const getOrderHistory = async (
     if (errorDays) {
       throw new CustomError(
         ErrorCodes.NOT_FOUND.code,
-        '部署情報の取得' + ErrorCodes.NOT_FOUND.message,
+        '注文履歴情報の取得' + ErrorCodes.NOT_FOUND.message,
         ErrorCodes.NOT_FOUND.status
       );
     }
@@ -73,6 +74,7 @@ export const getOrderHistory = async (
         count,
         user_burden_amount,
         payment_type,
+        order_datetime,
         order_status_type,
         cancel_datetime,
         t_shops!inner(shop_name),
@@ -84,7 +86,7 @@ export const getOrderHistory = async (
       .eq('t_user_id', user.id)
       .in('delivery_day', pagedDays)
       .order('delivery_day', { ascending: false }) // 降順
-      .order('id', { ascending: true });
+      .order('order_datetime', { ascending: false }); // 降順
 
     const { data, error } = (await query) as PostgrestSingleResponse<OrderData[]>;
     if (error) {
@@ -106,21 +108,23 @@ export const getOrderHistory = async (
 
     // 取得したデータを日付ごとにグループ化
     const groupedData = data.reduce((acc, current) => {
-      const existingGroup = acc.find((item) => item.delivery_day === current.delivery_day);
+      const formattedDate = formatJstDate(current.delivery_day as Date);
 
-      if (existingGroup) {
-        existingGroup.orderData.push(current);
+      const orderItem = {
+        ...current,
+        delivery_day: formattedDate,
+        cancel_datetime: current.cancel_datetime ? formatJstDateTime(current.cancel_datetime as Date) : undefined,
+        payment_type: convertPaymentTypeName(current.payment_type as PaymentType),
+      };
+
+      const group = acc.find((item) => item.delivery_day === formattedDate);
+
+      if (group) {
+        group.orderData.push(orderItem);
       } else {
         acc.push({
-          delivery_day: formatJstDate(current.delivery_day as Date),
-          orderData: [
-            {
-              ...current,
-              delivery_day: formatJstDate(current.delivery_day as Date),
-              cancel_datetime: current.cancel_datetime ? formatJstDateTime(current.cancel_datetime as Date) : undefined,
-              payment_type: convertPaymentTypeName(current.payment_type as PaymentType),
-            },
-          ],
+          delivery_day: formattedDate,
+          orderData: [orderItem],
         });
       }
 
@@ -129,8 +133,7 @@ export const getOrderHistory = async (
 
     return {
       success: true,
-      // data: { lastPage: hasNextPage ? page + 1 : null, orderData: groupedData },
-      data: { lastPage: hasNextPage ? page + 1 : null, orderData: [] },
+      data: { lastPage: hasNextPage ? page + 1 : null, orderData: groupedData },
     };
   } catch (e: unknown) {
     if (e instanceof CustomError) {

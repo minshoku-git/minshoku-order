@@ -53,6 +53,11 @@ export type ApiError = {
 
 export type ApiResponse<T> = ApiSuccess<T> | ApiError;
 
+// 型ガード: レスポンスがApiError型であるかを判定
+export const isApiError = <T>(response: ApiResponse<T>): response is ApiError => {
+  return response.success === false;
+};
+
 /* Mui 専用型定義
 ------------------------------------------------------------------ */
 /** SelectOption */

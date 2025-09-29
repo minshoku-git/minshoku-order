@@ -22,7 +22,7 @@ export const MenuDateNavigation = (props: Props): JSX.Element => {
   return (
     <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
       {/* 戻るボタンの代わりに同じサイズの透明な要素を配置 */}
-      <Box sx={{ width: 48, height: 48 }}>
+      <Box sx={{ width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', }}>
         {props.previousScheduleId && (
           <IconButton onClick={() => props.moveMenu(props.previousScheduleId!)}>
             <ArrowBackIosNewIcon />
@@ -30,12 +30,18 @@ export const MenuDateNavigation = (props: Props): JSX.Element => {
         )}
       </Box>
 
-      <Typography variant="h6" fontWeight="bold">
-        {props.menuDate} のメニュー
-      </Typography>
+      <Box sx={{ flex: 1, textAlign: 'center' }}>
+        <Typography variant="h6" fontWeight="bold" sx={{
+          fontSize: {
+            xs: 'clamp(1rem, 4vw, 1.2rem)', // 画面幅に応じて伸縮
+          },
+        }}>
+          {props.menuDate} のメニュー
+        </Typography>
+      </Box>
 
       {/* 進むボタンの代わりに同じサイズの透明な要素を配置 */}
-      <Box sx={{ width: 48, height: 48 }}>
+      <Box sx={{ width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', }}>
         {props.nextScheduleId && (
           <IconButton onClick={() => props.moveMenu(props.nextScheduleId!)}>
             <ArrowForwardIosIcon />

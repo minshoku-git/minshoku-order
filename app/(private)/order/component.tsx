@@ -1,5 +1,5 @@
 'use client';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 
@@ -13,6 +13,7 @@ import MenuCardSkeleton from '@/app/_ui/_parts/MenuCardSkeleton';
 import { MenuDateNavigation } from '@/app/_ui/_parts/MenuDateNavigation';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
 
 import { cancelOrderFetcher, getOrderInitFetcher, orderFetcher, preOrderFetcher } from './_lib/fetcher';
 import { CancelOrderRequest, OrderInitRequest, OrderInitResponse, OrderRequest } from './_lib/types';
@@ -95,22 +96,14 @@ export const OrderComponent = (): JSX.Element => {
     preOrderMutate.mutate(id);
   };
 
-  const preOrderMutate = useMutation({
+  const preOrderMutate = useApiMutation({
     mutationFn: async (id: number) => {
       openProcessing();
       const req: ApiRequest<OrderRequest> = { request: { order_count: count, t_menu_schedule_id: id } };
       return preOrderFetcher(req) as unknown as ApiResponse<null>;
     },
-    onSuccess: (res) => {
-      if (res.success) {
-        setOpenPreOrder(true);
-      } else {
-        openSnackbar(AlertType.ERROR, res.error.message);
-      }
-    },
-    onError: (e) => {
-      console.log(e.message);
-      openSnackbar(AlertType.ERROR, '注文確認に失敗しました。再度お試しください。');
+    onSuccess: () => {
+      setOpenPreOrder(true);
     },
     onSettled: () => {
       closeProcessing();
@@ -124,23 +117,15 @@ export const OrderComponent = (): JSX.Element => {
     orderMutate.mutate(id);
   };
 
-  const orderMutate = useMutation({
+  const orderMutate = useApiMutation({
     mutationFn: async (id: number) => {
       openProcessing();
       const req: ApiRequest<OrderRequest> = { request: { order_count: count, t_menu_schedule_id: id } };
       return orderFetcher(req) as unknown as ApiResponse<null>;
     },
-    onSuccess: (res) => {
-      if (res.success) {
-        openSnackbar(AlertType.INFO, '注文が完了しました。');
-        refetch()
-      } else {
-        openSnackbar(AlertType.ERROR, res.error.message);
-      }
-    },
-    onError: (e) => {
-      console.log(e.message);
-      openSnackbar(AlertType.ERROR, '注文確認に失敗しました。再度お試しください。');
+    onSuccess: async (res) => {
+      setOpenPreOrder(false);
+      openSnackbar(AlertType.INFO, '注文が完了しました。');
     },
     onSettled: () => {
       closeProcessing();
@@ -154,23 +139,15 @@ export const OrderComponent = (): JSX.Element => {
     cancelOrderMutate.mutate(id);
   };
 
-  const cancelOrderMutate = useMutation({
+  const cancelOrderMutate = useApiMutation({
     mutationFn: async (id: number) => {
       openProcessing();
       const req: ApiRequest<CancelOrderRequest> = { request: { t_menu_schedule_id: id } };
       return cancelOrderFetcher(req) as unknown as ApiResponse<null>;
     },
-    onSuccess: (res) => {
-      if (res.success) {
-        openSnackbar(AlertType.INFO, '注文をキャンセルしました。');
-        refetch()
-      } else {
-        openSnackbar(AlertType.ERROR, res.error.message);
-      }
-    },
-    onError: (e) => {
-      console.log(e.message);
-      openSnackbar(AlertType.ERROR, '注文のキャンセルに失敗しました。再度お試しください。');
+    onSuccess: async () => {
+      await refetch()
+      openSnackbar(AlertType.INFO, '注文をキャンセルしました。');
     },
     onSettled: () => {
       closeProcessing();

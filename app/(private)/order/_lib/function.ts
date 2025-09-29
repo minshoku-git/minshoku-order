@@ -125,7 +125,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
       .eq('cancel_flag', 0)
       .gt('delivery_day', data.delivery_day)
       .gte('delivery_day', today) // 今日以降
-      .order('delivery_day', { ascending: false })
+      .order('delivery_day', { ascending: true })
       .limit(1)
       .maybeSingle()) as PostgrestSingleResponse<t_menu_schedule>;
 

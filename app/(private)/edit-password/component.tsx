@@ -1,7 +1,6 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Typography } from '@mui/material';
-import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { JSX } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
@@ -12,6 +11,7 @@ import { Btn } from '@/app/_ui/_parts/Btn';
 import { InputItem } from '@/app/_ui/_parts/Inputitem';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
 
 import { updatePasswordFetcher } from './_lib/fetcher';
 import { EditPasswordFormValues, EditPasswordSchema, } from './_lib/types';
@@ -46,24 +46,16 @@ export const EditPasswordComponent = (): JSX.Element => {
     updatePasswordMutate.mutate(data);
   };
 
-  const updatePasswordMutate = useMutation({
+  const updatePasswordMutate = useApiMutation({
     mutationFn: async (data: EditPasswordFormValues) => {
       openProcessing();
 
       const req: ApiRequest<EditPasswordFormValues> = { request: data };
       return updatePasswordFetcher(req) as unknown as ApiResponse<null>;
     },
-    onSuccess: (res) => {
-      if (res.success) {
-        openSnackbar(AlertType.SUCCESS, 'パスワードを更新しました。');
-        router.push('/order')
-      } else {
-        openSnackbar(AlertType.ERROR, res.error.message);
-      }
-    },
-    onError: (e) => {
-      console.log(e.message);
-      openSnackbar(AlertType.ERROR, 'パスワードの更新に失敗しました。再度お試しください。');
+    onSuccess: () => {
+      openSnackbar(AlertType.SUCCESS, 'パスワードを更新しました。');
+      router.push('/order')
     },
     onSettled: () => {
       closeProcessing();

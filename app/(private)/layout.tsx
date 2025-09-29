@@ -2,23 +2,20 @@
 import '../../app/_ui/_parts/_layout/App.scss';
 
 import { Box, createTheme, CssBaseline, ThemeProvider } from '@mui/material';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 
 import { Footer } from '../_ui/_parts/_layout/Footer';
 import Header from '../_ui/_parts/_layout/Header';
 import { OpenProcessing } from '../_ui/processing/processing';
 import { ProcessingProvider } from '../_ui/processing/processingContext';
-import { createQueryClient } from '../_ui/queryClient';
 import { OpenSnackBar } from '../_ui/snackBar/snackBar';
 import { SnackBarProvider } from '../_ui/snackBar/snackbarContext';
+import { SnackBarInitializer } from '../_ui/snackBar/snackBarInitializer';
+import { queryClientInstance } from '../_ui/tanstackQuery/queryClient';
+
+const client = queryClientInstance;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  /* initialize
-  ------------------------------------------------------------------ */
-  const queryClient = createQueryClient;
-
-  /* functions
-  ------------------------------------------------------------------ */
   /* Theme
   ------------------------------------------------------------------ */
   const theme = createTheme({
@@ -45,8 +42,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <SnackBarProvider>
+        <SnackBarInitializer />
         <ProcessingProvider>
-          <QueryClientProvider client={queryClient}>
+          <QueryClientProvider client={client}>
             {/* snackバー表示 */}
             <OpenSnackBar />
             {/* 読込中表示 */}

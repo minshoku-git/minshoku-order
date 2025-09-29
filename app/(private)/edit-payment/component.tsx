@@ -4,7 +4,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
@@ -15,6 +15,7 @@ import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { PaymentForm } from '@/app/_ui/_parts/paymentForm';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
 
 import { getEditPaymentTypeInitDataFetcher, updatePaymentTypeFetcher } from './_lib/fetcher';
 import { CreditCardData, EditPaymentFormValues, EditPaymentInitData, EditPaymentSchema } from './_lib/types';
@@ -100,23 +101,15 @@ export const EditPaymentComponent = (): JSX.Element => {
     updateMutate.mutate(data);
   };
 
-  const updateMutate = useMutation({
+  const updateMutate = useApiMutation({
     mutationFn: async (data: EditPaymentFormValues) => {
       openProcessing();
       const req: ApiRequest<EditPaymentFormValues> = { request: data };
       return updatePaymentTypeFetcher(req);
     },
-    onSuccess: (res) => {
-      if (res.success) {
-        sessionStorage.setItem('snackbar', '支払い方法登録の更新が完了しました。');
-        router.replace('/order');
-      } else {
-        openSnackbar(AlertType.ERROR, res.error.message);
-      }
-    },
-    onError: (e) => {
-      console.log(e.message);
-      openSnackbar(AlertType.ERROR, '支払い方法の更新に失敗しました。再度お試しください。');
+    onSuccess: () => {
+      sessionStorage.setItem('snackbar', '支払い方法登録の更新が完了しました。');
+      router.replace('/order');
     },
     onSettled: () => {
       closeProcessing();

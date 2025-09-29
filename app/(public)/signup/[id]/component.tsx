@@ -1,7 +1,7 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Box, TextField, Typography } from '@mui/material';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { Box, Typography } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
@@ -9,13 +9,14 @@ import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
 import { AlertType } from '@/app/_types/enum';
 import { QUERY_KEYS } from '@/app/_types/queryKeys';
-import { ApiRequest, ApiResponse, SelectOption } from '@/app/_types/types';
+import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { Btn } from '@/app/_ui/_parts/Btn';
 import { InputItem } from '@/app/_ui/_parts/Inputitem';
 import { SelectItem } from '@/app/_ui/_parts/Selectitem';
 import UserCustomModal from '@/app/_ui/_parts/UserCustomModal';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
 
 import { SignUpFetcher, SignUpInitDataFetcher } from './_lib/fetcher';
 import { TermsComponent } from './_lib/terms';
@@ -126,23 +127,15 @@ export const SignUpComponent = (): JSX.Element => {
     signUpMutate.mutate(data);
   };
 
-  const signUpMutate = useMutation({
+  const signUpMutate = useApiMutation({
     mutationFn: async (data: SignUpFormValues) => {
       openProcessing();
       const req: ApiRequest<SignUpRequest> = { request: { ...data, token: token } };
       return SignUpFetcher(req) as unknown as ApiResponse<SignUpResponse>;
     },
     onSuccess: (res) => {
-      if (res.success) {
-        setIsCompleted(true);
-        setIsCompanyDomain(res.data.isCompanyDomain);
-      } else {
-        openSnackbar(AlertType.ERROR, res.error.message);
-      }
-    },
-    onError: (e) => {
-      console.log(e.message);
-      openSnackbar(AlertType.ERROR, '仮登録に失敗しました。再度お試しください。');
+      setIsCompleted(true);
+      setIsCompanyDomain(res.data.isCompanyDomain);
     },
     onSettled: () => {
       closeProcessing();

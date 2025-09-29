@@ -1,17 +1,16 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Typography } from '@mui/material';
-import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { JSX, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
-import { AlertType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { Btn } from '@/app/_ui/_parts/Btn';
 import { InputItem } from '@/app/_ui/_parts/Inputitem';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
 
 import { sendPasswordResetMail } from './_lib/fetcher';
 import { PasswordFormValues, PasswordSchema } from './_lib/types';
@@ -43,7 +42,7 @@ export const PaymentComponent = (): JSX.Element => {
   });
 
   const moveLoginPage = () => {
-    router.push('/login');
+    router.back();
   };
 
   /* functions - send
@@ -52,22 +51,14 @@ export const PaymentComponent = (): JSX.Element => {
     sendMutate.mutate(data);
   };
 
-  const sendMutate = useMutation({
+  const sendMutate = useApiMutation({
     mutationFn: async (data: PasswordFormValues) => {
       openProcessing();
       const req: ApiRequest<PasswordFormValues> = { request: data };
       return sendPasswordResetMail(req) as unknown as ApiResponse<null>;
     },
-    onSuccess: (res) => {
-      if (res.success) {
-        setIsSend(true);
-      } else {
-        openSnackbar(AlertType.ERROR, res.error.message);
-      }
-    },
-    onError: (e) => {
-      console.log(e.message);
-      openSnackbar(AlertType.ERROR, 'パスワード再設定メールの送信に失敗しました。再度お試しください。');
+    onSuccess: () => {
+      setIsSend(true);
     },
     onSettled: () => {
       closeProcessing();
