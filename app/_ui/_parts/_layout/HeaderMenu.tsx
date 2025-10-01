@@ -5,14 +5,13 @@ import React, { JSX } from 'react';
 import { AlertType } from '@/app/_types/enum';
 import { ApiResponse } from '@/app/_types/types';
 
-import { Nameplate } from './Nameplate';
-
 type Props = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   router: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   openSnackbar: any;
   open: boolean;
+  username: string;
   closeEvent: () => void;
 }
 
@@ -74,7 +73,9 @@ const HeaderMenu = (props: Props): JSX.Element => {
             }}
           >
             {/* ユーザー名（リンクでない） */}
-            <Nameplate />
+            <Typography variant="h6" sx={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#fff' }}>
+              {props.username} さま
+            </Typography>
             <Divider sx={translucentWhiteBg} />
 
             {/* メニューリンク */}

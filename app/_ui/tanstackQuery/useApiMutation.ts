@@ -39,7 +39,7 @@ export const useApiMutation = <TData, TVariables>(options: UseApiMutationOptions
       // 1. サーバー処理エラー(ApiError)のチェック
       if (isApiError(data)) {
         // ログ出力（ApiErrorの詳細ログ）
-        console.error('*** TanStack ApiError ***', data.error.code, data.error.message);
+        console.log('*** TanStack ApiError ***', data.error.code, data.error.message);
 
         // 共通Snackbarを表示（APIから返された具体的なエラーメッセージを使用）
         showGlobalSnackbar(AlertType.ERROR, data.error.message);

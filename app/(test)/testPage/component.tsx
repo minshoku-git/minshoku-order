@@ -1,7 +1,6 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Typography } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { RadioButtonGroup, useForm } from 'react-hook-form-mui';
@@ -14,6 +13,7 @@ import { Btn } from '@/app/_ui/_parts/Btn';
 import { InputItem } from '@/app/_ui/_parts/Inputitem';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
 
 import { getAuthFetcher } from './_lib/fetcher';
 import {
@@ -63,7 +63,7 @@ export const TestPageComponent = (): JSX.Element => {
     return getAuthFetcher(req);
   };
 
-  const { data: result, refetch } = useQuery<ApiResponse<GetAuthResponse>>({
+  const { data, refetch } = useApiQuery<GetAuthResponse>({
     queryKey: [QUERY_KEYS.TEST_RESULT],
     queryFn: getAuthFetch,
     refetchOnWindowFocus: false,
@@ -73,16 +73,13 @@ export const TestPageComponent = (): JSX.Element => {
   ------------------------------------------------------------------ */
   /** 初期表示情報取得 */
   useEffect(() => {
-    if (!result) {
+    if (!data) {
       return;
     }
-    if (!result.success) {
-      openSnackbar(AlertType.WARNING, result.error.message);
-    } else if (result.data) {
-      openSnackbar(AlertType.INFO, '取れたんやが！！！:' + result.data.email + "," + result.data.id);
-    }
+    openSnackbar(AlertType.INFO, '取れたんやが！！！:' + data.email + "," + data.id);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result]);
+  }, [data]);
 
   /* functions - パスワード更新
   ------------------------------------------------------------------ */

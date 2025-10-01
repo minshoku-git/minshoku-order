@@ -1,73 +1,79 @@
-import { PostgrestSingleResponse } from '@supabase/supabase-js';
+import { EmailOtpType } from '@supabase/supabase-js';
 
 import { createClient } from '@/app/_lib/supabase/server';
-import { t_user } from '@/app/_lib/supabase/tableTypes';
-import { UsageStatus, UserRegistrationStatus } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
-import { PasswordFormValues } from './types';
+import { PasswordResetRequest, PasswordResetResponse } from './types';
 
-/* ユーザーログイン
------------------------------------------------------------------- */
 /**
- * ログイン
- * @param {ApiRequest<PasswordFormValues>} req
- * @returns {Promise<ApiResponse<null>>}
+ * パスワード変更
+ * @returns {Promise<ApiResponse<string>>}
  */
-export const sendPasswordResetMail = async (req: ApiRequest<PasswordFormValues>): Promise<ApiResponse<null>> => {
+export const updatePassword = async (
+  values: ApiRequest<PasswordResetRequest>
+): Promise<ApiResponse<PasswordResetResponse>> => {
   const supabase = await createClient();
-  const { email } = req.request;
+  const req = values.request;
+  const token_hash = req.token;
 
   try {
-    /* メールアドレスの存在確認
+    /* 新しいパスワードと新しいパスワード(再入力)の検証
   　------------------------------------------------------------------ */
-    const query = supabase.from('t_user').select('*').eq('user_email', email).maybeSingle();
-    const { data, error } = (await query) as PostgrestSingleResponse<t_user>;
-
-    if (error) {
-      // 予期しないエラー
-      console.error('Error signing in:', error);
-      throw new CustomError(ErrorCodes.INTERNAL_SERVER_ERROR);
-    }
-    if (!data) {
-      // メールアドレスが未登録の場合
-      console.error('Error signing in:', error);
-      throw new CustomError(ErrorCodes.EMAIL_NOT_REGISTERED);
+    if (req.new_signup_password !== req.confirm_new_signup_password) {
+      throw new CustomError(ErrorCodes.PASSWORD_CONFIRMATION_MISMATCH);
     }
 
-    // // ステータス確認
-    // // TASK: 権限確認
-    // if (
-    //   data.usage_status === UsageStatus.AVAILABLE &&
-    //   data.user_registration_status === UserRegistrationStatus.REGISTERED
-    // ) {
-    //   // 登録ステータスが登録済み && 利用ステータスが利用可能の場合
-    //   // OK!!
-    // }else{
-    //   // 登録ステータスが登録済み && 利用ステータスが利用可能以外の場合
-    //   throw new CustomError(ErrorCodes.ACCOUNT_SUSPENDED);
-    // }
-
-    /* パスワードリセット送信
+    /* AuthCheck
   　------------------------------------------------------------------ */
-    // TODO:URL差し替え
-    const { error: signInError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: process.env.APP_URL_DEV + '/update-password',
+    console.log('token_hash', token_hash);
+
+    const { error: errorVerifyOtp } = await supabase.auth.verifyOtp({
+      type: 'recovery' as EmailOtpType,
+      token_hash,
     });
 
-    if (signInError) {
-      console.error('Error signing in:', signInError);
-      throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        'パスワードリセット送信' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
-      );
+    if (errorVerifyOtp) {
+      console.error(errorVerifyOtp);
+      return {
+        success: true,
+        data: { result: false, ErrorMessage: ErrorCodes.AUTH_CODE_EXPIRED.message },
+      };
     }
-    return { success: true, data: null };
+
+    /* パスワード更新
+  　------------------------------------------------------------------ */
+    const { error } = await supabase.auth.updateUser({
+      password: req.new_signup_password,
+    });
+
+    if (error) {
+      console.error(error);
+      if (error.code === 'same_password') {
+        return {
+          success: true,
+          data: { result: false, ErrorMessage: ErrorCodes.PASSWORD_SAME_AS_OLD.message },
+        };
+      }
+      return {
+        success: true,
+        data: { result: false, ErrorMessage: 'パスワードの再設定' + ErrorCodes.NOT_FOUND.message },
+      };
+    }
+
+    /* ログアウト
+  　------------------------------------------------------------------ */
+    await supabase.auth.signOut();
+
+    return { success: true, data: { result: true } };
   } catch (e: unknown) {
-    console.error(e);
+    try {
+      await supabase.auth.signOut();
+    } catch (signOutError) {
+      console.error('Failed to sign out after updatePassword error:', signOutError);
+      // サインアウト失敗はメインのエラーにはせず、ログに残す
+    }
     if (e instanceof CustomError) {
       return {
         success: false,
@@ -79,7 +85,10 @@ export const sendPasswordResetMail = async (req: ApiRequest<PasswordFormValues>)
     }
     return {
       success: false,
-      error: { code: ErrorCodes.INTERNAL_SERVER_ERROR.code, message: ErrorCodes.INTERNAL_SERVER_ERROR.message },
+      error: {
+        code: ErrorCodes.INTERNAL_SERVER_ERROR.code,
+        message: ErrorCodes.INTERNAL_SERVER_ERROR.message,
+      },
     };
   }
 };

@@ -4,19 +4,18 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
-import { AlertType, PaymentType } from '@/app/_types/enum';
+import { PaymentType } from '@/app/_types/enum';
 import { QUERY_KEYS } from '@/app/_types/queryKeys';
 import { ApiRequest, ApiResponse, CreditCardData } from '@/app/_types/types';
 import { PaymentForm } from '@/app/_ui/_parts/paymentForm';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
-import { getEditPaymentTypeInitDataFetcher } from '@/app/(private)/edit-payment/_lib/fetcher';
+import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
 
 import { getRegisterPaymentTypeInitDataFetcher, registerPaymentTypeFetcher } from './_lib/fetcher';
 import { RegisterPaymentInitData, UserPaymentFormValues, UserPaymentSchema } from './_lib/types';
@@ -61,7 +60,7 @@ export const PaymentComponent = (): JSX.Element => {
     return getRegisterPaymentTypeInitDataFetcher(req);
   };
 
-  const { data: result, isLoading } = useQuery<ApiResponse<RegisterPaymentInitData>>({
+  const { data, isLoading } = useApiQuery<RegisterPaymentInitData>({
     queryKey: [QUERY_KEYS.REGISTER_PAYMENT_INIT_RESULT],
     queryFn: RegisterPaymentInitDataFetch,
   });
@@ -91,21 +90,17 @@ export const PaymentComponent = (): JSX.Element => {
   /* useEffect 初期表示情報取得
   ------------------------------------------------------------------ */
   useEffect(() => {
-    if (!result) {
+    if (!data) {
       return;
-    }
-    if (!result.success) {
-      openSnackbar(AlertType.WARNING, result.error.message);
-      router.push('/login');
-    } else if (result.data) {
-      setCreditCardOptions(result.data.creditCardDatas);
+    } else {
+      setCreditCardOptions(data.creditCardDatas);
       reset({
-        paymentType: result.data.currentPaymentType as PaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
-        creditcard: result.data.currentCardDataId,
+        paymentType: data.currentPaymentType as PaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
+        creditcard: data.currentCardDataId,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result]);
+  }, [data]);
 
   useEffect(() => {
     if (isLoading) {
@@ -128,7 +123,7 @@ export const PaymentComponent = (): JSX.Element => {
         </Typography>
       </Box>
       <Typography variant="body1">支払い方法をご選択ください。</Typography>
-      {result?.success && <>
+      {!isLoading && data && <>
         <PaymentForm
           handleSubmit={handleSubmit}
           submitHandler={registerHandler}
@@ -136,9 +131,9 @@ export const PaymentComponent = (): JSX.Element => {
           paymentMethod={paymentMethod}
           cards={creditCardOptions}
           isRegister={true}
-          deduction_flag={result.data.deduction_flag}
-          credit_flag={result.data.credit_flag}
-          paypay_flag={result.data.paypay_flag}
+          deduction_flag={data.deduction_flag}
+          credit_flag={data.credit_flag}
+          paypay_flag={data.paypay_flag}
         />
       </>}
     </>

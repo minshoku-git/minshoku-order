@@ -25,7 +25,7 @@ export const ErrorCodes = {
   },
   AUTH_CODE_EXPIRED: {
     code: 'E1005',
-    message: '認証コードの有効期限が切れています。再度リクエストを行ってください。',
+    message: '認証コードの有効期限が切れています。',
     status: 400,
   },
   INVALID_RECOVERY_LINK: {

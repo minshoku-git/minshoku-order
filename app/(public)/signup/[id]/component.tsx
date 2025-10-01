@@ -7,7 +7,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
-import { AlertType } from '@/app/_types/enum';
 import { QUERY_KEYS } from '@/app/_types/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { Btn } from '@/app/_ui/_parts/Btn';
@@ -17,6 +16,7 @@ import UserCustomModal from '@/app/_ui/_parts/UserCustomModal';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
+import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
 
 import { SignUpFetcher, SignUpInitDataFetcher } from './_lib/fetcher';
 import { TermsComponent } from './_lib/terms';
@@ -37,7 +37,6 @@ export const SignUpComponent = (): JSX.Element => {
   /* initComponenttialize
   ------------------------------------------------------------------ */
   const router = useRouter();
-  const { openSnackbar } = useSnackBar();
   const { openProcessing, closeProcessing } = useProcessing();
   const token = useParams().id?.toString() ?? '';
 
@@ -90,7 +89,7 @@ export const SignUpComponent = (): JSX.Element => {
     return SignUpInitDataFetcher(req);
   };
 
-  const { data: result, isLoading } = useQuery<ApiResponse<SignUpInitData>>({
+  const { data, error, isLoading } = useApiQuery<SignUpInitData>({
     queryKey: [QUERY_KEYS.COMPANY_SEARCH_RESULT],
     queryFn: signUpInitDataFetch,
     refetchOnWindowFocus: false,
@@ -100,17 +99,17 @@ export const SignUpComponent = (): JSX.Element => {
   ------------------------------------------------------------------ */
   /** 初期表示情報取得 */
   useEffect(() => {
-    if (!result) {
+    if (data === undefined && error === null) {
       return;
     }
-    if (!result.success) {
-      openSnackbar(AlertType.WARNING, result.error.message);
-      router.push('/login');
-    } else if (result.data) {
-      setInitData(result.data)
+    if (error) {
+      router.replace('/login');
+      return;
     }
+    setInitData(data)
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result]);
+  }, [data, error]);
 
   useEffect(() => {
     if (isLoading) {

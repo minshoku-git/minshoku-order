@@ -1,14 +1,11 @@
 import './globals.css';
+import './_ui/_parts/_layout/App.scss';
 
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import type { Metadata } from 'next';
-import React from 'react';
 
-import { DirtyProvider } from './_ui/dirty/dartyContext';
 import { notoSansJp } from './_ui/fonts';
-import ThemeProvider from './_ui/theme-provider';
+import { AppLayoutContent } from './appLayoutContent';
 
-/** @type {Metadata} metadata */
 export const metadata: Metadata = {
   title: {
     default: 'みんなの社食',
@@ -19,11 +16,9 @@ export const metadata: Metadata = {
     icon: [
       { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
       { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico' }, // default fallback
+      { url: '/favicon.ico' },
     ],
-    apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180' },
-    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
   },
   appleWebApp: {
     title: 'みんしょく',
@@ -31,24 +26,16 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
 };
 
-/**
- * Layout
- * @param {React.ReactNode} children
- * @returns
- */
-const Layout = ({ children }: Readonly<{ children: React.ReactNode }>) => {
-  /* jsx
-  ---------------------------------------------------------------------------------------------------- */
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="ja">
       <body className={notoSansJp.variable}>
-        <AppRouterCacheProvider>
-          <ThemeProvider>
-            <DirtyProvider>{children}</DirtyProvider>
-          </ThemeProvider>
-        </AppRouterCacheProvider>
+        <AppLayoutContent>{children}</AppLayoutContent>
       </body>
     </html>
   );
-};
-export default Layout;
+}

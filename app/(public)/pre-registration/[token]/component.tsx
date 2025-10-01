@@ -1,14 +1,12 @@
 'use client';
-import { Box, Card, CardContent, Typography } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, Typography } from '@mui/material';
 import { useParams, useRouter } from 'next/navigation';
 import { JSX, useEffect } from 'react';
 
-import { AlertType } from '@/app/_types/enum';
 import { QUERY_KEYS } from '@/app/_types/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import { Btn } from '@/app/_ui/_parts/Btn';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
 
 import { preregisterFetcher } from './_lib/fetcher';
 import { NextPageInitRequest } from './_lib/types';
@@ -31,7 +29,7 @@ export const PreregistrationComponent = (): JSX.Element => {
     return preregisterFetcher(req);
   };
 
-  const { data: result } = useQuery<ApiResponse<null>>({
+  const { data, error } = useApiQuery<null>({
     queryKey: [QUERY_KEYS.PREREGISTRATION_INIT_RESULT],
     queryFn: preregisterFetch,
     refetchOnWindowFocus: false,
@@ -40,17 +38,17 @@ export const PreregistrationComponent = (): JSX.Element => {
   /* useEffect
   ------------------------------------------------------------------ */
   useEffect(() => {
-    if (!result) {
+    if (data === undefined && error === null) {
       return;
     }
-    if (!result?.success) {
-      openSnackbar(AlertType.WARNING, result.error.message);
+    if (error) {
       router.replace('/login');
-    } else {
-      router.replace('/register-payment');
+      return;
     }
+    router.replace('/register-payment');
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result]);
+  }, [data, error]);
 
   /* JSX
   ------------------------------------------------------------------ */

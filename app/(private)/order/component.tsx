@@ -1,6 +1,4 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 
 import { AlertType } from '@/app/_types/enum';
@@ -14,6 +12,7 @@ import { MenuDateNavigation } from '@/app/_ui/_parts/MenuDateNavigation';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
+import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
 
 import { cancelOrderFetcher, getOrderInitFetcher, orderFetcher, preOrderFetcher } from './_lib/fetcher';
 import { CancelOrderRequest, OrderInitRequest, OrderInitResponse, OrderRequest } from './_lib/types';
@@ -25,20 +24,19 @@ import { CancelOrderRequest, OrderInitRequest, OrderInitResponse, OrderRequest }
 export const OrderComponent = (): JSX.Element => {
   /* initialize
   ------------------------------------------------------------------ */
-  const router = useRouter();
   const { openSnackbar } = useSnackBar();
   const { openProcessing, closeProcessing } = useProcessing();
 
   /* useState
   ------------------------------------------------------------------ */
   const [openPreOrder, setOpenPreOrder] = useState<boolean>(false);
-  const [id, setId] = useState<number | undefined>(undefined);
+  const [scheduleID, setScheduleID] = useState<number | undefined>(undefined);
   const [count, setCount] = useState(1);
   const [condition, setCondition] = useState<ApiRequest<OrderInitRequest>>({ request: { move_t_menu_schedule_id: undefined } });
 
   /* useQuery - 初期取得
   ------------------------------------------------------------------ */
-  const { data: result, refetch, isLoading } = useQuery<ApiResponse<OrderInitResponse>>({
+  const { data, refetch, isLoading } = useApiQuery<OrderInitResponse>({
     queryKey: [QUERY_KEYS.ORDER_INIT_RESULT],
     queryFn: () => getOrderInitFetcher(condition),
     refetchOnWindowFocus: false,
@@ -66,18 +64,12 @@ export const OrderComponent = (): JSX.Element => {
   /* useEffect 初期取得
   ------------------------------------------------------------------ */
   useEffect(() => {
-    if (!result) {
-      return
-    }
-    if (!result.success) {
-      openSnackbar(AlertType.ERROR, result.error.message);
+    if (!data) {
       return
     } else {
-      // MEMO:スケジュールIDが存在しない場合、メニューなし表示になる。
-      setId(result.data.menuScheduleData?.id ?? undefined)
+      setScheduleID(data.menuScheduleData?.id ?? undefined)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result]);
+  }, [data]);
 
 
   /* functions - ページ送り
@@ -92,8 +84,8 @@ export const OrderComponent = (): JSX.Element => {
   /* functions - 注文確認
   ------------------------------------------------------------------ */
   const preOrderHandler = async () => {
-    if (!id) return
-    preOrderMutate.mutate(id);
+    if (!scheduleID) return
+    preOrderMutate.mutate(scheduleID);
   };
 
   const preOrderMutate = useApiMutation({
@@ -113,8 +105,8 @@ export const OrderComponent = (): JSX.Element => {
   /* functions - 注文確定
   ------------------------------------------------------------------ */
   const orderHandler = async () => {
-    if (!id) return
-    orderMutate.mutate(id);
+    if (!scheduleID) return
+    orderMutate.mutate(scheduleID);
   };
 
   const orderMutate = useApiMutation({
@@ -135,8 +127,8 @@ export const OrderComponent = (): JSX.Element => {
   /* functions - 注文キャンセル
  ------------------------------------------------------------------ */
   const cancelOrderHandler = async () => {
-    if (!id) return
-    cancelOrderMutate.mutate(id);
+    if (!scheduleID) return
+    cancelOrderMutate.mutate(scheduleID);
   };
 
   const cancelOrderMutate = useApiMutation({
@@ -168,18 +160,18 @@ export const OrderComponent = (): JSX.Element => {
       ? <MenuCardSkeleton />
       : <>
         {/* 日付ナビゲーション */}
-        {result?.success && result.data.menuScheduleData ? (<>
+        {data && data.menuScheduleData ? (<>
           {!openPreOrder ? <>
             <MenuDateNavigation
-              menuDate={result.data.menuScheduleData.delivery_day as string}
+              menuDate={data.menuScheduleData.delivery_day as string}
               moveMenu={moveMenu}
-              nextScheduleId={result.data.nextScheduleId}
-              previousScheduleId={result.data.previousScheduleId}
+              nextScheduleId={data.nextScheduleId}
+              previousScheduleId={data.previousScheduleId}
             />
             <MenuCard
               preOrderHandler={preOrderHandler}
               cancelOrderHandler={cancelOrderHandler}
-              data={result.data}
+              data={data}
               count={count}
               setCount={setCount}
             />

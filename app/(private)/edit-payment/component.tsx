@@ -4,18 +4,17 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
-import { AlertType, PaymentType, SelectType } from '@/app/_types/enum';
+import { PaymentType } from '@/app/_types/enum';
 import { QUERY_KEYS } from '@/app/_types/queryKeys';
-import { ApiRequest, ApiResponse } from '@/app/_types/types';
+import { ApiRequest } from '@/app/_types/types';
 import { PaymentForm } from '@/app/_ui/_parts/paymentForm';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
+import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
 
 import { getEditPaymentTypeInitDataFetcher, updatePaymentTypeFetcher } from './_lib/fetcher';
 import { CreditCardData, EditPaymentFormValues, EditPaymentInitData, EditPaymentSchema } from './_lib/types';
@@ -28,7 +27,6 @@ export const EditPaymentComponent = (): JSX.Element => {
   /* initialize
   ------------------------------------------------------------------ */
   const router = useRouter();
-  const { openSnackbar } = useSnackBar();
   const { openProcessing, closeProcessing } = useProcessing();
 
   /* useState
@@ -62,7 +60,7 @@ export const EditPaymentComponent = (): JSX.Element => {
     return getEditPaymentTypeInitDataFetcher(req);
   };
 
-  const { data: result, isLoading } = useQuery<ApiResponse<EditPaymentInitData>>({
+  const { data, isLoading } = useApiQuery<EditPaymentInitData>({
     queryKey: [QUERY_KEYS.EDIT_PAYMENT_INIT_RESULT],
     queryFn: EditPaymentInitDataFetch,
   });
@@ -70,21 +68,18 @@ export const EditPaymentComponent = (): JSX.Element => {
   /* useEffect 初期表示情報取得
   ------------------------------------------------------------------ */
   useEffect(() => {
-    if (!result) {
+    if (!data) {
       return;
     }
-    if (!result.success) {
-      openSnackbar(AlertType.WARNING, result.error.message);
-      router.push('/login');
-    } else if (result.data) {
-      setCreditCardOptions(result.data.creditCardDatas);
+    else {
+      setCreditCardOptions(data.creditCardDatas);
       reset({
-        paymentType: result.data.currentPaymentType as PaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
-        creditcard: result.data.currentCardDataId,
+        paymentType: data.currentPaymentType as PaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
+        creditcard: data.currentCardDataId,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result]);
+  }, [data]);
 
   useEffect(() => {
     if (isLoading) {
@@ -131,7 +126,7 @@ export const EditPaymentComponent = (): JSX.Element => {
         </Typography>
       </Box>
       <Typography variant="body1">支払い方法をご選択ください。</Typography>
-      {result?.success && <>
+      {!isLoading && data && <>
         <PaymentForm
           handleSubmit={handleSubmit}
           onError={onError}
@@ -140,9 +135,9 @@ export const EditPaymentComponent = (): JSX.Element => {
           paymentMethod={paymentMethod}
           cards={creditCardOptions}
           isRegister={false}
-          deduction_flag={result.data.deduction_flag}
-          credit_flag={result.data.credit_flag}
-          paypay_flag={result.data.paypay_flag}
+          deduction_flag={data.deduction_flag}
+          credit_flag={data.credit_flag}
+          paypay_flag={data.paypay_flag}
         />
       </>}
     </>

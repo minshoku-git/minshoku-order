@@ -15,6 +15,7 @@ import { SelectItem } from '@/app/_ui/_parts/Selectitem';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
+import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
 
 import { getEditProfileInitDataFetcher, updateProfileFetcher } from './_lib/fetcher';
 import { UserBasicResult, UserProfileFormValues, UserProfileInitData, UserProfileSchema } from './_lib/types';
@@ -58,7 +59,7 @@ export const EditProfileComponent = (): JSX.Element => {
     return getEditProfileInitDataFetcher(req);
   };
 
-  const { data: result, isLoading, refetch } = useQuery<ApiResponse<UserProfileInitData>>({
+  const { data, isLoading, refetch } = useApiQuery<UserProfileInitData>({
     queryKey: [QUERY_KEYS.COMPANY_SEARCH_RESULT],
     queryFn: UpdateProfileInitDataFetch,
     // enabled: false,
@@ -68,23 +69,19 @@ export const EditProfileComponent = (): JSX.Element => {
   ------------------------------------------------------------------ */
   /** 初期表示情報取得 */
   useEffect(() => {
-    if (!result) {
+    if (!data) {
       return;
-    }
-    if (!result.success) {
-      openSnackbar(AlertType.WARNING, result.error.message);
-      router.push('/login');
-    } else if (result.data) {
-      setDepartmentOptions(result.data.departmentOptions);
-      setEmploymentStatusOptions(result.data.employmentStatusOptions);
+    } else {
+      setDepartmentOptions(data.departmentOptions);
+      setEmploymentStatusOptions(data.employmentStatusOptions);
       reset({
-        ...result.data,
-        t_companies_department_id: result.data.t_companies_department_id.toString(),
-        t_companies_employment_status_id: result.data.t_companies_employment_status_id.toString()
+        ...data,
+        t_companies_department_id: data.t_companies_department_id.toString(),
+        t_companies_employment_status_id: data.t_companies_employment_status_id.toString()
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result]);
+  }, [data]);
 
   useEffect(() => {
     if (isLoading) {
@@ -107,7 +104,7 @@ export const EditProfileComponent = (): JSX.Element => {
       const req: ApiRequest<UserProfileFormValues> = { request: data };
       return updateProfileFetcher(req) as unknown as ApiResponse<UserBasicResult>;
     },
-    onSuccess: (res) => {
+    onSuccess: () => {
       refetch();
       openSnackbar(AlertType.SUCCESS, '会員情報を更新しました。');
     },
@@ -127,7 +124,7 @@ export const EditProfileComponent = (): JSX.Element => {
           </Typography>
         </Box>
         {/* <Typography variant='body1'>会員登録に必要な情報をご入力・ご選択ください。</Typography> */}
-        {!isLoading &&
+        {!isLoading && data &&
           <Box sx={{ mt: 2 }}>
             <form onSubmit={handleSubmit(updateProfileHandler)}>
               <InputItem control={control} label={`会社名`} name="cname" disabled={true} isNotFormValue={"株式会社リファクト"} type="text" />

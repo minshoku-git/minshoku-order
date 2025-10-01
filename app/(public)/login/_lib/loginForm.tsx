@@ -5,7 +5,6 @@ import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.share
 import { JSX } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
-import { AlertType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { Btn } from '@/app/_ui/_parts/Btn';
 import { InputItem } from '@/app/_ui/_parts/Inputitem';
@@ -63,7 +62,7 @@ export const LoginForm = (props: Props): JSX.Element => {
   /* functions 
   ------------------------------------------------------------------ */
   const movePasswordPage = () => {
-    router.push('/reset-password');
+    router.push('/forgot-password');
   };
 
   /* JSX

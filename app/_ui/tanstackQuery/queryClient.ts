@@ -17,7 +17,7 @@ export const queryClientInstance = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5, // 5分間はStaleではないと見なす
       gcTime: 1000 * 60 * 30, // 30分間はキャッシュに残す (gcTime > staleTime)
-      retry: 3, // 3回リトライ
+      retry: 2, // 2回リトライ
       refetchOnWindowFocus: false, // ウィンドウフォーカス時のリフェッチを無効化
     },
   },
@@ -26,10 +26,16 @@ export const queryClientInstance = new QueryClient({
   // ------------------------------------------------------------------
   queryCache: new QueryCache({
     onError: (error, query) => {
+      const API_ERROR_PREFIX = 'API_LOGIC_ERROR: ';
       // ログ出力: 開発者向けの詳細情報
       console.error('*** TanStack Query Fetch Error ***');
       console.error('Query Key:', query.queryKey);
       console.error('Error:', error);
+      // 💡 サーバー側ApiErrorの場合（useApiQueryでSnackbar表示済み）
+      if (error instanceof Error && error.message.startsWith(API_ERROR_PREFIX)) {
+        // **何もしない。Snackbar表示をスキップする**
+        return;
+      }
 
       // ユーザー向けSnackbar表示: 共通メッセージ
       showGlobalSnackbar(AlertType.ERROR, FETCH_FAILURE_MESSAGE);
