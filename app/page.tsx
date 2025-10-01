@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
 /**
- * Page aaaaa
+ * Page
  * @returns
  */
 const Page = () => {
