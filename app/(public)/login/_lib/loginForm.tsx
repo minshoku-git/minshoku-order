@@ -1,15 +1,16 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Button, Typography } from '@mui/material';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { JSX } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
+import { QUERY_KEYS } from '@/app/_types/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { Btn } from '@/app/_ui/_parts/Btn';
 import { InputItem } from '@/app/_ui/_parts/Inputitem';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
 
 import { userlogin } from './fetcher';
@@ -27,7 +28,7 @@ export const LoginForm = (props: Props): JSX.Element => {
   /* initialize
   ------------------------------------------------------------------ */
   const router = props.router;
-  const { openSnackbar } = useSnackBar();
+  const queryClient = useQueryClient();
   const { openProcessing, closeProcessing } = useProcessing();
 
   /* useForm
@@ -51,7 +52,8 @@ export const LoginForm = (props: Props): JSX.Element => {
       const req: ApiRequest<UserLoginFormValues> = { request: data };
       return userlogin(req) as unknown as ApiResponse<null>;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.AUTH_STATUS] });
       router.push('/order');
     },
     onSettled: () => {

@@ -2,32 +2,25 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Box, Divider, IconButton, Link, Slide, Typography } from '@mui/material';
 import React, { JSX } from 'react';
 
-import { AlertType } from '@/app/_types/enum';
-import { ApiResponse } from '@/app/_types/types';
+import { useAuth } from '@/app/_ui/contexts/auth/AuthContext';
 
 type Props = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  router: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  openSnackbar: any;
   open: boolean;
-  username: string;
   closeEvent: () => void;
 }
 
 const HeaderMenu = (props: Props): JSX.Element => {
+  // Contextから必要な機能を取得
+  const { userName, logout, } = useAuth();
+
   const translucentWhiteBg = { bgcolor: 'rgba(255,255,255,0.5)' };
+
+  // ログアウト処理：AuthContextのlogout関数を呼び出す
   const logoutHandler = async () => {
-    const response = await fetch('/api/logout', {
-      method: 'POST',
-    });
-    const res = await response.json() as ApiResponse<null>;
-    if (res.success) {
-      props.router.push('/login');
-    } else {
-      props.openSnackbar(AlertType.ERROR, res.error.message);
-    }
+    props.closeEvent(); // メニューを閉じる
+    await logout(); // AuthContextで定義されたログアウト処理を実行
   };
+
   return (
     <>
       {/* スライドインメニュー */}
@@ -72,13 +65,17 @@ const HeaderMenu = (props: Props): JSX.Element => {
               gap: 1,
             }}
           >
-            {/* ユーザー名（リンクでない） */}
+            {/* ユーザー名 */}
             <Typography variant="h6" sx={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#fff' }}>
-              {props.username} さま
+              {userName} さま
             </Typography>
             <Divider sx={translucentWhiteBg} />
 
-            {/* メニューリンク */}
+            {/* メニューリンク群 */}
+            {/* Next.jsのLinkコンポーネントを使用することを推奨します */}
+            {/* 例：<NextLink href={'/order'} passHref>...</NextLink> */}
+            {/* ここではMUI Linkをそのまま維持しつつ、Next.jsのLink機能を持つと仮定 */}
+
             <Box>
               <Link href={'/order'} underline="none" sx={{ color: '#fff', fontSize: '1rem', display: 'block', py: 1 }}>
                 {'注文・予約'}
@@ -155,7 +152,7 @@ const HeaderMenu = (props: Props): JSX.Element => {
               <Link
                 underline="none"
                 sx={{ color: '#fff', fontSize: '1rem', display: 'block', py: 1, cursor: 'pointer' }}
-                onClick={() => logoutHandler()}>
+                onClick={logoutHandler}>
                 {'ログアウト'}
               </Link>
             </Box>

@@ -17,4 +17,6 @@ export const QUERY_KEYS = {
   EDIT_PAYMENT_INIT_RESULT: 'EDIT_PAYMENT_INIT_RESULT' as const,
   // 支払い情報の新規登録 - 初期情報取得
   REGISTER_PAYMENT_INIT_RESULT: 'REGISTER_PAYMENT_INIT_RESULT' as const,
+
+  AUTH_STATUS: 'AUTH_STATUS' as const,
 };
