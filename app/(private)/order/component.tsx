@@ -155,19 +155,27 @@ export const OrderComponent = (): JSX.Element => {
 
   /* JSX
   ------------------------------------------------------------------ */
+  // ロード中はスケルトンを表示し、DOM構造のブレを防ぐ
+  if (isLoading || !data) {
+    // データ取得中、またはデータがまだ空の場合はスケルトンを表示
+    // MenuCardNoneを表示するのはデータ取得完了後、かつメニューデータがnullの場合のみ
+    return <MenuCardSkeleton />;
+  }
+
   return (
-    <>{isLoading
-      ? <MenuCardSkeleton />
-      : <>
-        {/* 日付ナビゲーション */}
-        {data && data.menuScheduleData ? (<>
-          {!openPreOrder ? <>
-            <MenuDateNavigation
-              menuDate={data.menuScheduleData.delivery_day as string}
-              moveMenu={moveMenu}
-              nextScheduleId={data.nextScheduleId}
-              previousScheduleId={data.previousScheduleId}
-            />
+    <>
+      {data.menuScheduleData ? (
+        <>
+          {/* 日付ナビゲーションはデータがあれば常に表示 */}
+          <MenuDateNavigation
+            menuDate={data.menuScheduleData.delivery_day as string}
+            moveMenu={moveMenu}
+            nextScheduleId={data.nextScheduleId}
+            previousScheduleId={data.previousScheduleId}
+          />
+
+          {/* メインコンテンツ部分の制御 */}
+          {!openPreOrder ? (
             <MenuCard
               preOrderHandler={preOrderHandler}
               cancelOrderHandler={cancelOrderHandler}
@@ -175,17 +183,17 @@ export const OrderComponent = (): JSX.Element => {
               count={count}
               setCount={setCount}
             />
-          </>
-            : <MenuCardConfirm
+          ) : (
+            <MenuCardConfirm
               backHandler={backHandler}
               orderHandler={orderHandler}
             />
-          }
-        </>) : (
-          <MenuCardNone />
-        )}
-      </>
-    }
+          )}
+        </>
+      ) : (
+        // データが存在しない（メニューがない）場合
+        <MenuCardNone />
+      )}
     </>
   );
 };

@@ -78,7 +78,7 @@ function newQueryClient(): QueryClient {
       dehydrateOptions: {
         shouldDehydrateQuery: (query) => {
           // 永続化対象のキーを定義
-          const PERSIST_KEYS = [QUERY_KEYS.USER_NAME_SEARCH_RESULT];
+          const PERSIST_KEYS = [QUERY_KEYS.AUTH_STATUS];
 
           // queryKeyの最初の要素（メインキー）が永続化対象リストに含まれているか確認
           // queryKeyは配列なので、最初の要素（例: ['TOKEN_CHECK_RESULT', userId]）を確認

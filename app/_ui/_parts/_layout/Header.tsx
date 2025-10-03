@@ -1,10 +1,10 @@
 'use client';
 
 import MenuIcon from '@mui/icons-material/Menu';
-import { AppBar, Box, Button, Fade, IconButton, Link, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Button, Fade, Grow, IconButton, Link, Toolbar, Typography } from '@mui/material';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react'; // useEffect, useStateをReactからインポート
 
 import { UserRegistrationStatus } from '@/app/_types/enum';
 
@@ -20,17 +20,17 @@ export default function Header() {
     isAuthenticated,
     restaurantName,
     userRegistrationStatus,
-    isLoading: isAuthLoading,
+    // isAuthLoadingはここでは使用せず、初期レンダリングをシンプルにする
   } = useAuth();
 
   console.log("isAuthenticated:", isAuthenticated);
   console.log("restaurantName:", restaurantName);
-  console.log("isAuthLoading:", isAuthLoading);
+  // console.log("isAuthLoading:", isAuthLoading); // 使用しないためコメントアウト
 
   const isLoginPath = pathname.startsWith('/login/');
-  const isProtectedPath =
-    !['/', '/login', '/contact', '/about', '/forgot-password', '/reset-password'].includes(pathname) &&
-    !isLoginPath;
+  const nonProtectedPaths = ['/', '/login', '/contact', '/about', '/forgot-password', '/reset-password'];
+  // ユーザーがログイン不要な公開ページにいるかどうか
+  const isOnPublicPath = nonProtectedPaths.includes(pathname) || isLoginPath;
 
   /** 注文画面遷移 */
   const moveToOrder = () => {
@@ -39,43 +39,53 @@ export default function Header() {
 
   /** ヘッダー左側のコンテンツをレンダリング */
   const renderLeftContent = () => {
-    // ローディング中はロゴと同じサイズの空Boxを返してブランクを維持
-    if (isAuthLoading) {
-      return <Box sx={{ width: 200, height: 52 }} />;
-    }
+    // レストラン名が取得できていればFadeInで表示
+    const showRestaurantName = isAuthenticated && (restaurantName ? true : false);
 
-    // 1. データがある場合
-    if (isAuthenticated && restaurantName) {
-      // Fade コンポーネントでラップ
-      // Fadeの直下は<Button>という単一の要素であるため、エラーは発生しないはずです。
+    // 1. 認証情報が確定し、レストラン名がある場合 -> FadeInでレストラン名を表示
+    if (showRestaurantName) {
       return (
-        <Fade in={isAuthenticated} timeout={500}>
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{
-              color: '#ea5315',
-              fontWeight: 'bold',
-              fontSize: 28,
-              fontFamily: 'Mobo Bold',
-            }}
-          >
-            {restaurantName}
-          </Typography>
-        </Fade>
+        // Logoと同じサイズを確保するコンテナ
+        <Box sx={{ width: 200, height: 52, position: 'relative' }}>
+          <Fade in={showRestaurantName} timeout={500} unmountOnExit>
+            <Button onClick={moveToOrder} sx={{ height: 52, p: 0 }}>
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{
+                  color: '#ea5315',
+                  fontWeight: 'bold',
+                  fontSize: 28,
+                  fontFamily: 'Mobo Bold',
+                }}
+              >
+                {restaurantName}
+              </Typography>
+            </Button>
+          </Fade>
+        </Box>
       );
     }
 
-    // ロゴ表示 (ロゴはそのまま表示)
-    return <Image
-      src="/logo.svg"
-      alt="みんなの社食"
-      width={200}
-      height={52}
-      priority
-      sizes="(max-width: 768px) 100vw, 200px"
-    />;
+    // 2. 公開ページにいる場合 -> ロゴを表示
+    if (isOnPublicPath) {
+      return (
+        <Image
+          src="/logo.svg"
+          alt="みんなの社食"
+          width={200}
+          height={52}
+          priority
+          sizes="(max-width: 768px) 100vw, 200px"
+        />
+      );
+    }
+
+    // 3. 保護されたページにいるが、まだデータがない（ロード中/非認証状態）の場合 -> ブランク（空のBox）を表示
+    // これにより、ロゴが表示されることなく、ブランクからレストラン名へ切り替わる
+    return <Box sx={{ width: 200, height: 52 }} />;
   };
+
 
   // ★ メニューアイコンの表示条件を定数として定義
   const isMenuVisible = isAuthenticated && userRegistrationStatus === UserRegistrationStatus.REGISTERED.toString();
@@ -93,16 +103,16 @@ export default function Header() {
           }}
         >
           <Box sx={{ width: 200, height: 52, display: 'flex', alignItems: 'center' }}>
+            {/* renderLeftContentの戻り値はロゴまたはFadeでラップされたレストラン名になる */}
             {renderLeftContent()}
           </Box>
 
-          {/* メニューボタン (Fadeを適用) */}
-          {/* isMenuVisibleがtrueになったときに、IconButtonがふわっと表示されます */}
-          <Fade in={isMenuVisible} timeout={500} unmountOnExit>
+          {/* メニューボタン (Growを適用 - 中央から穏やかに拡大) */}
+          <Grow in={isMenuVisible} timeout={500} unmountOnExit>
             <IconButton size="large" edge="end" color="inherit" aria-label="menu" onClick={() => setOpen(true)}>
               <MenuIcon sx={{ color: '#ea5315' }} />
             </IconButton>
-          </Fade>
+          </Grow>
         </Toolbar>
 
         <HeaderMenu open={open} closeEvent={() => setOpen(false)} />
