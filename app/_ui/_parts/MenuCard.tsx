@@ -86,6 +86,7 @@ export default function MenuCard(props: Props) {
                   alt="Example"
                   priority
                   onLoad={() => setImageLoaded(true)}
+                  sizes="(max-width: 640px) 100vw, 640px"
                 />
               ) : (
                 <Typography
@@ -159,7 +160,7 @@ export default function MenuCard(props: Props) {
                     : menuScheduleData.spice_level === 2
                       ? karasaImage2
                       : karasaImage3} alt="辛さ"
-                style={{ verticalAlign: 'middle', height: 30, marginLeft: 0 }} />
+                style={{ verticalAlign: 'middle', height: 30, width: 'auto', marginLeft: 20, }} />
             }
           </Typography>
 
