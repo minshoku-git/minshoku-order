@@ -1,4 +1,5 @@
 import { Noto_Sans_JP, Roboto } from 'next/font/google';
+import localFont from 'next/font/local';
 
 /** Noto_Sans_JP */
 export const notoSansJp = Noto_Sans_JP({
@@ -18,4 +19,12 @@ export const roboto = Roboto({
   variable: '--font-roboto',
   display: 'swap',
   fallback: ['Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'sans-serif'],
+});
+
+export const moboBold = localFont({
+  src: './_fonts/MOBO-Bold.otf',
+  weight: '700',
+  style: 'normal',
+  variable: '--font-mobo-bold',
+  display: 'swap',
 });

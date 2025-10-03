@@ -3,7 +3,7 @@ import './_ui/_parts/_layout/App.scss';
 
 import type { Metadata } from 'next';
 
-import { notoSansJp } from './_ui/fonts';
+import { moboBold, notoSansJp } from './_ui/fonts';
 import { AppLayoutContent } from './appLayoutContent';
 
 export const metadata: Metadata = {
@@ -33,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className={notoSansJp.variable}>
+      <body className={`${notoSansJp.variable} ${moboBold.variable}`}>
         <AppLayoutContent>{children}</AppLayoutContent>
       </body>
     </html>

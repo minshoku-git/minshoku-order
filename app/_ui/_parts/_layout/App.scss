@@ -1,14 +1,14 @@
 @charset "UTF-8";
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap');
-@font-face {
-  font-family: 'Mobo Bold';
-  src: url('../../_fonts/MOBO-Bold.otf') format('otf');
-  font-weight: bold;
-  font-style: normal;
-}
+// ⬇️ 削除: Next.jsのnext/fontで既に最適化されているため不要です。
+// @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap');
 
+// ⬇️ 変更: CSS変数（--font-noto-sans-jp）を参照するように変更します。
+//          （もし全要素に適用するならbodyタグの指定があれば*は不要になることもあります）
 * {
-  font-family: 'Noto Sans JP', sans-serif;
+  // layout.tsxで body の className に適用されている CSS 変数を指定します。
+  // layout.tsx: body className={notoSansJp.variable}
+  // _ui/fonts.ts: variable: '--font-noto-sans-jp'
+  font-family: var(--font-noto-sans-jp), sans-serif;
 }
 
 header {
@@ -22,7 +22,8 @@ header {
     height: 5vw;
     pointer-events: none;
     display: block;
-    background: url('../../_images/bg-rounded-top.svg') no-repeat top;
+    background: url('data:image/svg+xml;base64,PHN2ZyBpZD0iX+ODrOOCpOODpOODvF8xIiBkYXRhLW5hbWU9IuODrOOCpOODpOODvF8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCA0MzAgMjUiPgogIDwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAyOS4zLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiAyLjEuMCBCdWlsZCAxNDYpICAtLT4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLnN0MCB7CiAgICAgICAgZmlsbDogbm9uZTsKICAgICAgfQoKICAgICAgLnN0MSB7CiAgICAgICAgZmlsbDogI2VmZTlkZTsKICAgICAgfQoKICAgICAgLnN0MiB7CiAgICAgICAgZmlsbDogI2ZmZjsKICAgICAgfQoKICAgICAgLnN0MyB7CiAgICAgICAgY2xpcC1wYXRoOiB1cmwoI2NsaXBwYXRoKTsKICAgICAgfQogICAgPC9zdHlsZT4KICAgIDxjbGlwUGF0aCBpZD0iY2xpcHBhdGgiPgogICAgICA8cmVjdCBjbGFzcz0ic3QwIiB5PSIwIiB3aWR0aD0iNDMwIiBoZWlnaHQ9IjI1Ii8+CiAgICA8L2NsaXBQYXRoPgogIDwvZGVmcz4KICA8ZyBjbGFzcz0ic3QzIj4KICAgIDxnPgogICAgICA8cGF0aCBjbGFzcz0ic3QyIiBkPSJNMCwwdjE5LjhDNjMsNy4yLDEzNi41LDAsMjE1LDBIMFoiLz4KICAgICAgPHBhdGggY2xhc3M9InN0MiIgZD0iTTQzMCwwaC0yMTVjNzguNSwwLDE1Miw3LjIsMjE1LDE5LjhWMFoiLz4KICAgICAgPHBhdGggY2xhc3M9InN0MSIgZD0iTTQzMCwxOS44djUuMkgwdi01LjJjLTEyNC41LDI0LjktMjA4LDcwLjctMjA4LDEyMy4yLDAsNzksMTg5LjQsMTQzLDQyMywxNDNzNDIzLTY0LDQyMy0xNDMtODMuNS05OC4zLTIwOC0xMjMuMloiLz4KCiAgICA8L2c+CiAgPC9nPgo8L3N2Zz4=')
+      no-repeat top;
     background-size: 100% auto;
 
     @media screen and (max-width: 600px) {

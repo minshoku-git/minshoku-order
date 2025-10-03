@@ -3,6 +3,7 @@ import { JSX } from "react";
 
 import { AlertType } from "@/app/_types/enum";
 import { ApiResponse } from "@/app/_types/types";
+import { queryClientInstance } from "../tanstackQuery/queryClient";
 
 type Props = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,7 +23,9 @@ export const LogoutButton = (props: Props): JSX.Element => {
         });
         const res = await response.json() as ApiResponse<null>;
         if (res.success) {
+            queryClientInstance.clear();
             props.router.push('/login');
+
         } else {
             props.openSnackbar(AlertType.ERROR, res.error.message);
         }

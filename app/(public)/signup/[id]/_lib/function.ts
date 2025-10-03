@@ -10,7 +10,7 @@ import {
   t_user,
 } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
-import { getDomain, getPostgreSqlItems } from '@/app/_lib/utill';
+import { getDomain, getPostgreSqlItems } from '@/app/_lib/utills';
 import { UsageStatus, UserRegistrationStatus } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse, SelectOption } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
