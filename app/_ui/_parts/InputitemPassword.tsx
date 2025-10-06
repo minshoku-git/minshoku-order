@@ -7,6 +7,7 @@ type Props = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: any;
   label: string;
+  annotation?: string;
   name: string;
   setShowPassword: (value: SetStateAction<boolean>) => void
   showPassword: boolean;
@@ -20,11 +21,16 @@ export const InputItemPassword = (props: Props) => {
           <InputLabel sx={{ fontWeight: 'bold', color: '#252525', fontSize: 16 }} htmlFor={props.name}>
             {props.label}
           </InputLabel>
+          {props.annotation && (
+            <InputLabel sx={{ fontWeight: 'bold', color: '#252525', fontSize: 16 }} htmlFor={props.name}>
+              {props.annotation}
+            </InputLabel>
+          )}
         </Box>
         <Typography sx={{ fontWeight: 'bold', fontSize: 16, color: '#ea5315' }}>必須</Typography>
       </Box>
       <TextFieldElement
-        name="password"
+        name={props.name}
         type={props.showPassword ? 'text' : 'password'}
         fullWidth
         required

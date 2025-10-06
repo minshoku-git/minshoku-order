@@ -2,13 +2,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { JSX } from 'react';
+import { JSX, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
 import { AlertType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { Btn } from '@/app/_ui/_parts/Btn';
 import { InputItem } from '@/app/_ui/_parts/Inputitem';
+import { InputItemPassword } from '@/app/_ui/_parts/InputitemPassword';
 import { useProcessing } from '@/app/_ui/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
 import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
@@ -26,6 +27,10 @@ export const EditPasswordComponent = (): JSX.Element => {
   const router = useRouter()
   const { openSnackbar } = useSnackBar();
   const { openProcessing, closeProcessing } = useProcessing();
+
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewSignupPassword, setShowNewSignupPassword] = useState(false);
+  const [showConfirmNewSignupPassword, setShowConfirmNewSignupPassword] = useState(false);
 
   /* useForm
   ------------------------------------------------------------------ */
@@ -76,29 +81,29 @@ export const EditPasswordComponent = (): JSX.Element => {
         <Box sx={{ mt: 2 }}>
           <form onSubmit={handleSubmit(updatePasswordHandler)}>
             {/* 現在のパスワード */}
-            <InputItem
+            <InputItemPassword
               control={control}
-              label={`現在のパスワード`}
+              label="現在のパスワード"
               name="current_password"
-              required={true}
-              type="password"
+              showPassword={showCurrentPassword}
+              setShowPassword={setShowCurrentPassword}
             />
             {/* 新しいパスワード */}
-            <InputItem
+            <InputItemPassword
               control={control}
-              label={`新しいパスワード`}
-              annotation="(8文字以上、半角英数字の組み合わせ)"
+              label="新しいパスワード"
               name="new_signup_password"
-              required={true}
-              type="password"
+              annotation="(8文字以上、半角英数字の組み合わせ)"
+              showPassword={showNewSignupPassword}
+              setShowPassword={setShowNewSignupPassword}
             />
             {/* 新しいパスワード(再入力) */}
-            <InputItem
+            <InputItemPassword
               control={control}
               label={`新しいパスワード(再入力)`}
               name="confirm_new_signup_password"
-              required={true}
-              type="password"
+              showPassword={showConfirmNewSignupPassword}
+              setShowPassword={setShowConfirmNewSignupPassword}
             />
             {/* 送信ボタン */}
             <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
