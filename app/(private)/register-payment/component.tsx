@@ -9,13 +9,13 @@ import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
 import { PaymentType } from '@/app/_types/enum';
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { ApiRequest, ApiResponse, CreditCardData } from '@/app/_types/types';
-import { PaymentForm } from '@/app/_ui/_parts/paymentForm';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
-import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
-import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
+import { PaymentForm } from '@/app/_ui/components/organisms/paymentForm';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
+import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
+import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
+import { useApiQuery } from '@/app/_lib/hooks/query/useApiQuery';
 
 import { getRegisterPaymentTypeInitDataFetcher, registerPaymentTypeFetcher } from './_lib/fetcher';
 import { RegisterPaymentInitData, UserPaymentFormValues, UserPaymentSchema } from './_lib/types';

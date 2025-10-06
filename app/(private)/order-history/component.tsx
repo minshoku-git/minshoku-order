@@ -4,10 +4,10 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { JSX, useEffect, useRef } from 'react';
 
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { ApiResponse } from '@/app/_types/types';
-import { InfiniteCircularProgress } from '@/app/_ui/_parts/infiniteCircularProgress';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { LoadingSpinner } from '@/app/_ui/components/atoms/LoadingSpinner';
+import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
 
 import { getOrderHistoryFetcher } from './_lib/fetcher';
 import { OrderHistoryResponse } from './_lib/types';
@@ -73,7 +73,7 @@ export const OrderHistoryComponent = (): JSX.Element => {
   // データの初期ロード中はローディングインジケーターを表示し、DOM構造を安定させる
   if (isLoading && orders.length === 0) {
     return (
-      <InfiniteCircularProgress />
+      <LoadingSpinner />
     );
   }
 
@@ -167,7 +167,7 @@ export const OrderHistoryComponent = (): JSX.Element => {
       </Box >
       <Box ref={observerTarget}>
         {(isFetchingNextPage) && // ★ 初期ロード中は既に上で対応済みのため、ここでは次のページフェッチ中のみに限定
-          <InfiniteCircularProgress />
+          <LoadingSpinner />
         }
       </Box>
     </>

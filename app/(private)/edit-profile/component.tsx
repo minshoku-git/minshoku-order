@@ -7,15 +7,15 @@ import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
 import { AlertType } from '@/app/_types/enum';
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { ApiRequest, ApiResponse, SelectOption } from '@/app/_types/types';
-import { Btn } from '@/app/_ui/_parts/Btn';
-import { InputItem } from '@/app/_ui/_parts/Inputitem';
-import { SelectItem } from '@/app/_ui/_parts/Selectitem';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
-import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
-import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
+import { Btn } from '@/app/_ui/components/atoms/Button';
+import { InputItem } from '@/app/_ui/components/molecules/InputItem';
+import { SelectItem } from '@/app/_ui/components/molecules/SelectItem';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
+import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
+import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
+import { useApiQuery } from '@/app/_lib/hooks/query/useApiQuery';
 
 import { getEditProfileInitDataFetcher, updateProfileFetcher } from './_lib/fetcher';
 import { UserBasicResult, UserProfileFormValues, UserProfileInitData, UserProfileSchema } from './_lib/types';

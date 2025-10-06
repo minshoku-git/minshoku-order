@@ -1,6 +1,6 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
-import { getNow } from '@/app/_lib/getDateTime';
+import { getNow } from '@/app/_lib/utils/getDateTime';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import { t_user } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';

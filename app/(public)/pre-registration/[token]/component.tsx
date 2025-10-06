@@ -3,10 +3,10 @@ import { Card, CardContent, Typography } from '@mui/material';
 import { useParams, useRouter } from 'next/navigation';
 import { JSX, useEffect } from 'react';
 
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
-import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
+import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
+import { useApiQuery } from '@/app/_lib/hooks/query/useApiQuery';
 
 import { preregisterFetcher } from './_lib/fetcher';
 import { NextPageInitRequest } from './_lib/types';

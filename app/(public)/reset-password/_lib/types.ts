@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { formatString } from '@/app/_lib/utills';
-import { MSG_PASSWORD, MSG_REQUIRED, REG_PASSWORD } from '@/app/_types/constants';
+import { MSG_PASSWORD, MSG_REQUIRED, REG_PASSWORD } from '@/app/_config/constants';
+import { formatString } from '@/app/_lib/utils/utils';
 
 /**
  * パスワード再設定 Schema

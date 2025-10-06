@@ -2,7 +2,7 @@ import { sendMail } from '@/app/_lib/mailer/mailer';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import { t_contact } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
-import { getPostgreSqlItems } from '@/app/_lib/utills';
+import { getPostgreSqlItems } from '@/app/_lib/utils/utils';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';

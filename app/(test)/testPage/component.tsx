@@ -9,13 +9,13 @@ import { TextFieldElement } from 'react-hook-form-mui';
 
 import { decrypt, encrypt } from '@/app/_lib/encryption/crypto';
 import { AlertType, PaymentType } from '@/app/_types/enum';
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import { Btn } from '@/app/_ui/_parts/Btn';
-import { InputItem } from '@/app/_ui/_parts/Inputitem';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
-import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
+import { Btn } from '@/app/_ui/components/atoms/Button';
+import { InputItem } from '@/app/_ui/components/molecules/InputItem';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
+import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
+import { useApiQuery } from '@/app/_lib/hooks/query/useApiQuery';
 
 import { getAuthFetcher } from './_lib/fetcher';
 import {

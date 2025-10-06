@@ -6,13 +6,13 @@ import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.share
 import { JSX, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import { Btn } from '@/app/_ui/_parts/Btn';
-import { InputItem } from '@/app/_ui/_parts/Inputitem';
-import { InputItemPassword } from '@/app/_ui/_parts/InputitemPassword';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
+import { Btn } from '@/app/_ui/components/atoms/Button';
+import { InputItem } from '@/app/_ui/components/molecules/InputItem';
+import { InputItemPassword } from '@/app/_ui/components/molecules/InputItemPassword';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
+import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
 
 import { userlogin } from './fetcher';
 import { UserLoginFormValues, UserLoginSchema } from './types';

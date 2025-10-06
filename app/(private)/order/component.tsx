@@ -2,17 +2,17 @@
 import { JSX, useEffect, useState } from 'react';
 
 import { AlertType } from '@/app/_types/enum';
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import MenuCard from '@/app/_ui/_parts/MenuCard';
-import MenuCardConfirm from '@/app/_ui/_parts/MenuCardConfirm';
-import MenuCardNone from '@/app/_ui/_parts/MenuCardNone';
-import MenuCardSkeleton from '@/app/_ui/_parts/MenuCardSkeleton';
-import { MenuDateNavigation } from '@/app/_ui/_parts/MenuDateNavigation';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
-import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
-import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
+import MenuCard from '@/app/_ui/components/organisms/menu/MenuCard';
+import MenuCardConfirm from '@/app/_ui/components/organisms/menu/MenuCardConfirm';
+import MenuCardNone from '@/app/_ui/components/organisms/menu/MenuCardNone';
+import MenuCardSkeleton from '@/app/_ui/components/organisms/menu/MenuCardSkeleton';
+import { MenuDateNavigation } from '@/app/_ui/components/organisms/menu/MenuDateNavigation';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
+import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
+import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
+import { useApiQuery } from '@/app/_lib/hooks/query/useApiQuery';
 
 import { cancelOrderFetcher, getOrderInitFetcher, orderFetcher, preOrderFetcher } from './_lib/fetcher';
 import { CancelOrderRequest, OrderInitRequest, OrderInitResponse, OrderRequest } from './_lib/types';

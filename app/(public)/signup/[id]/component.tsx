@@ -1,22 +1,20 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Typography } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import { Btn } from '@/app/_ui/_parts/Btn';
-import { InputItem } from '@/app/_ui/_parts/Inputitem';
-import { SelectItem } from '@/app/_ui/_parts/Selectitem';
-import UserCustomModal from '@/app/_ui/_parts/UserCustomModal';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
-import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
-import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
+import { Btn } from '@/app/_ui/components/atoms/Button';
+import { InputItem } from '@/app/_ui/components/molecules/InputItem';
+import { SelectItem } from '@/app/_ui/components/molecules/SelectItem';
+import UserCustomModal from '@/app/_ui/components/organisms/UserCustomModal';
+import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
+import { useApiQuery } from '@/app/_lib/hooks/query/useApiQuery';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
 
 import { SignUpFetcher, SignUpInitDataFetcher } from './_lib/fetcher';
 import { TermsComponent } from './_lib/terms';

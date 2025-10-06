@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { formatString } from '@/app/_lib/utills';
-import { MSG_EMAIL, MSG_MAX, MSG_PASSWORD, MSG_REQUIRED, REG_PASSWORD, REG_ZENKAKU_KANA } from '@/app/_types/constants';
+import { MSG_MAX, MSG_REQUIRED, REG_ZENKAKU_KANA } from '@/app/_config/constants';
+import { formatString } from '@/app/_lib/utils/utils';
 import { SelectOption } from '@/app/_types/types';
 
 /**

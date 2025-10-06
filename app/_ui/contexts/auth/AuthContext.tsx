@@ -3,10 +3,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 
-import { useApiQuery } from '../../tanstackQuery/useApiQuery';
+import { useApiQuery } from '../../../_lib/hooks/query/useApiQuery';
 import { SessionStatusfetcher } from './fetcher';
 import { AuthContextResponse } from './types';
 

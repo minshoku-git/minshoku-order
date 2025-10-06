@@ -1,10 +1,10 @@
 import './globals.css';
-import './_ui/_parts/_layout/App.scss';
+import './_ui/parts/_layout/App.scss';
 
 import type { Metadata } from 'next';
 
-import { moboBold, notoSansJp } from './_ui/fonts';
-import { AppLayoutContent } from './appLayoutContent';
+import { moboBold, notoSansJp } from './_config/fonts';
+import { AppLayoutContent } from './_ui/components/layouts/AppLayoutContent';
 
 export const metadata: Metadata = {
   title: {

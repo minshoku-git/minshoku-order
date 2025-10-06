@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material';
 import { useParams, useRouter } from 'next/navigation';
 import { JSX } from 'react';
 
-import { Btn } from '@/app/_ui/_parts/Btn';
+import { Btn } from '@/app/_ui/components/atoms/Button';
 
 import { LoginForm } from '../_lib/loginForm';
 
