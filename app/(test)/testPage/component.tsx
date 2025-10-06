@@ -1,9 +1,11 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Box, Typography } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Box, IconButton, InputAdornment, Typography } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { RadioButtonGroup, useForm } from 'react-hook-form-mui';
+import { TextFieldElement } from 'react-hook-form-mui';
 
 import { decrypt, encrypt } from '@/app/_lib/encryption/crypto';
 import { AlertType, PaymentType } from '@/app/_types/enum';
@@ -52,6 +54,7 @@ export const TestPageComponent = (): JSX.Element => {
       angou0: '',
       hukugou0: '',
       payment_type: '0',
+      password: '',
     },
   });
 
@@ -117,6 +120,8 @@ export const TestPageComponent = (): JSX.Element => {
     setValue('angou0', res1)
     setValue('hukugou0', res2)
   };
+
+  const [showPassword, setShowPassword] = useState(false);
 
   /* functions - ログアウト
   ------------------------------------------------------------------ */
@@ -213,6 +218,34 @@ export const TestPageComponent = (): JSX.Element => {
               ),
             },
           ]} />
+        <Box>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', fontSize: 20 }}>
+            ★目隠しオンオフなパスワード入力欄
+          </Typography>
+          <TextFieldElement
+            name="password"
+            label="パスワード"
+            type={showPassword ? 'text' : 'password'}
+            fullWidth
+            required
+            control={control}
+            margin="normal"
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }
+            }}
+          />
+        </Box>
       </form>
     </>
   );
