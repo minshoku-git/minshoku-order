@@ -22,7 +22,7 @@ export const roboto = Roboto({
 });
 
 export const moboBold = localFont({
-  src: './_fonts/MOBO-Bold.otf',
+  src: '../_ui/assets/fonts/MOBO-Bold.otf',
   weight: '700',
   style: 'normal',
   variable: '--font-mobo-bold',

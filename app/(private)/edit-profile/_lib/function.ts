@@ -1,13 +1,8 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
-import { getNow } from '@/app/_lib/utils/getDateTime';
 import { createClient } from '@/app/_lib/supabase/server';
-import {
-  t_administrator,
-  t_companies_department,
-  t_companies_employment_status,
-  t_user,
-} from '@/app/_lib/supabase/tableTypes';
+import { t_companies_department, t_companies_employment_status, t_user } from '@/app/_lib/supabase/tableTypes';
+import { getNow } from '@/app/_lib/utils/getDateTime';
 import { UsageStatus, UserRegistrationStatus } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse, SelectOption } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';

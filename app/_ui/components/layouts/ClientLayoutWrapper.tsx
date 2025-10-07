@@ -8,7 +8,8 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import React from 'react';
 
-import fvImage from '../../_images/fv.jpg';
+import { queryClientInstance } from '../../../_lib/hooks/query/queryClient';
+import fvImage from '../../assets/images/fv.jpg';
 import { AuthProvider } from '../../contexts/auth/AuthContext';
 import { DirtyProvider } from '../../state/dirty/dirtyContext';
 import { OpenProcessing } from '../../state/processing/processing';
@@ -16,7 +17,6 @@ import { ProcessingProvider } from '../../state/processing/processingContext';
 import { OpenSnackBar } from '../../state/snackBar/snackBar';
 import { SnackBarProvider } from '../../state/snackBar/snackbarContext';
 import { SnackBarInitializer } from '../../state/snackBar/snackBarInitializer';
-import { queryClientInstance } from '../../../_lib/hooks/query/queryClient';
 import { Footer } from './Footer';
 import Header from './Header';
 

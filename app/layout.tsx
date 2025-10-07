@@ -1,5 +1,5 @@
 import './globals.css';
-import './_ui/parts/_layout/App.scss';
+import './_ui/components/layouts/App.scss';
 
 import type { Metadata } from 'next';
 
