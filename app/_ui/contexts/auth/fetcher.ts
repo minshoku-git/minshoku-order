@@ -8,10 +8,10 @@ import { AuthContextResponse } from './types';
  * @param {ApiRequest<null>} condition
  * @returns {Promise<ApiResponse<AuthContextResponse>>}
  */
-export const SessionStatusfetcher = async (
+export const sessionStatusfetcher = async (
   condition: ApiRequest<null> | null
 ): Promise<ApiResponse<AuthContextResponse>> => {
-  return fetcher<ApiResponse<AuthContextResponse>>('/api/supabase', {
+  return fetcher<ApiResponse<AuthContextResponse>>('/api/auth', {
     method: 'POST',
     body: JSON.stringify(condition),
     headers: {

@@ -22,7 +22,7 @@ export async function POST(_req: NextRequest) {
     // セッション取得時のエラーは、サーバーの問題として扱う
     if (sessionError && sessionError.name !== 'AuthSessionMissingError') {
       console.error('Session acquisition error:', sessionError);
-      throw new CustomError(ErrorCodes.INTERNAL_SERVER_ERROR.code, 'セッション取得に失敗しました', 500);
+      throw new CustomError(ErrorCodes.INTERNAL_SERVER_ERROR);
     }
 
     // -----------------------------------------------------

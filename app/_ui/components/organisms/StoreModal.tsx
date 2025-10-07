@@ -2,7 +2,7 @@ import { Box, IconButton, Modal, SxProps, Theme, Typography } from '@mui/materia
 import Image from 'next/image';
 import React from 'react';
 
-import closeIcon from '../assets/images/modal-close.svg';
+import closeIcon from '../../assets/images/modal-close.svg';
 
 // -----------------------------------------------------------
 // 1. Propsの型定義

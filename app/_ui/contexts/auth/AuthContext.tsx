@@ -7,7 +7,7 @@ import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 
 import { useApiQuery } from '../../../_lib/hooks/query/useApiQuery';
-import { SessionStatusfetcher } from './fetcher';
+import { sessionStatusfetcher } from './fetcher';
 import { AuthContextResponse } from './types';
 
 // AuthContextTypeの定義はそのまま維持
@@ -45,7 +45,7 @@ export function AuthProvider({ children, initialSession }: AuthProviderProps) {
     // Tanstack Queryでのセッション状態のポーリング
     const { data: queryData, isLoading: isQueryLoading, isFetched } = useApiQuery<AuthContextResponse>({
         queryKey: [QUERY_KEYS.AUTH_STATUS],
-        queryFn: () => SessionStatusfetcher(req),
+        queryFn: () => sessionStatusfetcher(req),
         staleTime: 5 * 60 * 1000,
         refetchOnWindowFocus: true,
     });

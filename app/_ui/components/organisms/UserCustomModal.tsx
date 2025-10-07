@@ -1,7 +1,7 @@
 import { Box, IconButton, Modal, Typography } from '@mui/material';
 import Image from 'next/image';
 
-import closeIcon from '../_images/modal-close.svg';
+import closeIcon from '../../assets/images/modal-close.svg';
 
 const style = {
   position: 'absolute',

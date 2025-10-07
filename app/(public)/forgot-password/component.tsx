@@ -12,7 +12,7 @@ import { useProcessing } from '@/app/_ui/state/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
 import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
 
-import { sendPasswordResetMail } from './_lib/fetcher';
+import { sendResetPasswordMail } from './_lib/fetcher';
 import { PasswordFormValues, PasswordSchema } from './_lib/types';
 
 /**
@@ -55,7 +55,7 @@ export const PaymentComponent = (): JSX.Element => {
     mutationFn: async (data: PasswordFormValues) => {
       openProcessing();
       const req: ApiRequest<PasswordFormValues> = { request: data };
-      return sendPasswordResetMail(req) as unknown as ApiResponse<null>;
+      return sendResetPasswordMail(req) as unknown as ApiResponse<null>;
     },
     onSuccess: () => {
       setIsSend(true);

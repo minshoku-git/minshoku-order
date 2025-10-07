@@ -5,11 +5,11 @@ import { Box, Button, Card, CardContent, Grid2 as Grid, IconButton, Skeleton, Ty
 import Image from 'next/image';
 import React, { useState } from 'react';
 
-import houseIcon from '../_images/icon-shop_b.svg';
-import karasaImage1 from '../_images/karasa_01.svg';
-import karasaImage2 from '../_images/karasa_02.svg';
-import karasaImage3 from '../_images/karasa_03.svg';
-import tabelogImage from '../_images/tabelog_logo.png';
+import houseIcon from '../../../assets/images/icon-shop_b.svg';
+import karasaImage1 from '../../../assets/images/karasa_01.svg';
+import karasaImage2 from '../../../assets/images/karasa_02.svg';
+import karasaImage3 from '../../../assets/images/karasa_03.svg';
+import tabelogImage from '../../../assets/images/tabelog_logo.png';
 import StoreModal from '../StoreModal';
 import { Btn } from '../../atoms/Button';
 import { OrderInitResponse } from '@/app/(private)/order/_lib/types';
