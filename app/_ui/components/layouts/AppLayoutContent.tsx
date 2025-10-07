@@ -1,12 +1,8 @@
 import React from 'react';
 
-// サーバークライアントのインポート (修正後の引数なしバージョン)
 import { createClient as createServerClient } from '../../../_lib/supabase/server';
 import { ClientLayoutWrapper } from './ClientLayoutWrapper';
-// ClientLayoutWrapperのインポート
 
-
-// サーバーコンポーネントとして実行 (async 関数)
 export async function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
     // 1. サーバー側で安全にセッションを取得

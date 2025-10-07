@@ -1,40 +1,39 @@
-import { PostgrestSingleResponse } from '@supabase/supabase-js';
+import { PostgrestSingleResponse, Session } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
+import { LoginUserQueryResponse } from '@/app/_lib/getLoginUser/types';
 import { createClient } from '@/app/_lib/supabase/server';
 import { ApiResponse } from '@/app/_types/types';
-import { AuthContextResponse, UserAndCompanies } from '@/app/_ui/contexts/auth/types';
-import { CustomError } from '@/app/errors/customError';
+import { AuthContextResponse } from '@/app/_ui/contexts/auth/types';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
+/**
+ * POST /api/auth
+ * 認証コンテキスト用の初期ユーザー情報とセッションを取得します。
+ * SECURITY: supabase.auth.getUser() を使用してトークンを検証しています。
+ */
 export async function POST(_req: NextRequest) {
   try {
-    const supabase = await createClient(); // createClient() が引数なしの同期関数であることを前提
+    const supabase = await createClient();
 
     // -----------------------------------------------------
-    // 1. セッションとユーザー情報の取得
+    // 1. ユーザー情報の取得と検証 (getUser() を使用)
     // -----------------------------------------------------
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    // セッション取得時のエラーは、サーバーの問題として扱う
-    if (sessionError && sessionError.name !== 'AuthSessionMissingError') {
-      console.error('Session acquisition error:', sessionError);
-      throw new CustomError(ErrorCodes.INTERNAL_SERVER_ERROR);
-    }
+      data: { user: verifiedUser },
+      error: userError,
+    } = await supabase.auth.getUser();
 
     // -----------------------------------------------------
     // 2. 非認証状態の早期リターン
     // -----------------------------------------------------
-    // セッションがない場合（ログアウト状態）、即座に null を返します
-    if (!session) {
+    if (!verifiedUser) {
+      if (userError) {
+        console.warn('Authentication check failed (no user):', userError.message);
+      }
       const res: ApiResponse<AuthContextResponse> = {
         success: true,
-        data: {
-          session: null,
-        },
+        data: { session: null },
       };
       return NextResponse.json(res);
     }
@@ -46,35 +45,36 @@ export async function POST(_req: NextRequest) {
       .from('t_user')
       .select(
         `user_name,
-                 user_registration_status,
-                 t_companies!inner(
-                   restaurant_name
-                 )`
+         user_registration_status,
+         t_companies!inner(
+          restaurant_name
+        )`
       )
-      .eq('user_email', session.user.email)
+      .eq('user_email', verifiedUser.email)
       .single();
 
-    const { error: userDataError, data: userData } = (await query) as PostgrestSingleResponse<UserAndCompanies>;
+    const { error: userDataError, data: userData } = (await query) as PostgrestSingleResponse<LoginUserQueryResponse>;
 
     if (userDataError || !userData || !userData.t_companies) {
-      console.error(userDataError);
-      // データを null として返し、クライアント側でログアウトさせる
+      console.error('t_user query failed. User exists but data is missing/invalid:', userDataError);
       const res: ApiResponse<AuthContextResponse> = {
-        success: true, // APIコール自体は成功
-        data: {
-          session: null, // セッションを null として返し、クライアントにログアウトを促す
-        },
+        success: true,
+        data: { session: null },
       };
       return NextResponse.json(res);
     }
 
     // -----------------------------------------------------
-    // 4. 成功応答
+    // 4. セッションを取得し、成功応答を返却
     // -----------------------------------------------------
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     const res: ApiResponse<AuthContextResponse> = {
       success: true,
       data: {
-        session: session,
+        session: session as Session,
         userRegistrationStatus: userData.user_registration_status,
         restaurantName: userData.t_companies.restaurant_name,
         userName: userData.user_name,

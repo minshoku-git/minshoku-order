@@ -2,13 +2,14 @@ import { sendMail } from '@/app/_lib/mailer/mailer';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import { t_contact } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
+import { formatJstDateTime, getNow } from '@/app/_lib/utils/getDateTime';
 import { getPostgreSqlItems } from '@/app/_lib/utils/utils';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
-import { ContactFormValues } from './types';
+import { ContactFormValues, ContactMessageDetails } from './types';
 
 /**
  * sendContactMail
@@ -21,6 +22,7 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
   const req = values.request;
   const client = await createClient();
   const pgClient = createPgClient();
+  const now = formatJstDateTime(getNow());
 
   try {
     // connection Start
@@ -57,11 +59,19 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
 
     /* メール送信
   　------------------------------------------------------------------ */
+    const message = generateContactMessage({
+      contactId: result.oid,
+      contactMessage: req.contactMessage,
+      date: now,
+      userName: user.user_name,
+      userEmail: user.user_email,
+      companyName: user.t_companies.company_name,
+      branchName: user.t_companies.branch_name,
+    });
+
     await sendMail({
-      mailType: 'contact',
-      senderUserName: user.user_name,
-      senderEmail: user.user_email,
-      text: req.contactMessage,
+      title: '【みんしょく】ユーザーからのお問い合わせを受信しました',
+      text: message,
     });
 
     /* --------------------------------------------------------------- */
@@ -95,4 +105,35 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
     // Transaction End
     await pgClient.end();
   }
+};
+
+const generateContactMessage = (details: ContactMessageDetails): string => {
+  const { contactId, contactMessage, date, userName, userEmail, companyName, branchName } = details;
+
+  return `
+運営ご担当者様
+
+お疲れ様です。  
+以下の通り、ユーザーよりお問い合わせがありましたので、共有いたします。
+
+────────────────────  
+■ お問い合わせ日時  
+${date}
+■ お問合せ番号
+${contactId}
+
+■ ユーザー情報  
+・お名前：${userName}  
+・会社名：${companyName}  
+・部署名：${branchName}  
+・メールアドレス：${userEmail}
+
+■ お問い合わせ内容  
+――――――――――――――――  
+${contactMessage}
+――――――――――――――――
+
+ご確認のほど、よろしくお願いいたします。
+
+（自動送信）`.trim();
 };
