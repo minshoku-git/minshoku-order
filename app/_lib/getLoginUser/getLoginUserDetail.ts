@@ -3,15 +3,17 @@ import { PostgrestSingleResponse, SupabaseClient } from '@supabase/supabase-js';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
-import { UserData } from './types copy';
+import { UserData } from './types';
 
 /**
- * getAuth
- * ユーザー情報取得
- * @returns {Promise<ApiResponse<OrderInitResponse>>} 検索結果
+ * getLoginUserDetail
+ * ログイン中のユーザーIDに基づき、全ての詳細なユーザー情報（会社、部署、勤務形態、各種設定を含む）を取得します。
+ *
+ * @param client Supabaseクライアントインスタンス
+ * @returns {Promise<UserData>} ユーザーの詳細情報
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getAuth = async (client: SupabaseClient<any>): Promise<UserData> => {
+export const getLoginUserDetail = async (client: SupabaseClient<any>): Promise<UserData> => {
   try {
     const {
       data: { user },

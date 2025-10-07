@@ -9,7 +9,7 @@ import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
-import { getAuth } from '../../order/_lib/function copy';
+import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
 import { OrderData, OrderHistoryData, OrderHistoryRequest, OrderHistoryResponse } from './types';
 
 /**
@@ -28,7 +28,7 @@ export const getOrderHistory = async (
   try {
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
     console.log(user.id);
 
     /* ユーザー情報取得

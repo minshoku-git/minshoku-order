@@ -4,9 +4,9 @@ import { fetcher } from '../fetcher';
 import { LoginUserResponse } from './types';
 
 /**
- * getWaitingApproval
- * 承認待ちステータスのユーザー数を取得します
- * @returns {Promise<any>}
+ * getUserNameFetcher
+ * ログイン中のユーザー名、食堂名、登録ステータスなどの簡易情報を取得します。
+ * @returns {Promise<ApiResponse<LoginUserResponse>>}
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getUserNameFetcher = (): Promise<ApiResponse<LoginUserResponse>> => {

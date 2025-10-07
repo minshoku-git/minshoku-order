@@ -7,7 +7,7 @@ import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
-import { getAuth } from '../../order/_lib/function copy';
+import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
 import { ContactFormValues } from './types';
 
 /**
@@ -32,7 +32,7 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
 
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
 
     /* 問い合わせ新規追加
   　------------------------------------------------------------------ */

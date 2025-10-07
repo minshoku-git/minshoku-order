@@ -8,7 +8,7 @@ import { ApiRequest, ApiResponse, SelectOption } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
-import { getAuth } from '../../order/_lib/function copy';
+import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
 import { UserProfileFormValues, UserProfileInitData } from './types';
 
 /* 会員情報の変更
@@ -156,7 +156,7 @@ export const updateProfile = async (values: ApiRequest<UserProfileFormValues>): 
   const now = getNow();
 
   try {
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
 
     const query = client
       .from('t_user')

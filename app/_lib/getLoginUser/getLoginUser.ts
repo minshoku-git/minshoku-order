@@ -5,13 +5,13 @@ import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 import { ApiResponse } from '../../_types/types';
 import { createClient } from '../supabase/server';
-import { LoginUserResponse, UserAndCompanies } from './types';
+import { LoginUserQueryResponse, LoginUserResponse } from './types';
 
 /**
- * getUserName
- * ログイン中のユーザー名を取得します
+ * getLoginUser
+ * ログイン中のユーザー名、食堂名、登録ステータスなどの簡易情報を取得します。
  *
- * @returns {number} ユーザー名
+ * @returns {Promise<ApiResponse<LoginUserResponse>>} ユーザー簡易情報を含むAPIレスポンス
  */
 export const getLoginUser = async (): Promise<ApiResponse<LoginUserResponse>> => {
   const client = await createClient();
@@ -30,7 +30,7 @@ export const getLoginUser = async (): Promise<ApiResponse<LoginUserResponse>> =>
       return { success: true, data: {} };
     }
 
-    /* ユーザー名・食堂名取得
+    /* ユーザー名、食堂名、登録ステータス取得
     ------------------------------------------------------------------ */
     const query = client
       .from('t_user')
@@ -45,7 +45,7 @@ export const getLoginUser = async (): Promise<ApiResponse<LoginUserResponse>> =>
       .eq('user_email', user.email)
       .single();
 
-    const { data, error } = (await query) as PostgrestSingleResponse<UserAndCompanies>;
+    const { data, error } = (await query) as PostgrestSingleResponse<LoginUserQueryResponse>;
     if (error || !data) {
       console.error('query error', error);
       throw new CustomError(

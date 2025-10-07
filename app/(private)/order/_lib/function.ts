@@ -13,7 +13,7 @@ import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
-import { getAuth } from './function copy';
+import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
 import {
   CancelOrderRequest,
   OmitMenuScheduleAndShop,
@@ -38,7 +38,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
   try {
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
 
     /* メニュー情報取得
     ------------------------------------------------------------------ */
@@ -255,7 +255,7 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
   try {
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
 
     /* スケジュール情報取得とテーブルロック
   　------------------------------------------------------------------ */
@@ -355,7 +355,7 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
   try {
     /* ユーザー情報取得
       ------------------------------------------------------------------ */
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
 
     // connection Start
     await pgClient.connect();
@@ -538,7 +538,7 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
   try {
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
 
     /* 注文キャンセル
   　------------------------------------------------------------------ */
