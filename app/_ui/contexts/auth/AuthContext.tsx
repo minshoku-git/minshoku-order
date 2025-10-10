@@ -12,8 +12,8 @@ import { AuthContextResponse } from './types';
 
 // AuthContextTypeの定義はそのまま維持
 type AuthContextType = {
-    user: User | null;
-    session: Session | null;
+    userId: string | null;
+    // session: Session | null;
     isLoading: boolean;
     logout: () => Promise<void>;
     isAuthenticated: boolean;
@@ -25,18 +25,18 @@ type AuthContextType = {
 
 type AuthProviderProps = {
     children: ReactNode;
-    initialSession: Session | null;
+    userEmail: string | null;
 };
 
 // Contextの作成
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Providerコンポーネント
-export function AuthProvider({ children, initialSession }: AuthProviderProps) {
+export function AuthProvider({ children, userEmail }: AuthProviderProps) {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     // サーバー注入データを初期値に使用し、初期化は完了済みとする
-    const [user, setUser] = useState<User | null>(initialSession?.user ?? null);
-    const [session, setSession] = useState<Session | null>(initialSession);
+    const [userId, setUserId] = useState<string | null>(userEmail ?? null);
+    // const [session, setSession] = useState<Session | null>(initialSession);
     const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -52,23 +52,20 @@ export function AuthProvider({ children, initialSession }: AuthProviderProps) {
 
     useEffect(() => {
         if (queryData) {
-            const newSession = queryData.session;
-            const newUser = newSession?.user ?? null;
+            const newUser = queryData.email ?? null;
 
-            console.log("New session:", newSession);
             console.log("New user:", newUser);
 
             // 状態が変化した場合のみ更新（不要な再レンダリングを防ぐ）
-            if (session?.user?.id !== newUser?.id || !session) {
-                setSession(newSession);
-                setUser(newUser);
+            if (newUser) {
+                setUserId(newUser);
             }
         }
-    }, [queryData, session, setSession, setUser]);
+    }, [queryData, setUserId]);
 
     useEffect(() => {
-        setIsAuthenticated(!!user); // userがnullでない場合にtrue
-    }, [user]);
+        setIsAuthenticated(!!userId); // userがnullでない場合にtrue
+    }, [userId]);
 
     // ログアウト関数 (ロジックは変更なし)
     const logout = async () => {
@@ -82,9 +79,7 @@ export function AuthProvider({ children, initialSession }: AuthProviderProps) {
                 queryClient.clear();
                 queryClient.removeQueries({ queryKey: [QUERY_KEYS.AUTH_STATUS] });
 
-                // 状態を手動で非認証済みとして更新
-                setSession(null);
-                setUser(null);
+                setUserId(null);
 
                 // サーバーインジェクションがない場合は /login にリダイレクト
                 router.push('/login');
@@ -102,9 +97,8 @@ export function AuthProvider({ children, initialSession }: AuthProviderProps) {
     };
 
 
-    // 最終的なユーザーセッション
-    const finalSession = session;
-    const finalUser = user;
+    // 最終的なユーザー
+    const finalUser = userId;
     const apiData = queryData ?? null;
 
     // 認証情報が確定したユーザー名、レストラン名を取得
@@ -112,24 +106,20 @@ export function AuthProvider({ children, initialSession }: AuthProviderProps) {
     const finalUserName = apiData?.userName;
     const finalUserRegistrationStatus = apiData?.userRegistrationStatus;
 
-    // ユーザー名がまだAPIから取得できていない場合、サーバー注入データから取得を試みる
-    const fallbackUserName = finalUser?.user_metadata?.user_name;
-
     // 最終的なローディング状態の決定
     const finalIsLoading = !isFetched && isQueryLoading;
 
     return (
         <AuthContext.Provider
             value={{
-                user: finalUser,
-                session: finalSession,
+                userId: finalUser,
                 isLoading: finalIsLoading,
                 isAuthenticated: isAuthenticated,  // 更新したisAuthenticatedを反映
                 isLoggingOut: isLoggingOut,
                 logout,
                 userRegistrationStatus: finalUserRegistrationStatus ?? '',
                 restaurantName: finalRestaurantName ?? '',
-                userName: finalUserName ?? fallbackUserName,
+                userName: finalUserName,
             }}
         >
             {children}

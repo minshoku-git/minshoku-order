@@ -115,9 +115,10 @@ export const OrderComponent = (): JSX.Element => {
       const req: ApiRequest<OrderRequest> = { request: { order_count: count, t_menu_schedule_id: id } };
       return orderFetcher(req) as unknown as ApiResponse<null>;
     },
-    onSuccess: async (res) => {
-      setOpenPreOrder(false);
+    onSuccess: async () => {
+      await refetch()
       openSnackbar(AlertType.INFO, '注文が完了しました。');
+      setOpenPreOrder(false);
     },
     onSettled: () => {
       closeProcessing();
@@ -166,25 +167,28 @@ export const OrderComponent = (): JSX.Element => {
     <>
       {data.menuScheduleData ? (
         <>
-          {/* 日付ナビゲーションはデータがあれば常に表示 */}
-          <MenuDateNavigation
-            menuDate={data.menuScheduleData.delivery_day as string}
-            moveMenu={moveMenu}
-            nextScheduleId={data.nextScheduleId}
-            previousScheduleId={data.previousScheduleId}
-          />
-
-          {/* メインコンテンツ部分の制御 */}
           {!openPreOrder ? (
-            <MenuCard
-              preOrderHandler={preOrderHandler}
-              cancelOrderHandler={cancelOrderHandler}
-              data={data}
-              count={count}
-              setCount={setCount}
-            />
+            <>
+              {/* 日付ナビゲーションはデータがあれば常に表示 */}
+              <MenuDateNavigation
+                menuDate={data.menuScheduleData.delivery_day as string}
+                moveMenu={moveMenu}
+                nextScheduleId={data.nextScheduleId}
+                previousScheduleId={data.previousScheduleId}
+              />
+              {/* メインコンテンツ部分の制御 */}
+              <MenuCard
+                preOrderHandler={preOrderHandler}
+                cancelOrderHandler={cancelOrderHandler}
+                data={data}
+                count={count}
+                setCount={setCount}
+              />
+            </>
           ) : (
             <MenuCardConfirm
+              data={data}
+              count={count}
               backHandler={backHandler}
               orderHandler={orderHandler}
             />

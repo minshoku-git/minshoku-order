@@ -164,3 +164,30 @@ export function getCancelDeadlineUTC(
 
   return cancelDeadlineUTC;
 }
+
+/**
+ * getOrderDeadlineUTC
+ * 提供日を基に注文の期限日時を取得します
+ * @param deliveryDay - 提供日（納品日）(Date or string)
+ * @param orderPeriodDaysBefore - 注文可能な日数（納品日から何日前か）
+ * @param orderPeriodTime - 注文時刻（例: "10:30:00"）
+ * @returns {Date} - 注文期限日時
+ */
+export function getOrderDeadlineUTC(
+  deliveryDay: Date | string,
+  orderPeriodDaysBefore: number,
+  orderPeriodTime: string // 例: "10:00"
+): Date {
+  const deadlineDateJST = new Date(deliveryDay);
+
+  deadlineDateJST.setDate(deadlineDateJST.getDate() - orderPeriodDaysBefore);
+
+  const [hourStr, minuteStr] = orderPeriodTime.split(':');
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr);
+
+  // setHours()はローカルタイムゾーンの値を操作する
+  deadlineDateJST.setHours(hour, minute, 0, 0);
+
+  return deadlineDateJST;
+}

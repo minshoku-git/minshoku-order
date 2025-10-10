@@ -6,9 +6,9 @@ import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import { t_menu_schedule, t_order } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
 import { getImageSignedUrl } from '@/app/_lib/supabaseStorage/getImageUrl';
-import { formatJstDate, getCancelDeadlineUTC, getNow } from '@/app/_lib/utils/getDateTime';
+import { formatJstDate, getCancelDeadlineUTC, getNow, getOrderDeadlineUTC } from '@/app/_lib/utils/getDateTime';
 import { getPostgreSqlItems } from '@/app/_lib/utils/utils';
-import { OrderStatusType, PaymentType } from '@/app/_types/enum';
+import { convertPaymentTypeName, OrderStatusType, PaymentType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
@@ -160,15 +160,25 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
       );
     }
 
+    /* 注文可否判定
+    ------------------------------------------------------------------ */
+    const orderPeriodDaysBefore = user.t_companies.order_period_day;
+    const orderPeriodTime = user.t_companies.order_period_time;
+    const orderDeadlineUTC = getOrderDeadlineUTC(data.delivery_day, orderPeriodDaysBefore, orderPeriodTime);
+
+    console.log('現在日時:', now);
+    console.log('納品日:', data.delivery_day);
+    console.log('注文期限:', orderDeadlineUTC);
+
+    const isOrderDeadlinePassed = now >= orderDeadlineUTC;
+
     /* 注文キャンセル可否判定
     ------------------------------------------------------------------ */
     const cancelDaysBefore = user.t_companies.cancel_period_day;
     const cancelTime = user.t_companies.cancel_period_time;
     const cancelDeadlineUTC = getCancelDeadlineUTC(data.delivery_day, cancelDaysBefore, cancelTime);
 
-    console.log('納品日:', data.delivery_day);
     console.log('キャンセル日時:', cancelDeadlineUTC);
-    console.log('現在日時:', now);
 
     const isCancellable = cancelDeadlineUTC > now;
 
@@ -197,6 +207,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
         sale_price: data.sale_price ?? 0,
         spice_level: data.spice_level ?? 0,
         stock_count: data.stock_count ?? 0,
+        isOrderDeadlinePassed: isOrderDeadlinePassed,
       },
       shopData: {
         shop_name: data.t_shops.shop_name,
@@ -215,6 +226,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
         cancel_period_time: user.t_companies.cancel_period_time!.slice(0, 5),
       },
       orderData: orderData ? { t_order_id: orderData.id, order_count: orderData.count, isCancellable } : undefined,
+      paymentTypeString: convertPaymentTypeName(user.payment_type as PaymentType),
     };
 
     return {
@@ -249,7 +261,6 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
 export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiResponse<null>> => {
   const client = await createClient();
   const req = values.request;
-  const today = formatISO(getNow());
   const now = getNow();
 
   try {
@@ -261,7 +272,7 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
   　------------------------------------------------------------------ */
     const { data: menuSchedule, error: scheduleError } = await client
       .from('t_menu_schedule')
-      .select('stock_count')
+      .select('delivery_day, stock_count')
       .eq('id', req.t_menu_schedule_id)
       .eq('cancel_flag', 0)
       .single();
@@ -272,6 +283,20 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
         'メニュースケジュール情報の取得' + ErrorCodes.NOT_FOUND.message,
         ErrorCodes.NOT_FOUND.status
       );
+    }
+
+    /* 注文時間判定
+    ------------------------------------------------------------------ */
+    const orderPeriodDaysBefore = user.t_companies.order_period_day;
+    const orderPeriodTime = user.t_companies.order_period_time;
+    const orderDeadlineUTC = getOrderDeadlineUTC(menuSchedule.delivery_day, orderPeriodDaysBefore, orderPeriodTime);
+
+    console.log('注文期限:', orderDeadlineUTC);
+    console.log('現在日時:', now);
+
+    const isOrderDeadlinePassed = now >= orderDeadlineUTC;
+    if (isOrderDeadlinePassed) {
+      throw new CustomError(ErrorCodes.ORDER_EXPIRED);
     }
 
     /* 自身の注文状況
@@ -287,9 +312,12 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
     if (orderCheckError) {
       throw new CustomError(
         ErrorCodes.NOT_FOUND.code,
-        '既に注文済みです。' + ErrorCodes.NOT_FOUND.message,
+        '注文状況の確認' + ErrorCodes.NOT_FOUND.message,
         ErrorCodes.NOT_FOUND.status
       );
+    }
+    if (orderCheck && orderCheck.id) {
+      throw new CustomError(ErrorCodes.ORDER_ALREADY_PLACED);
     }
 
     /* 現在の在庫数の確認
@@ -440,6 +468,16 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
       );
     }
 
+    /* 会社負担額
+    ------------------------------------------------------------------ */
+    const burden: number = user.t_companies_employment_status.set_meal_burden ?? 0;
+    const companiesBurdenAmount = req.order_count * burden;
+
+    const amount = menuScheduleData.sale_price! * req.order_count;
+
+    // ユーザー負担額
+    const userBurdenAmount = amount - companiesBurdenAmount;
+
     /* 注文情報の新規登録
     ------------------------------------------------------------------ */
     const insertValues: Omit<t_order, 'id' | 'cancel_datetime' | 'created_at' | 'updated_at'> = {
@@ -455,17 +493,17 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
       // 支払金額類
       count: req.order_count,
       list_price: menuScheduleData.list_price,
-      amount: menuScheduleData.sale_price! * req.order_count!,
+      amount: amount,
       // 支払情報
       payment_type: user.payment_type,
-      // 会社清算
-      user_burden_amount: 0,
-      companies_burden_amount: 0,
-      // クレジットカード情報
+      user_burden_amount: userBurdenAmount,
+      // 会社負担額
+      companies_burden_amount: companiesBurdenAmount,
+      // クレジットカード情報 TASK:置き換え
       gmo_order_id: PaymentType.CREDITCARD === user.payment_type ? '' : '',
       credit_access_id: PaymentType.CREDITCARD === user.payment_type ? '' : '',
       credit_access_password: PaymentType.CREDITCARD === user.payment_type ? '' : '',
-      // paypay情報
+      // paypay情報 TASK:置き換え
       paypay_access_id: PaymentType.PAYPAY === user.payment_type ? '' : '',
       paypay_access_password: PaymentType.PAYPAY === user.payment_type ? '' : '',
     };

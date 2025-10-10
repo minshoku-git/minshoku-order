@@ -9,8 +9,7 @@ import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 /**
  * POST /api/auth
- * 認証コンテキスト用の初期ユーザー情報とセッションを取得します。
- * SECURITY: supabase.auth.getUser() を使用してトークンを検証しています。
+ * 認証コンテキスト用の初期ユーザー情報を取得します。
  */
 export async function POST(_req: NextRequest) {
   try {
@@ -33,7 +32,7 @@ export async function POST(_req: NextRequest) {
       }
       const res: ApiResponse<AuthContextResponse> = {
         success: true,
-        data: { session: null },
+        data: { email: null },
       };
       return NextResponse.json(res);
     }
@@ -59,22 +58,18 @@ export async function POST(_req: NextRequest) {
       console.error('t_user query failed. User exists but data is missing/invalid:', userDataError);
       const res: ApiResponse<AuthContextResponse> = {
         success: true,
-        data: { session: null },
+        data: { email: null },
       };
       return NextResponse.json(res);
     }
 
     // -----------------------------------------------------
-    // 4. セッションを取得し、成功応答を返却
+    // 4. 成功応答を返却
     // -----------------------------------------------------
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
     const res: ApiResponse<AuthContextResponse> = {
       success: true,
       data: {
-        session: session as Session,
+        email: verifiedUser.email ?? '',
         userRegistrationStatus: userData.user_registration_status,
         restaurantName: userData.t_companies.restaurant_name,
         userName: userData.user_name,

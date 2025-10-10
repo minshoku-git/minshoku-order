@@ -231,8 +231,8 @@ export default function MenuCard(props: Props) {
 
           {/* フッター */}
           {/* 注文中 */}
-          {!orderData ? (
-            <>
+          {!orderData ? (<>
+            {!menuScheduleData.isOrderDeadlinePassed ? (<>
               <Grid container alignItems="end" justifyContent="space-between" mt={3}>
                 <Grid>
                   <Typography sx={{ color: '#333', fontWeight: 'bold' }}>残り{REST_OF_ORDER - props.count} 食</Typography>
@@ -298,7 +298,15 @@ export default function MenuCard(props: Props) {
                   </Button>
                 </Grid>
               </Grid>
-            </>
+            </>) :
+              (<Grid>
+                <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
+                  <Typography textAlign="right" sx={{ fontSize: 18, fontWeight: 'bold', mr: 2, mt: 2 }}>
+                    注文期限を過ぎています
+                  </Typography>
+                </Box>
+              </Grid>)}
+          </>
           ) : (
             <>
               {/* 注文キャンセル */}

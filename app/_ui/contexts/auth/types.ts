@@ -1,9 +1,9 @@
-import { Session } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 
 import { UserRegistrationStatus } from '@/app/_types/enum';
 
 export type AuthContextResponse = {
-  session: Session | null;
+  email: string | null;
   restaurantName?: string;
   userRegistrationStatus?: string;
   userName?: string;

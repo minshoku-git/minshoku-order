@@ -7,7 +7,7 @@ import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
-import { UserLoginFormValues } from './types';
+import { LoginUserQueryResponse, UserLoginFormValues } from './types';
 
 /* ユーザーログイン
 ------------------------------------------------------------------ */
@@ -16,7 +16,7 @@ import { UserLoginFormValues } from './types';
  * @param {ApiRequest<UserLoginFormValues>} req
  * @returns {Promise<ApiResponse<string>>}
  */
-export const login = async (req: ApiRequest<UserLoginFormValues>): Promise<ApiResponse<string>> => {
+export const login = async (req: ApiRequest<UserLoginFormValues>): Promise<ApiResponse<null>> => {
   const supabase = await createClient();
   const { email, password } = req.request;
 
@@ -25,24 +25,39 @@ export const login = async (req: ApiRequest<UserLoginFormValues>): Promise<ApiRe
 
   try {
     // 1.ユーザー情報取得
-    const query = supabase.from('t_user').select('*').eq('user_email', email).maybeSingle();
-    const { data, error } = (await query) as PostgrestSingleResponse<t_user>;
+    const query = supabase
+      .from('t_user')
+      .select(
+        `
+        usage_status,
+        user_registration_status,
+        t_companies!inner(
+        usage_status
+        )`
+      )
+      .eq('user_email', email)
+      .maybeSingle();
+    const { data, error } = (await query) as PostgrestSingleResponse<LoginUserQueryResponse>;
 
+    // 予期しないエラー
     if (error) {
-      // 予期しないエラー
       console.error('Error signing in:', error);
       throw new CustomError(ErrorCodes.INTERNAL_SERVER_ERROR);
     }
+    // メールアドレスが未登録の場合
     if (!data) {
-      // メールアドレスが未登録の場合
       console.error('Error signing in:', error);
       throw new CustomError(ErrorCodes.EMAIL_NOT_REGISTERED);
     }
+    // 会社利用ステータスが利用不可の場合
+    if (data.t_companies?.usage_status === UsageStatus.DEACTIVATION) {
+      throw new CustomError(ErrorCodes.COMPANY_SUSPENDED);
+    }
+    // 登録ステータスが利用可能 && 利用ステータスが利用停止の場合
     if (
       data.usage_status === UsageStatus.DEACTIVATION &&
       data.user_registration_status === UserRegistrationStatus.REGISTERED
     ) {
-      // 登録ステータスが利用可能 && 利用ステータスが利用停止の場合
       throw new CustomError(ErrorCodes.ACCOUNT_SUSPENDED);
     }
 
@@ -60,7 +75,7 @@ export const login = async (req: ApiRequest<UserLoginFormValues>): Promise<ApiRe
         ErrorCodes.NOT_FOUND.status
       );
     }
-    return { success: true, data: '' };
+    return { success: true, data: null };
   } catch (e: unknown) {
     console.error(e);
     if (e instanceof CustomError) {

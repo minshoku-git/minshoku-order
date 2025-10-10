@@ -1,13 +1,13 @@
 'use client';
 
-import { Box, createTheme, CssBaseline, ThemeProvider as MuiThemeProvider } from '@mui/material';
+import { Box, CssBaseline, ThemeProvider as MuiThemeProvider } from '@mui/material';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
-import { Session } from '@supabase/supabase-js';
 import { QueryClientProvider } from '@tanstack/react-query';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import React from 'react';
 
+import theme from '../../../_config/theme/theme'
 import { queryClientInstance } from '../../../_lib/hooks/query/queryClient';
 import fvImage from '../../assets/images/fv.jpg';
 import { AuthProvider } from '../../contexts/auth/AuthContext';
@@ -20,36 +20,15 @@ import { SnackBarInitializer } from '../../state/snackBar/snackBarInitializer';
 import { Footer } from './Footer';
 import Header from './Header';
 
-
-
-// 既存のMUIテーマ定義をそのまま使用
-const theme = createTheme({
-    typography: {
-        fontFamily: ['Noto Sans JP', 'Yu Gothic', '游ゴシック体', 'YuGothic', 'sans-serif'].join(','),
-        allVariants: { color: '#252525' },
-    },
-    components: {
-        MuiOutlinedInput: {
-            styleOverrides: {
-                root: {
-                    backgroundColor: '#fff',
-                    borderRadius: '6px',
-                    '& .MuiOutlinedInput-notchedOutline': { border: '1px solid #707070' },
-                },
-            },
-        },
-    },
-});
-
-// サーバーから初期セッションを受け取るためのProps定義
+// サーバーから初期セッションを受け取るためのProps定義を initialUserEmail に戻す
 type ClientLayoutWrapperProps = {
     children: React.ReactNode;
-    // サーバーから取得した初期セッション。AuthContextに渡します。
-    initialSession: Session | null;
+    // サーバーから取得した初期ユーザーメールアドレス
+    initialUserEmail: string | null;
 };
 
-export function ClientLayoutWrapper({ children, initialSession }: ClientLayoutWrapperProps) {
-    const pathname = usePathname(); // 👈 クライアントHookを使用
+export function ClientLayoutWrapper({ children, initialUserEmail }: ClientLayoutWrapperProps) {
+    const pathname = usePathname();
     const isLoginPage = pathname?.includes('/login');
 
     return (
@@ -61,8 +40,8 @@ export function ClientLayoutWrapper({ children, initialSession }: ClientLayoutWr
                         <SnackBarInitializer />
                         <ProcessingProvider>
                             <QueryClientProvider client={queryClientInstance}>
-                                {/* 取得した初期セッションをAuthProviderに注入する */}
-                                <AuthProvider initialSession={initialSession}>
+                                {/* 取得した初期メールアドレスをAuthProviderに注入する */}
+                                <AuthProvider userEmail={initialUserEmail}>
                                     <OpenSnackBar />
                                     <OpenProcessing />
                                     <Box
@@ -105,7 +84,7 @@ export function ClientLayoutWrapper({ children, initialSession }: ClientLayoutWr
                                                 maxWidth: 640,
                                                 pt: '20px',
                                                 mx: 'auto',
-                                                pb: 8,
+                                                pb: 4,
                                             }}
                                         >
                                             {children}

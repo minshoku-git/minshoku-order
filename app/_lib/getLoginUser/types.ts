@@ -89,5 +89,7 @@ export type UserData = {
   t_companies_employment_status: {
     /** 雇用形態名 */
     employment_status_name: string;
+    /** 負担額 */
+    set_meal_burden?: number;
   };
 };

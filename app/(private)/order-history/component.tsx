@@ -1,13 +1,11 @@
 'use client';
-import { Box, Card, CardContent, Divider, Typography } from '@mui/material';
+import { Box, Card, CardContent, Divider, Fade, Typography } from '@mui/material';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { JSX, useEffect, useRef } from 'react';
 
 import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { ApiResponse } from '@/app/_types/types';
 import { LoadingSpinner } from '@/app/_ui/components/atoms/LoadingSpinner';
-import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
 
 import { getOrderHistoryFetcher } from './_lib/fetcher';
 import { OrderHistoryResponse } from './_lib/types';
@@ -19,8 +17,6 @@ import { OrderHistoryResponse } from './_lib/types';
 export const OrderHistoryComponent = (): JSX.Element => {
   /* initialize
   ------------------------------------------------------------------ */
-  const router = useRouter();
-  const { openSnackbar } = useSnackBar();
 
   /* useQuery - 初期取得
   ------------------------------------------------------------------ */
@@ -72,8 +68,12 @@ export const OrderHistoryComponent = (): JSX.Element => {
   ------------------------------------------------------------------ */
   // データの初期ロード中はローディングインジケーターを表示し、DOM構造を安定させる
   if (isLoading && orders.length === 0) {
-    return (
+    return (<>
+      <Typography variant="h3" sx={{ fontSize: 20, mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
+        注文履歴
+      </Typography>
       <LoadingSpinner />
+    </>
     );
   }
 
@@ -85,71 +85,73 @@ export const OrderHistoryComponent = (): JSX.Element => {
       <Box>
         {orders.map((order) => (
           <Box key={order.delivery_day} sx={{ mb: 2 }}>
-            <Card sx={{ borderRadius: 4 }}>
-              <CardContent>
-                {/* 日付ヘッダー */}
-                <Typography
-                  variant="h3"
-                  sx={{ fontSize: 16, mb: 1, fontWeight: 'bold', borderRadius: 2, background: '#ffb59a', py: 1, px: 2 }}
-                >
-                  {order.delivery_day}
-                </Typography>
-                {/* 注文データ */}
-                {order.orderData.map((item, index) => (
-                  <Box key={item.id}>
-                    {/* 最初の要素以外にDividerを表示 */}
-                    {index > 0 && <Divider sx={{ mt: 2, mb: 2, backgroundColor: '#333' }} />}
-                    {/* キャンセル済みの表示 */}
-                    {item.cancel_datetime && (
-                      <Typography
-                        variant="h3"
-                        sx={{
-                          fontSize: 16,
-                          mb: 1,
-                          borderRadius: 2,
-                          fontWeight: 'bold',
-                          background: '#afafaf',
-                          display: 'inline-block',
-                          py: 1,
-                          px: 2,
-                        }}
-                      >
-                        キャンセル済み
-                      </Typography>
-                    )}
+            <Fade in={order ? true : false} timeout={500} unmountOnExit >
+              <Card sx={{ borderRadius: 4 }}>
+                <CardContent>
+                  {/* 日付ヘッダー */}
+                  <Typography
+                    variant="h3"
+                    sx={{ fontSize: 16, mb: 1, fontWeight: 'bold', borderRadius: 2, background: '#ffb59a', py: 1, px: 2 }}
+                  >
+                    {order.delivery_day}
+                  </Typography>
+                  {/* 注文データ */}
+                  {order.orderData.map((item, index) => (
+                    <Box key={item.id}>
+                      {/* 最初の要素以外にDividerを表示 */}
+                      {index > 0 && <Divider sx={{ mt: 2, mb: 2, backgroundColor: '#333' }} />}
+                      {/* キャンセル済みの表示 */}
+                      {item.cancel_datetime && (
+                        <Typography
+                          variant="h3"
+                          sx={{
+                            fontSize: 16,
+                            mb: 1,
+                            borderRadius: 2,
+                            fontWeight: 'bold',
+                            background: '#afafaf',
+                            display: 'inline-block',
+                            py: 1,
+                            px: 2,
+                          }}
+                        >
+                          キャンセル済み
+                        </Typography>
+                      )}
 
-                    <Box ml={2}>
-                      {/* 各注文の詳細 */}
-                      {item.cancel_datetime &&
-                        <>
-                          <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
-                            キャンセル日時：
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontSize: 14, mb: 1, fontWeight: 'bold' }}>
-                            {item.cancel_datetime as string}
-                          </Typography>
-                        </>
-                      }
-                      <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
-                        店舗：{item.t_shops.shop_name}
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
-                        商品：{item.t_menu_schedule.menu_name}
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
-                        数量：{item.count}食
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
-                        金額：{item.user_burden_amount}円(税込)
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontSize: 16, mb: 0, fontWeight: 'bold' }}>
-                        支払い方法：{item.payment_type}
-                      </Typography>
+                      <Box ml={2}>
+                        {/* 各注文の詳細 */}
+                        {item.cancel_datetime &&
+                          <>
+                            <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
+                              キャンセル日時：
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontSize: 14, mb: 1, fontWeight: 'bold' }}>
+                              {item.cancel_datetime as string}
+                            </Typography>
+                          </>
+                        }
+                        <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
+                          店舗：{item.t_shops.shop_name}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
+                          商品：{item.t_menu_schedule.menu_name}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
+                          数量：{item.count}食
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
+                          金額：{item.user_burden_amount}円(税込)
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontSize: 16, mb: 0, fontWeight: 'bold' }}>
+                          支払い方法：{item.payment_type}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                ))}
-              </CardContent>
-            </Card>
+                  ))}
+                </CardContent>
+              </Card>
+            </Fade>
           </Box>
         ))}
         {orders.length === 0 && !isLoading && <> {/* ロード完了後、データがない場合のみ表示 */}
@@ -166,7 +168,7 @@ export const OrderHistoryComponent = (): JSX.Element => {
         }
       </Box >
       <Box ref={observerTarget}>
-        {(isFetchingNextPage) && // ★ 初期ロード中は既に上で対応済みのため、ここでは次のページフェッチ中のみに限定
+        {(isFetchingNextPage) &&
           <LoadingSpinner />
         }
       </Box>

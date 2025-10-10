@@ -33,6 +33,7 @@ export const LoginForm = (props: Props): JSX.Element => {
   const { openProcessing, closeProcessing } = useProcessing();
 
   const [showPassword, setShowPassword] = useState(false);
+  const [loginBtnLoading, setLoginBtnLoading] = useState(false);
 
   /* useForm
   ------------------------------------------------------------------ */

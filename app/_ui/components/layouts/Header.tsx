@@ -20,12 +20,7 @@ export default function Header() {
     isAuthenticated,
     restaurantName,
     userRegistrationStatus,
-    // isAuthLoadingはここでは使用せず、初期レンダリングをシンプルにする
   } = useAuth();
-
-  console.log("isAuthenticated:", isAuthenticated);
-  console.log("restaurantName:", restaurantName);
-  // console.log("isAuthLoading:", isAuthLoading); // 使用しないためコメントアウト
 
   const isLoginPath = pathname.startsWith('/login/');
   const nonProtectedPaths = ['/', '/login', '/contact', '/about', '/forgot-password', '/reset-password'];
@@ -40,7 +35,7 @@ export default function Header() {
   /** ヘッダー左側のコンテンツをレンダリング */
   const renderLeftContent = () => {
     // レストラン名が取得できていればFadeInで表示
-    const showRestaurantName = isAuthenticated && (restaurantName ? true : false);
+    const showRestaurantName = isAuthenticated && restaurantName && restaurantName.length > 0;
 
     // 1. 認証情報が確定し、レストラン名がある場合 -> FadeInでレストラン名を表示
     if (showRestaurantName) {
