@@ -82,7 +82,7 @@ export const LoginForm = (props: Props): JSX.Element => {
             ログインはこちら
           </Typography>
         </Box>
-        <form onSubmit={handleSubmit(loginHandler)}>
+        <form noValidate onSubmit={handleSubmit(loginHandler)}>
           {/* メールアドレス */}
           <InputItem control={control} label="メールアドレス" name="email" required={true} type="mail" />
           {/* パスワード */}

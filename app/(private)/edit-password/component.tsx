@@ -78,7 +78,7 @@ export const EditPasswordComponent = (): JSX.Element => {
         </Box>
         {/* <Typography variant='body1'>会員登録に必要な情報をご入力・ご選択ください。</Typography> */}
         <Box sx={{ mt: 2 }}>
-          <form onSubmit={handleSubmit(updatePasswordHandler)}>
+          <form noValidate onSubmit={handleSubmit(updatePasswordHandler)}>
             {/* 現在のパスワード */}
             <InputItemPassword
               control={control}

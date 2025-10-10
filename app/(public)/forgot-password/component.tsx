@@ -85,7 +85,7 @@ export const PaymentComponent = (): JSX.Element => {
           </Typography>
           {/* 登録メールアドレス */}
           <Box sx={{ mt: 2 }}>
-            <form onSubmit={handleSubmit(sendHandler)}>
+            <form noValidate onSubmit={handleSubmit(sendHandler)}>
               <InputItem control={control} label="登録メールアドレス" name="email" required={true} type="email" />
               {/* 送信ボタン */}
               <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>

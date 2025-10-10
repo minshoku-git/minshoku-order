@@ -112,7 +112,7 @@ export const ContactComponent = (): JSX.Element => {
                 3営業日以内に担当者より返信いたします。
               </Typography>
               <Box sx={{ mt: 2 }}>
-                <form onSubmit={handleSubmit(sendHandler)}>
+                <form noValidate onSubmit={handleSubmit(sendHandler)}>
                   {/* 問い合わせ内容 */}
                   <TextareaAutosizeElement
                     control={control}

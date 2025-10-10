@@ -53,9 +53,6 @@ export function AuthProvider({ children, userEmail }: AuthProviderProps) {
     useEffect(() => {
         if (queryData) {
             const newUser = queryData.email ?? null;
-
-            console.log("New user:", newUser);
-
             // 状態が変化した場合のみ更新（不要な再レンダリングを防ぐ）
             if (newUser) {
                 setUserId(newUser);

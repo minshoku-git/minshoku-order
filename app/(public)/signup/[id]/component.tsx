@@ -181,7 +181,7 @@ export const SignUpComponent = (): JSX.Element => {
             <Typography variant="body1">会員登録に必要な情報をご入力・ご選択ください。</Typography>
             {initData && <>
               <Box sx={{ mt: 2 }}>
-                <form onSubmit={handleSubmit(signUpHandler)} noValidate>
+                <form noValidate onSubmit={handleSubmit(signUpHandler)}>
                   <InputItem control={control} label={`会社名`} name="cname" disabled={true} isNotFormValue={initData.company_name} type="text" />
                   <InputItem control={control} label={`支店名`} name="cname" disabled={true} isNotFormValue={initData.branch_name} type="text" />
                   <InputItem control={control} label={`お名前`} name="user_name" required={true} />
