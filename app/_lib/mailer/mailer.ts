@@ -32,7 +32,7 @@ type Props = {
 export const sendMail = async (req: Props): Promise<ApiResponse<null>> => {
   return await transporter
     .sendMail({
-      to: 's.abe@refact.co.jp', // TASK
+      to: req.to ?? 's.abe@refact.co.jp', // TASK
       subject: req.title,
       text: req.text,
     })

@@ -57,7 +57,26 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
       );
     }
 
-    /* メール送信
+    /* メール送信(利用者)
+  　------------------------------------------------------------------ */
+    const customerMessage = generateCustomerMessage({
+      contactId: result.rows[0].id,
+      contactMessage: req.contactMessage,
+      date: now,
+      userName: user.user_name,
+      userNameKana: user.user_name_kana,
+      userEmail: user.user_email,
+      companyName: user.t_companies.company_name,
+      branchName: user.t_companies.branch_name,
+    });
+
+    await sendMail({
+      title: '【みんなの社食】お問い合わせを承りました。',
+      text: customerMessage,
+      to: user.user_email,
+    });
+
+    /* メール送信(運営)
   　------------------------------------------------------------------ */
     const message = generateContactMessage({
       contactId: result.rows[0].id,
@@ -71,7 +90,7 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
     });
 
     await sendMail({
-      title: '【みんしょく】ユーザーからのお問い合わせを受信しました',
+      title: '【みんなの社食】ユーザーからのお問い合わせを受信しました',
       text: message,
     });
 
@@ -135,6 +154,37 @@ ${contactMessage}
 ――――――――――――――――
 
 ご確認のほど、よろしくお願いいたします。
+
+（自動送信）`.trim();
+};
+
+const generateCustomerMessage = (details: ContactMessageDetails): string => {
+  const { contactId, contactMessage, date, userName, userNameKana, userEmail, companyName, branchName } = details;
+
+  return `
+${userName} 様
+
+「みんなの食堂」をご利用いただき、誠にありがとうございます。
+
+以下の内容でお問合せを承りました。
+担当者より、あらためてご連絡させていただきますので、今しばらくお待ちください。
+
+────────────────────  
+■ お問い合わせ日時  
+${date}
+■ お問合せ番号
+${contactId}
+
+■ ユーザー情報  
+・お名前：${userName}(${userNameKana}) 様
+・会社名：${companyName}  
+・部署名：${branchName}  
+・メールアドレス：${userEmail}
+
+■ お問い合わせ内容  
+――――――――――――――――  
+${contactMessage}
+――――――――――――――――
 
 （自動送信）`.trim();
 };
