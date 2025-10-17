@@ -116,6 +116,8 @@ export type MenuScheduleData = {
   sale_price: number;
   /** 注文期限超過 */
   isOrderDeadlinePassed: boolean;
+  /** 注文数 */
+  orderCount: number;
 };
 
 /** 店舗情報 */

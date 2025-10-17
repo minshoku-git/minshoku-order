@@ -35,7 +35,7 @@ export default function MenuCard(props: Props) {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-  const REST_OF_ORDER = 32;
+  const REST_OF_ORDER = menuScheduleData.stock_count - menuScheduleData.orderCount;
 
   /* functions - 会員情報の更新
   ------------------------------------------------------------------ */
@@ -130,7 +130,7 @@ export default function MenuCard(props: Props) {
                   >
                     <Image
                       src={houseIcon}
-                      alt="ハウスアイコン"
+                      alt="店舗紹介"
                       fill
                       style={{
                         objectFit: 'contain',
@@ -159,7 +159,7 @@ export default function MenuCard(props: Props) {
                     ? karasaImage1
                     : menuScheduleData.spice_level === 2
                       ? karasaImage2
-                      : karasaImage3} alt="辛さ"
+                      : karasaImage3} alt={'辛さレベル' + menuScheduleData.spice_level}
                 style={{ verticalAlign: 'middle', height: 30, width: 'auto', marginLeft: 20, }} />
             }
           </Typography>
@@ -233,71 +233,79 @@ export default function MenuCard(props: Props) {
           {/* 注文中 */}
           {!orderData ? (<>
             {!menuScheduleData.isOrderDeadlinePassed ? (<>
-              <Grid container alignItems="end" justifyContent="space-between" mt={3}>
-                <Grid>
-                  <Typography sx={{ color: '#333', fontWeight: 'bold' }}>残り{REST_OF_ORDER - props.count} 食</Typography>
-                  <Box
-                    sx={{
-                      color: '#333',
-                      display: 'flex',
-                      alignItems: 'center',
-                      border: '1px solid #333',
-                      borderRadius: 1,
-                      px: 1,
-                      height: 53,
-                      width: 132,
-                    }}
-                  >
-                    <Typography
-                      sx={{ color: '#333', fontWeight: 'bold', display: 'block', minWidth: 'unset', width: '40%' }}
-                    >
-                      数量
-                    </Typography>
-                    <Button
-                      sx={{ color: '#333', fontWeight: 'bold', display: 'block', minWidth: 'unset', width: '20%' }}
-                      onClick={() => props.setCount((count) => (count > 1 ? count - 1 : 1))}
-                    >
-                      -
-                    </Button>
-                    <Typography
+              {REST_OF_ORDER > 0 ? (
+                <Grid container alignItems="end" justifyContent="space-between" mt={3}>
+                  <Grid>
+                    <Typography sx={{ color: '#333', fontWeight: 'bold' }}>残り{REST_OF_ORDER - props.count} 食</Typography>
+                    <Box
                       sx={{
                         color: '#333',
-                        fontWeight: 'bold',
-                        display: 'block',
-                        minWidth: 'unset',
-                        width: '20%',
-                        textAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        border: '1px solid #333',
+                        borderRadius: 1,
+                        px: 1,
+                        height: 53,
+                        width: 132,
                       }}
                     >
-                      {props.count}
-                    </Typography>
+                      <Typography
+                        sx={{ color: '#333', fontWeight: 'bold', display: 'block', minWidth: 'unset', width: '40%' }}
+                      >
+                        数量
+                      </Typography>
+                      <Button
+                        sx={{ color: '#333', fontWeight: 'bold', display: 'block', minWidth: 'unset', width: '20%' }}
+                        onClick={() => props.setCount((count) => (count > 1 ? count - 1 : 1))}
+                      >
+                        -
+                      </Button>
+                      <Typography
+                        sx={{
+                          color: '#333',
+                          fontWeight: 'bold',
+                          display: 'block',
+                          minWidth: 'unset',
+                          width: '20%',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {props.count}
+                      </Typography>
+                      <Button
+                        sx={{ color: '#333', fontWeight: 'bold', display: 'block', minWidth: 'unset', width: '20%' }}
+                        onClick={() => props.setCount((count) => (count == REST_OF_ORDER ? REST_OF_ORDER : (count += 1)))}
+                      >
+                        +
+                      </Button>
+                    </Box>
+                  </Grid>
+                  <Grid>
                     <Button
-                      sx={{ color: '#333', fontWeight: 'bold', display: 'block', minWidth: 'unset', width: '20%' }}
-                      onClick={() => props.setCount((count) => (count == REST_OF_ORDER ? REST_OF_ORDER : (count += 1)))}
+                      variant="contained"
+                      sx={{
+                        ml: 2,
+                        height: 53,
+                        background: '#ea5315',
+                        fontWeight: 'bold',
+                        borderRadius: '16px',
+                        width: 164,
+                        fontSize: 18,
+                      }}
+                      color="warning"
+                      onClick={() => props.preOrderHandler(props.count)}
                     >
-                      +
+                      注文する
                     </Button>
+                  </Grid>
+                </Grid>) :
+                (<Grid>
+                  <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
+                    <Typography textAlign="right" sx={{ fontSize: 18, fontWeight: 'bold', mr: 2, mt: 2 }}>
+                      本日分完売しました！
+                    </Typography>
                   </Box>
-                </Grid>
-                <Grid>
-                  <Button
-                    variant="contained"
-                    sx={{
-                      ml: 2,
-                      height: 53,
-                      background: '#ea5315',
-                      fontWeight: 'bold',
-                      borderRadius: '16px',
-                      width: 164,
-                      fontSize: 18,
-                    }}
-                    color="warning"
-                    onClick={() => props.preOrderHandler(props.count)}
-                  >
-                    注文する
-                  </Button>
-                </Grid>
-              </Grid>
+                </Grid>)}
             </>) :
               (<Grid>
                 <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>

@@ -49,6 +49,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
             spice_level,
             list_price,
             sale_price,
+            stock_count,
             t_shops!inner(
               id,
               shop_name,
@@ -138,7 +139,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
       );
     }
 
-    /* 注文情報取得
+    /* 自注文情報取得
     ------------------------------------------------------------------ */
     const queryOrder = client
       .from('t_order')
@@ -151,7 +152,6 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     console.log('スケジュールID', menuSchesuleId ?? data.id);
 
     if (errorOrder) {
-      console.log(errorOrder);
       console.error(errorOrder);
       throw new CustomError(
         ErrorCodes.NOT_FOUND.code,
@@ -159,6 +159,29 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
         ErrorCodes.NOT_FOUND.status
       );
     }
+
+    /* 現在の注文数
+    ------------------------------------------------------------------ */
+    const queryCountOrder = client
+      .from('t_order')
+      .select('count')
+      .eq('t_menu_schedule_id', menuSchesuleId ?? data.id)
+      .eq('order_status_type', OrderStatusType.VALID);
+    const { data: countOrderData, error: errorCountOrder } = (await queryCountOrder) as PostgrestSingleResponse<
+      t_order[]
+    >;
+    console.log('スケジュールID', menuSchesuleId ?? data.id);
+
+    if (errorCountOrder) {
+      console.error(errorCountOrder);
+      throw new CustomError(
+        ErrorCodes.NOT_FOUND.code,
+        '現在の注文数の取得' + ErrorCodes.NOT_FOUND.message,
+        ErrorCodes.NOT_FOUND.status
+      );
+    }
+
+    const orderCount = countOrderData ? countOrderData.reduce((sum, item) => sum + (item.count ?? 0), 0) : 0;
 
     /* 注文可否判定
     ------------------------------------------------------------------ */
@@ -208,6 +231,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
         spice_level: data.spice_level ?? 0,
         stock_count: data.stock_count ?? 0,
         isOrderDeadlinePassed: isOrderDeadlinePassed,
+        orderCount: orderCount,
       },
       shopData: {
         shop_name: data.t_shops.shop_name,

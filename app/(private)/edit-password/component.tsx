@@ -33,7 +33,7 @@ export const EditPasswordComponent = (): JSX.Element => {
 
   /* useForm
   ------------------------------------------------------------------ */
-  const { handleSubmit, control, formState: { isDirty } } = useForm<EditPasswordFormValues>({
+  const { handleSubmit, control, formState: { isDirty, dirtyFields } } = useForm<EditPasswordFormValues>({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
     resolver: zodResolver(EditPasswordSchema),
