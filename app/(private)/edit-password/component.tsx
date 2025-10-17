@@ -1,6 +1,6 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Box, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { JSX, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
@@ -33,9 +33,9 @@ export const EditPasswordComponent = (): JSX.Element => {
 
   /* useForm
   ------------------------------------------------------------------ */
-  const { handleSubmit, control, reset } = useForm<EditPasswordFormValues>({
+  const { handleSubmit, control, formState: { isDirty } } = useForm<EditPasswordFormValues>({
     mode: 'onSubmit',
-    reValidateMode: 'onBlur',
+    reValidateMode: 'onSubmit',
     resolver: zodResolver(EditPasswordSchema),
     defaultValues: {
       current_password: '',
@@ -65,6 +65,10 @@ export const EditPasswordComponent = (): JSX.Element => {
       closeProcessing();
     },
   });
+
+  const movePasswordPage = () => {
+    router.push('/forgot-password');
+  };
 
   /* JSX
   ------------------------------------------------------------------ */
@@ -106,7 +110,16 @@ export const EditPasswordComponent = (): JSX.Element => {
             />
             {/* 送信ボタン */}
             <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
-              <Btn label={'送信'} isSubmit={true} />
+              <Btn label={'送信'} isSubmit={true} isDisabled={!isDirty} />
+            </Box>
+            {/* パスワードをお忘れの場合 */}
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <Button
+                sx={{ textDecoration: 'underline', color: '#000', fontWeight: 'bold' }}
+                onClick={() => movePasswordPage()}
+              >
+                パスワードをお忘れの場合
+              </Button>
             </Box>
           </form>
         </Box>

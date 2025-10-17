@@ -41,7 +41,7 @@ export const EditProfileComponent = (): JSX.Element => {
   ------------------------------------------------------------------ */
   const { handleSubmit, control, reset, formState: { isDirty } } = useForm<UserProfileFormValues>({
     mode: 'onSubmit',
-    reValidateMode: 'onBlur',
+    reValidateMode: 'onSubmit',
     resolver: zodResolver(UserProfileSchema),
     defaultValues: {
       user_name: '',

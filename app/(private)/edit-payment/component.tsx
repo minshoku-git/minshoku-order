@@ -40,7 +40,7 @@ export const EditPaymentComponent = (): JSX.Element => {
     handleSubmit,
     watch,
     reset,
-    formState: { isDirty },
+    formState: { isDirty, errors },
   } = useForm<EditPaymentFormValues>({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
@@ -126,6 +126,7 @@ export const EditPaymentComponent = (): JSX.Element => {
         </Typography>
       </Box>
       <Typography variant="body1">支払い方法をご選択ください。</Typography>
+      <Typography variant="body1">※予約済みの注文は、変更前の支払い方法で決済されます。</Typography>
       {!isLoading && data && <>
         <PaymentForm
           handleSubmit={handleSubmit}
@@ -138,6 +139,7 @@ export const EditPaymentComponent = (): JSX.Element => {
           deduction_flag={data.deduction_flag}
           credit_flag={data.credit_flag}
           paypay_flag={data.paypay_flag}
+          error={errors.paymentType}
         />
       </>}
     </>

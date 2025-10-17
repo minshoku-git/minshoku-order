@@ -60,10 +60,11 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
     /* メール送信
   　------------------------------------------------------------------ */
     const message = generateContactMessage({
-      contactId: result.oid,
+      contactId: result.rows[0].id,
       contactMessage: req.contactMessage,
       date: now,
       userName: user.user_name,
+      userNameKana: user.user_name_kana,
       userEmail: user.user_email,
       companyName: user.t_companies.company_name,
       branchName: user.t_companies.branch_name,
@@ -108,7 +109,7 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
 };
 
 const generateContactMessage = (details: ContactMessageDetails): string => {
-  const { contactId, contactMessage, date, userName, userEmail, companyName, branchName } = details;
+  const { contactId, contactMessage, date, userName, userNameKana, userEmail, companyName, branchName } = details;
 
   return `
 運営ご担当者様
@@ -123,7 +124,7 @@ ${date}
 ${contactId}
 
 ■ ユーザー情報  
-・お名前：${userName}  
+・お名前：${userName}(${userNameKana}) 様
 ・会社名：${companyName}  
 ・部署名：${branchName}  
 ・メールアドレス：${userEmail}

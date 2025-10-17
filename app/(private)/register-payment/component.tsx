@@ -42,6 +42,7 @@ export const PaymentComponent = (): JSX.Element => {
     handleSubmit,
     watch,
     reset,
+    formState: { isDirty, errors },
   } = useForm<UserPaymentFormValues>({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
@@ -134,6 +135,7 @@ export const PaymentComponent = (): JSX.Element => {
           deduction_flag={data.deduction_flag}
           credit_flag={data.credit_flag}
           paypay_flag={data.paypay_flag}
+          error={errors.paymentType}
         />
       </>}
     </>

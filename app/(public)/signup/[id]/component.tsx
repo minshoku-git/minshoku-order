@@ -54,7 +54,7 @@ export const SignUpComponent = (): JSX.Element => {
   ------------------------------------------------------------------ */
   const { handleSubmit, control } = useForm<SignUpFormValues>({
     mode: 'onSubmit',
-    reValidateMode: 'onChange',
+    reValidateMode: 'onSubmit',
     resolver: zodResolver(SignUpSchema),
     defaultValues: {
       user_name: '阿部沙友里',

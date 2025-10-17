@@ -109,7 +109,7 @@ export const ContactComponent = (): JSX.Element => {
               {/* 送信前 */}
               <Typography variant="body1">
                 下記のフォームにお問い合わせ内容をご記入の上、送信ボタンを押してください。<br></br>
-                3営業日以内に担当者より返信いたします。
+                お客様の登録メールアドレス宛に、担当者より返信いたします。
               </Typography>
               <Box sx={{ mt: 2 }}>
                 <form noValidate onSubmit={handleSubmit(sendHandler)}>

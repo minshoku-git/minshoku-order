@@ -5,12 +5,23 @@ import { PaymentType, SelectType } from '@/app/_types/enum';
 /**
  * 支払い方法の更新 Schema
  */
-export const EditPaymentSchema = z.object({
-  /** 支払い種別 */
-  paymentType: z.enum(PaymentType),
-  /** クレジットカード番号 */
-  creditcard: z.string().optional(),
-});
+export const EditPaymentSchema = z
+  .object({
+    /** 支払い種別 */
+    paymentType: z.enum(PaymentType),
+    /** クレジットカード番号 */
+    creditcard: z.string().optional(),
+  })
+  .check((ctx) => {
+    if (ctx.value.paymentType === PaymentType.CREDITCARD && !ctx.value.creditcard) {
+      ctx.issues.push({
+        code: 'custom',
+        path: ['paymentType'],
+        message: '登録済みのクレジットカード番号を選択してください。',
+        input: ctx.value,
+      });
+    }
+  });
 
 /**
  * 支払い方法の更新 FormValues

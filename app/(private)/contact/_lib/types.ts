@@ -16,6 +16,8 @@ export type ContactFormValues = z.infer<typeof ContactSchema>;
 export type ContactMessageDetails = {
   /** ユーザー名 */
   userName: string;
+  /** ユーザー名カナ */
+  userNameKana: string;
   /** メールアドレス */
   userEmail: string;
   /** 問い合わせID */

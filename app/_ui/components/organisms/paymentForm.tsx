@@ -4,6 +4,7 @@ import { AddCard } from '@mui/icons-material';
 import {
     Box,
     Button,
+    colors,
     Divider,
     FormControl,
     FormControlLabel,
@@ -12,7 +13,7 @@ import {
     Typography,
 } from '@mui/material';
 import { JSX } from 'react';
-import { Controller, SubmitHandler, UseFormHandleSubmit } from 'react-hook-form';
+import { Controller, FieldError, FieldErrors, SubmitHandler, UseFormHandleSubmit } from 'react-hook-form';
 
 import { PaymentType, SelectType } from '@/app/_types/enum';
 import { Btn } from '@/app/_ui/components/atoms/Button';
@@ -33,6 +34,7 @@ type Props = {
     /** クレジットカードFlag ※0:非/1:可 */
     credit_flag: SelectType
     onError?: (errors: any) => void
+    error: FieldError | undefined
 }
 
 /**
@@ -43,6 +45,7 @@ export const PaymentForm = (props: Props): JSX.Element => {
 
     /* initialize
     ------------------------------------------------------------------ */
+
     return (
         <>
             <Divider sx={{ mb: 2, mt: 4 }} />
@@ -79,7 +82,7 @@ export const PaymentForm = (props: Props): JSX.Element => {
                                         control={<Radio />}
                                         label={<Typography fontWeight="bold">クレジットカード決済</Typography>}
                                     />
-                                    {true && (
+                                    {props.paymentMethod === PaymentType.CREDITCARD && (
                                         <>
                                             <Box sx={{ pl: 2 }}>
                                                 <Controller
@@ -111,6 +114,7 @@ export const PaymentForm = (props: Props): JSX.Element => {
                                                             >
                                                                 新しいクレジットカードを登録する
                                                             </Button>
+                                                            {props.error && <Typography sx={{ 'color': '#d32f2f', 'fontSize': '0.75rem', mt: 1, ml: 1 }}>{props.error.message}</Typography>}
                                                         </RadioGroup>
                                                     )}
                                                 />
