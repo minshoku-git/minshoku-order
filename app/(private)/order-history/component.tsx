@@ -1,12 +1,11 @@
 'use client';
-import { Box, Card, CardContent, CircularProgress, Divider, Typography } from '@mui/material';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { JSX, useEffect, useRef, useState } from 'react';
+import { Box, Card, CardContent, Divider, Fade, Typography } from '@mui/material';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { JSX, useEffect, useRef } from 'react';
 
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
-import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
+import { ApiResponse } from '@/app/_types/types';
+import { LoadingSpinner } from '@/app/_ui/components/atoms/LoadingSpinner';
 
 import { getOrderHistoryFetcher } from './_lib/fetcher';
 import { OrderHistoryResponse } from './_lib/types';
@@ -18,8 +17,6 @@ import { OrderHistoryResponse } from './_lib/types';
 export const OrderHistoryComponent = (): JSX.Element => {
   /* initialize
   ------------------------------------------------------------------ */
-  const router = useRouter();
-  const { openSnackbar } = useSnackBar();
 
   /* useQuery - 初期取得
   ------------------------------------------------------------------ */
@@ -69,15 +66,26 @@ export const OrderHistoryComponent = (): JSX.Element => {
 
   /* JSX
   ------------------------------------------------------------------ */
+  // データの初期ロード中はローディングインジケーターを表示し、DOM構造を安定させる
+  if (isLoading && orders.length === 0) {
+    return (<>
+      <Typography variant="h3" sx={{ fontSize: 20, mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
+        注文履歴
+      </Typography>
+      <LoadingSpinner />
+    </>
+    );
+  }
+
   return (
     <>
       <Typography variant="h3" sx={{ fontSize: 20, mb: 2, fontWeight: 'bold', textAlign: 'center' }}>
         注文履歴
       </Typography>
       <Box>
-        {!isLoading && <>
-          {orders.map((order) => (
-            <Box key={order.delivery_day} sx={{ mb: 2 }}>
+        {orders.map((order) => (
+          <Box key={order.delivery_day} sx={{ mb: 2 }}>
+            <Fade in={order ? true : false} timeout={500} unmountOnExit >
               <Card sx={{ borderRadius: 4 }}>
                 <CardContent>
                   {/* 日付ヘッダー */}
@@ -143,47 +151,25 @@ export const OrderHistoryComponent = (): JSX.Element => {
                   ))}
                 </CardContent>
               </Card>
-            </Box>
-          ))}
-          {orders.length === 0 && <>
-            <Card sx={{ borderRadius: 4 }}>
-              <CardContent >
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignContent: 'center' }}>
-                  <Typography sx={{ fontSize: 16 }}>
-                    ご注文履歴がありません。<br />最初のご注文をお待ちしています。
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </>
-          }
-        </>}
-      </Box>
-      <Box ref={observerTarget}>
-        {(isLoading || isFetchingNextPage) &&
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-              <CircularProgress color="warning" size="4rem" />
-              <Box
-                sx={{
-                  top: 0,
-                  left: 0,
-                  bottom: 0,
-                  right: 0,
-                  position: 'absolute',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  component="div"
-                  sx={{ color: '#ea5315' }}
-                >Loading</Typography>
-              </Box>
-            </Box>
+            </Fade>
           </Box>
+        ))}
+        {orders.length === 0 && !isLoading && <> {/* ロード完了後、データがない場合のみ表示 */}
+          <Card sx={{ borderRadius: 4 }}>
+            <CardContent >
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignContent: 'center' }}>
+                <Typography sx={{ fontSize: 16 }}>
+                  ご注文履歴がありません。<br />最初のご注文をお待ちしています。
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </>
+        }
+      </Box >
+      <Box ref={observerTarget}>
+        {(isFetchingNextPage) &&
+          <LoadingSpinner />
         }
       </Box>
     </>

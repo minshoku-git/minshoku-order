@@ -1,15 +1,15 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
-import { formatJstDate, formatJstDateTime } from '@/app/_lib/getDateTime';
+import { ORDER_HISTORY_PAGE_MAX_COUNT } from '@/app/_config/constants';
 import { createClient } from '@/app/_lib/supabase/server';
 import { t_order } from '@/app/_lib/supabase/tableTypes';
-import { ORDER_HISTORY_PAGE_MAX_COUNT } from '@/app/_types/constants';
+import { formatJstDate, formatJstDateTime } from '@/app/_lib/utils/getDateTime';
 import { convertPaymentTypeName, PaymentType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
-import { getAuth } from '../../order/_lib/function copy';
+import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
 import { OrderData, OrderHistoryData, OrderHistoryRequest, OrderHistoryResponse } from './types';
 
 /**
@@ -28,7 +28,7 @@ export const getOrderHistory = async (
   try {
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
     console.log(user.id);
 
     /* ユーザー情報取得

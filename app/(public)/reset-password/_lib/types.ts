@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { formatString } from '@/app/_lib/utill';
-import { MSG_PASSWORD, MSG_REQUIRED, REG_PASSWORD } from '@/app/_types/constants';
+import { MSG_PASSWORD, MSG_REQUIRED, REG_PASSWORD } from '@/app/_config/constants';
+import { formatString } from '@/app/_lib/utils/utils';
 
 /**
  * パスワード再設定 Schema
@@ -19,12 +19,13 @@ export const PasswordResetSchema = z
       .nonempty({ message: formatString(MSG_REQUIRED, '新しいパスワード(再入力)') })
       .regex(REG_PASSWORD, MSG_PASSWORD),
   })
-  .superRefine((data, ctx) => {
-    if (data.new_signup_password !== data.confirm_new_signup_password) {
-      ctx.addIssue({
+  .check((ctx) => {
+    if (ctx.value.new_signup_password !== ctx.value.confirm_new_signup_password) {
+      ctx.issues.push({
         code: 'custom',
         path: ['confirm_new_signup_password'],
-        message: '新しいパスワードと再入力のパスワードが一致しません。',
+        message: '新しいパスワードと新しいパスワード(再入力)が一致しません。',
+        input: ctx.value,
       });
     }
   });

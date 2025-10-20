@@ -1,22 +1,20 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Typography } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
+import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
+import { useApiQuery } from '@/app/_lib/hooks/query/useApiQuery';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import { Btn } from '@/app/_ui/_parts/Btn';
-import { InputItem } from '@/app/_ui/_parts/Inputitem';
-import { SelectItem } from '@/app/_ui/_parts/Selectitem';
-import UserCustomModal from '@/app/_ui/_parts/UserCustomModal';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
-import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
-import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
+import { Btn } from '@/app/_ui/components/atoms/Button';
+import { InputItem } from '@/app/_ui/components/molecules/InputItem';
+import { SelectItem } from '@/app/_ui/components/molecules/SelectItem';
+import UserCustomModal from '@/app/_ui/components/organisms/UserCustomModal';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
 
 import { SignUpFetcher, SignUpInitDataFetcher } from './_lib/fetcher';
 import { TermsComponent } from './_lib/terms';
@@ -56,7 +54,7 @@ export const SignUpComponent = (): JSX.Element => {
   ------------------------------------------------------------------ */
   const { handleSubmit, control } = useForm<SignUpFormValues>({
     mode: 'onSubmit',
-    reValidateMode: 'onChange',
+    reValidateMode: 'onSubmit',
     resolver: zodResolver(SignUpSchema),
     defaultValues: {
       user_name: '阿部沙友里',
@@ -183,7 +181,7 @@ export const SignUpComponent = (): JSX.Element => {
             <Typography variant="body1">会員登録に必要な情報をご入力・ご選択ください。</Typography>
             {initData && <>
               <Box sx={{ mt: 2 }}>
-                <form onSubmit={handleSubmit(signUpHandler)} noValidate>
+                <form noValidate onSubmit={handleSubmit(signUpHandler)}>
                   <InputItem control={control} label={`会社名`} name="cname" disabled={true} isNotFormValue={initData.company_name} type="text" />
                   <InputItem control={control} label={`支店名`} name="cname" disabled={true} isNotFormValue={initData.branch_name} type="text" />
                   <InputItem control={control} label={`お名前`} name="user_name" required={true} />

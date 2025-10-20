@@ -5,11 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { JSX, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
+import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import { Btn } from '@/app/_ui/_parts/Btn';
-import { InputItem } from '@/app/_ui/_parts/Inputitem';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
+import { Btn } from '@/app/_ui/components/atoms/Button';
+import { InputItemPassword } from '@/app/_ui/components/molecules/InputItemPassword';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
 
 import { updatePasswordFetcher } from './_lib/fetcher';
 import {
@@ -37,6 +37,9 @@ export const UpdatePasswordComponent = (): JSX.Element => {
   const [showCompleteMsg, setShowCompleteMsg] = useState<boolean>(false);
   const [showRetryMsg, setShowRetryMsg] = useState<boolean>(false);
   const [retryMsg, setRetryMsg] = useState<string>('');
+  const [showNewSignupPassword, setShowNewSignupPassword] = useState(false);
+  const [showConfirmNewSignupPassword, setShowConfirmNewSignupPassword] = useState(false);
+
 
   /* useForm
   ------------------------------------------------------------------ */
@@ -101,23 +104,24 @@ export const UpdatePasswordComponent = (): JSX.Element => {
         {!showCompleteMsg && !showRetryMsg && (<>
           <Typography variant="body1">新しいパスワードを入力してください。</Typography>
           <Box sx={{ mt: 2 }}>
-            <form onSubmit={handleSubmit(updatePasswordHandler)}>
+            <form noValidate onSubmit={handleSubmit(updatePasswordHandler)}>
               {/* 8文字以上、英数字の組み合わせ */}
-              <InputItem
+              {/* 新しいパスワード */}
+              <InputItemPassword
                 control={control}
-                label={`新しいパスワード`}
-                annotation="(8文字以上、半角英数字の組み合わせ)"
+                label="新しいパスワード"
                 name="new_signup_password"
-                required={true}
-                type="password"
+                annotation="(8文字以上、半角英数字の組み合わせ)"
+                showPassword={showNewSignupPassword}
+                setShowPassword={setShowNewSignupPassword}
               />
               {/* 新しいパスワード(再入力) */}
-              <InputItem
+              <InputItemPassword
                 control={control}
                 label={`新しいパスワード(再入力)`}
                 name="confirm_new_signup_password"
-                required={true}
-                type="password"
+                showPassword={showConfirmNewSignupPassword}
+                setShowPassword={setShowConfirmNewSignupPassword}
               />
               {/* 送信ボタン */}
               <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>

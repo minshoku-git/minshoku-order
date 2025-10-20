@@ -8,13 +8,13 @@ import { useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
+import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
+import { useApiQuery } from '@/app/_lib/hooks/query/useApiQuery';
 import { PaymentType } from '@/app/_types/enum';
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
 import { ApiRequest } from '@/app/_types/types';
-import { PaymentForm } from '@/app/_ui/_parts/paymentForm';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
-import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
+import { PaymentForm } from '@/app/_ui/components/organisms/paymentForm';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
 
 import { getEditPaymentTypeInitDataFetcher, updatePaymentTypeFetcher } from './_lib/fetcher';
 import { CreditCardData, EditPaymentFormValues, EditPaymentInitData, EditPaymentSchema } from './_lib/types';
@@ -40,7 +40,7 @@ export const EditPaymentComponent = (): JSX.Element => {
     handleSubmit,
     watch,
     reset,
-    formState: { isDirty },
+    formState: { isDirty, errors },
   } = useForm<EditPaymentFormValues>({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
@@ -126,6 +126,7 @@ export const EditPaymentComponent = (): JSX.Element => {
         </Typography>
       </Box>
       <Typography variant="body1">支払い方法をご選択ください。</Typography>
+      <Typography variant="body1">※予約済みの注文は、変更前の支払い方法で決済されます。</Typography>
       {!isLoading && data && <>
         <PaymentForm
           handleSubmit={handleSubmit}
@@ -138,6 +139,7 @@ export const EditPaymentComponent = (): JSX.Element => {
           deduction_flag={data.deduction_flag}
           credit_flag={data.credit_flag}
           paypay_flag={data.paypay_flag}
+          error={errors.paymentType}
         />
       </>}
     </>

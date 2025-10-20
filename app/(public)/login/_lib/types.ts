@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { formatString } from '@/app/_lib/utill';
-import { MSG_EMAIL, MSG_MAX, MSG_PASSWORD, MSG_REQUIRED, REG_PASSWORD } from '@/app/_types/constants';
+import { MSG_REQUIRED } from '@/app/_config/constants';
+import { formatString } from '@/app/_lib/utils/utils';
 
 /**
  * ユーザーログイン Schema
@@ -17,3 +17,18 @@ export const UserLoginSchema = z.object({
  * ユーザーログイン FormValues
  */
 export type UserLoginFormValues = z.infer<typeof UserLoginSchema>;
+
+/**
+ *  LoginUserQueryResponse
+ */
+export type LoginUserQueryResponse = {
+  /** 利用ステータス */
+  usage_status?: string;
+  /** ユーザー登録ステータス */
+  user_registration_status?: string;
+  /** 会社テーブル */
+  t_companies?: {
+    /** 利用ステータス */
+    usage_status: string;
+  };
+};

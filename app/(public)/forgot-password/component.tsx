@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { JSX, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
+import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import { Btn } from '@/app/_ui/_parts/Btn';
-import { InputItem } from '@/app/_ui/_parts/Inputitem';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
-import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
+import { Btn } from '@/app/_ui/components/atoms/Button';
+import { InputItem } from '@/app/_ui/components/molecules/InputItem';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
+import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
 
-import { sendPasswordResetMail } from './_lib/fetcher';
+import { sendResetPasswordMail } from './_lib/fetcher';
 import { PasswordFormValues, PasswordSchema } from './_lib/types';
 
 /**
@@ -55,7 +55,7 @@ export const PaymentComponent = (): JSX.Element => {
     mutationFn: async (data: PasswordFormValues) => {
       openProcessing();
       const req: ApiRequest<PasswordFormValues> = { request: data };
-      return sendPasswordResetMail(req) as unknown as ApiResponse<null>;
+      return sendResetPasswordMail(req) as unknown as ApiResponse<null>;
     },
     onSuccess: () => {
       setIsSend(true);
@@ -85,7 +85,7 @@ export const PaymentComponent = (): JSX.Element => {
           </Typography>
           {/* 登録メールアドレス */}
           <Box sx={{ mt: 2 }}>
-            <form onSubmit={handleSubmit(sendHandler)}>
+            <form noValidate onSubmit={handleSubmit(sendHandler)}>
               <InputItem control={control} label="登録メールアドレス" name="email" required={true} type="email" />
               {/* 送信ボタン */}
               <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>

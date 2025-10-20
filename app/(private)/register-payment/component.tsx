@@ -8,14 +8,14 @@ import { useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
+import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
+import { useApiQuery } from '@/app/_lib/hooks/query/useApiQuery';
 import { PaymentType } from '@/app/_types/enum';
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
 import { ApiRequest, ApiResponse, CreditCardData } from '@/app/_types/types';
-import { PaymentForm } from '@/app/_ui/_parts/paymentForm';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
-import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
-import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
+import { PaymentForm } from '@/app/_ui/components/organisms/paymentForm';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
+import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
 
 import { getRegisterPaymentTypeInitDataFetcher, registerPaymentTypeFetcher } from './_lib/fetcher';
 import { RegisterPaymentInitData, UserPaymentFormValues, UserPaymentSchema } from './_lib/types';
@@ -42,6 +42,7 @@ export const PaymentComponent = (): JSX.Element => {
     handleSubmit,
     watch,
     reset,
+    formState: { isDirty, errors },
   } = useForm<UserPaymentFormValues>({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
@@ -134,6 +135,7 @@ export const PaymentComponent = (): JSX.Element => {
           deduction_flag={data.deduction_flag}
           credit_flag={data.credit_flag}
           paypay_flag={data.paypay_flag}
+          error={errors.paymentType}
         />
       </>}
     </>

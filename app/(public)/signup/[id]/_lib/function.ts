@@ -1,7 +1,6 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 import { decrypt, encrypt } from '@/app/_lib/encryption/crypto';
-import { isEmailDuplicate } from '@/app/_lib/isEmailDuplicate';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import {
   t_companies,
@@ -10,7 +9,8 @@ import {
   t_user,
 } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
-import { getDomain, getPostgreSqlItems } from '@/app/_lib/utill';
+import { isEmailDuplicate } from '@/app/_lib/utils/isEmailDuplicate';
+import { getDomain, getPostgreSqlItems } from '@/app/_lib/utils/utils';
 import { UsageStatus, UserRegistrationStatus } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse, SelectOption } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';

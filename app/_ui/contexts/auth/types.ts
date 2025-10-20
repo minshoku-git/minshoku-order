@@ -1,0 +1,23 @@
+import { Session, User } from '@supabase/supabase-js';
+
+import { UserRegistrationStatus } from '@/app/_types/enum';
+
+export type AuthContextResponse = {
+  email: string | null;
+  restaurantName?: string;
+  userRegistrationStatus?: string;
+  userName?: string;
+};
+
+/** ユーザー情報 Response */
+export type UserAndCompanies = {
+  /** ユーザー名 */
+  user_name: string;
+  /** ユーザー登録ステータス */
+  user_registration_status: string;
+  /** 会社情報 */
+  t_companies: {
+    /** 食堂名 */
+    restaurant_name: string;
+  };
+};

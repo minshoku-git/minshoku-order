@@ -1,7 +1,14 @@
 import { z } from 'zod';
 
-import { formatString } from '@/app/_lib/utill';
-import { MSG_EMAIL, MSG_MAX, MSG_PASSWORD, MSG_REQUIRED, REG_PASSWORD, REG_ZENKAKU_KANA } from '@/app/_types/constants';
+import {
+  MSG_EMAIL,
+  MSG_MAX,
+  MSG_PASSWORD,
+  MSG_REQUIRED,
+  REG_PASSWORD,
+  REG_ZENKAKU_KANA,
+} from '@/app/_config/constants';
+import { formatString } from '@/app/_lib/utils/utils';
 import { SelectOption } from '@/app/_types/types';
 
 /**
@@ -43,12 +50,13 @@ export const SignUpSchema = z
       .nonempty({ message: formatString(MSG_REQUIRED, 'パスワード(再入力)') })
       .regex(REG_PASSWORD, MSG_PASSWORD),
   })
-  .superRefine((data, ctx) => {
-    if (data.signup_password !== data.confirm_signup_password) {
-      ctx.addIssue({
+  .check((ctx) => {
+    if (ctx.value.signup_password !== ctx.value.confirm_signup_password) {
+      ctx.issues.push({
         code: 'custom',
         path: ['confirm_signup_password'],
-        message: 'パスワードが一致しません。',
+        message: 'パスワードとパスワード(再入力)が一致しません。',
+        input: ctx.value,
       });
     }
   });

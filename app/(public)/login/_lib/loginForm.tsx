@@ -1,16 +1,18 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Button, Typography } from '@mui/material';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
-import { JSX } from 'react';
+import { JSX, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
+import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import { Btn } from '@/app/_ui/_parts/Btn';
-import { InputItem } from '@/app/_ui/_parts/Inputitem';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
-import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
+import { Btn } from '@/app/_ui/components/atoms/Button';
+import { InputItem } from '@/app/_ui/components/molecules/InputItem';
+import { InputItemPassword } from '@/app/_ui/components/molecules/InputItemPassword';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
 
 import { userlogin } from './fetcher';
 import { UserLoginFormValues, UserLoginSchema } from './types';
@@ -27,8 +29,11 @@ export const LoginForm = (props: Props): JSX.Element => {
   /* initialize
   ------------------------------------------------------------------ */
   const router = props.router;
-  const { openSnackbar } = useSnackBar();
+  const queryClient = useQueryClient();
   const { openProcessing, closeProcessing } = useProcessing();
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginBtnLoading, setLoginBtnLoading] = useState(false);
 
   /* useForm
   ------------------------------------------------------------------ */
@@ -51,7 +56,8 @@ export const LoginForm = (props: Props): JSX.Element => {
       const req: ApiRequest<UserLoginFormValues> = { request: data };
       return userlogin(req) as unknown as ApiResponse<null>;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.AUTH_STATUS] });
       router.push('/order');
     },
     onSettled: () => {
@@ -76,11 +82,17 @@ export const LoginForm = (props: Props): JSX.Element => {
             ログインはこちら
           </Typography>
         </Box>
-        <form onSubmit={handleSubmit(loginHandler)}>
+        <form noValidate onSubmit={handleSubmit(loginHandler)}>
           {/* メールアドレス */}
           <InputItem control={control} label="メールアドレス" name="email" required={true} type="mail" />
           {/* パスワード */}
-          <InputItem control={control} label="パスワード" name="password" required={true} type="password" />
+          <InputItemPassword
+            name="password"
+            label="パスワード"
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+            control={control}
+          />
           {/* ログインボタン */}
           <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
             <Btn label={'ログイン'} isSubmit={true} />

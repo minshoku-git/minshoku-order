@@ -2,13 +2,14 @@ import { sendMail } from '@/app/_lib/mailer/mailer';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import { t_contact } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
-import { getPostgreSqlItems } from '@/app/_lib/utill';
+import { formatJstDateTime, getNow } from '@/app/_lib/utils/getDateTime';
+import { getPostgreSqlItems } from '@/app/_lib/utils/utils';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
-import { getAuth } from '../../order/_lib/function copy';
-import { ContactFormValues } from './types';
+import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
+import { ContactFormValues, ContactMessageDetails } from './types';
 
 /**
  * sendContactMail
@@ -21,6 +22,7 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
   const req = values.request;
   const client = await createClient();
   const pgClient = createPgClient();
+  const now = formatJstDateTime(getNow());
 
   try {
     // connection Start
@@ -32,7 +34,7 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
 
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
 
     /* 問い合わせ新規追加
   　------------------------------------------------------------------ */
@@ -55,13 +57,41 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
       );
     }
 
-    /* メール送信
+    /* メール送信(利用者)
   　------------------------------------------------------------------ */
+    const customerMessage = generateCustomerMessage({
+      contactId: result.rows[0].id,
+      contactMessage: req.contactMessage,
+      date: now,
+      userName: user.user_name,
+      userNameKana: user.user_name_kana,
+      userEmail: user.user_email,
+      companyName: user.t_companies.company_name,
+      branchName: user.t_companies.branch_name,
+    });
+
     await sendMail({
-      mailType: 'contact',
-      senderUserName: user.user_name,
-      senderEmail: user.user_email,
-      text: req.contactMessage,
+      title: '【みんなの社食】お問い合わせを承りました。',
+      text: customerMessage,
+      to: user.user_email,
+    });
+
+    /* メール送信(運営)
+  　------------------------------------------------------------------ */
+    const message = generateContactMessage({
+      contactId: result.rows[0].id,
+      contactMessage: req.contactMessage,
+      date: now,
+      userName: user.user_name,
+      userNameKana: user.user_name_kana,
+      userEmail: user.user_email,
+      companyName: user.t_companies.company_name,
+      branchName: user.t_companies.branch_name,
+    });
+
+    await sendMail({
+      title: '【みんなの社食】ユーザーからのお問い合わせを受信しました',
+      text: message,
     });
 
     /* --------------------------------------------------------------- */
@@ -95,4 +125,66 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
     // Transaction End
     await pgClient.end();
   }
+};
+
+const generateContactMessage = (details: ContactMessageDetails): string => {
+  const { contactId, contactMessage, date, userName, userNameKana, userEmail, companyName, branchName } = details;
+
+  return `
+運営ご担当者様
+
+お疲れ様です。  
+以下の通り、ユーザーよりお問い合わせがありましたので、共有いたします。
+
+────────────────────  
+■ お問い合わせ日時  
+${date}
+■ お問合せ番号
+${contactId}
+
+■ ユーザー情報  
+・お名前：${userName}(${userNameKana}) 様
+・会社名：${companyName}  
+・部署名：${branchName}  
+・メールアドレス：${userEmail}
+
+■ お問い合わせ内容  
+――――――――――――――――  
+${contactMessage}
+――――――――――――――――
+
+ご確認のほど、よろしくお願いいたします。
+
+（自動送信）`.trim();
+};
+
+const generateCustomerMessage = (details: ContactMessageDetails): string => {
+  const { contactId, contactMessage, date, userName, userNameKana, userEmail, companyName, branchName } = details;
+
+  return `
+${userName} 様
+
+「みんなの食堂」をご利用いただき、誠にありがとうございます。
+
+以下の内容でお問合せを承りました。
+担当者より、あらためてご連絡させていただきますので、今しばらくお待ちください。
+
+────────────────────  
+■ お問い合わせ日時  
+${date}
+■ お問合せ番号
+${contactId}
+
+■ ユーザー情報  
+・お名前：${userName}(${userNameKana}) 様
+・会社名：${companyName}  
+・部署名：${branchName}  
+・メールアドレス：${userEmail}
+
+■ お問い合わせ内容  
+――――――――――――――――  
+${contactMessage}
+――――――――――――――――
+
+（自動送信）`.trim();
 };

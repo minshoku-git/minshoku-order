@@ -11,7 +11,7 @@ import { PasswordResetFormValues } from './types';
 export const updatePasswordFetcher = async (
   condition: ApiRequest<PasswordResetFormValues> | null
 ): Promise<ApiResponse<null>> => {
-  return fetcher<ApiResponse<null>>('/api/reset-password', {
+  return fetcher<ApiResponse<null>>('/api/reset-password/resetPassword', {
     method: 'POST',
     body: JSON.stringify(condition),
     headers: {

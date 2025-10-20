@@ -16,6 +16,7 @@ export const PasswordResetSchema = z.object({
   hukugou0: z.string().optional(),
   /** 新しいパスワード(再入力) */
   payment_type: z.string(),
+  password: z.string(),
 });
 
 /**

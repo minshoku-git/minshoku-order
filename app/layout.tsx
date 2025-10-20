@@ -1,10 +1,10 @@
 import './globals.css';
-import './_ui/_parts/_layout/App.scss';
+import './_ui/components/layouts/App.scss';
 
 import type { Metadata } from 'next';
 
-import { notoSansJp } from './_ui/fonts';
-import { AppLayoutContent } from './appLayoutContent';
+import { moboBold, notoSansJp } from './_config/fonts';
+import { AppLayoutContent } from './_ui/components/layouts/AppLayoutContent';
 
 export const metadata: Metadata = {
   title: {
@@ -33,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className={notoSansJp.variable}>
+      <body className={`${notoSansJp.variable} ${moboBold.variable}`}>
         <AppLayoutContent>{children}</AppLayoutContent>
       </body>
     </html>

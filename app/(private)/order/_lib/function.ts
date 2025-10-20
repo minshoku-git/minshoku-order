@@ -1,19 +1,19 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 import { formatISO } from 'date-fns';
 
-import { formatJstDate, getCancelDeadlineUTC, getNow } from '@/app/_lib/getDateTime';
-import { getImageSignedUrl } from '@/app/_lib/subabaseStorage/getImageUrl';
+import { BUCKET_SHOP_IMAGES } from '@/app/_config/constants';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import { t_menu_schedule, t_order } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
-import { getPostgreSqlItems } from '@/app/_lib/utill';
-import { BUCKET_SHOP_IMAGES } from '@/app/_types/constants';
-import { OrderStatusType, PaymentType } from '@/app/_types/enum';
+import { getImageSignedUrl } from '@/app/_lib/supabaseStorage/getImageUrl';
+import { formatJstDate, getCancelDeadlineUTC, getNow, getOrderDeadlineUTC } from '@/app/_lib/utils/getDateTime';
+import { getPostgreSqlItems } from '@/app/_lib/utils/utils';
+import { convertPaymentTypeName, OrderStatusType, PaymentType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
-import { getAuth } from './function copy';
+import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
 import {
   CancelOrderRequest,
   OmitMenuScheduleAndShop,
@@ -38,7 +38,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
   try {
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
 
     /* メニュー情報取得
     ------------------------------------------------------------------ */
@@ -49,6 +49,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
             spice_level,
             list_price,
             sale_price,
+            stock_count,
             t_shops!inner(
               id,
               shop_name,
@@ -138,7 +139,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
       );
     }
 
-    /* 注文情報取得
+    /* 自注文情報取得
     ------------------------------------------------------------------ */
     const queryOrder = client
       .from('t_order')
@@ -151,7 +152,6 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     console.log('スケジュールID', menuSchesuleId ?? data.id);
 
     if (errorOrder) {
-      console.log(errorOrder);
       console.error(errorOrder);
       throw new CustomError(
         ErrorCodes.NOT_FOUND.code,
@@ -160,15 +160,48 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
       );
     }
 
+    /* 現在の注文数
+    ------------------------------------------------------------------ */
+    const queryCountOrder = client
+      .from('t_order')
+      .select('count')
+      .eq('t_menu_schedule_id', menuSchesuleId ?? data.id)
+      .eq('order_status_type', OrderStatusType.VALID);
+    const { data: countOrderData, error: errorCountOrder } = (await queryCountOrder) as PostgrestSingleResponse<
+      t_order[]
+    >;
+    console.log('スケジュールID', menuSchesuleId ?? data.id);
+
+    if (errorCountOrder) {
+      console.error(errorCountOrder);
+      throw new CustomError(
+        ErrorCodes.NOT_FOUND.code,
+        '現在の注文数の取得' + ErrorCodes.NOT_FOUND.message,
+        ErrorCodes.NOT_FOUND.status
+      );
+    }
+
+    const orderCount = countOrderData ? countOrderData.reduce((sum, item) => sum + (item.count ?? 0), 0) : 0;
+
+    /* 注文可否判定
+    ------------------------------------------------------------------ */
+    const orderPeriodDaysBefore = user.t_companies.order_period_day;
+    const orderPeriodTime = user.t_companies.order_period_time;
+    const orderDeadlineUTC = getOrderDeadlineUTC(data.delivery_day, orderPeriodDaysBefore, orderPeriodTime);
+
+    console.log('現在日時:', now);
+    console.log('納品日:', data.delivery_day);
+    console.log('注文期限:', orderDeadlineUTC);
+
+    const isOrderDeadlinePassed = now >= orderDeadlineUTC;
+
     /* 注文キャンセル可否判定
     ------------------------------------------------------------------ */
     const cancelDaysBefore = user.t_companies.cancel_period_day;
     const cancelTime = user.t_companies.cancel_period_time;
     const cancelDeadlineUTC = getCancelDeadlineUTC(data.delivery_day, cancelDaysBefore, cancelTime);
 
-    console.log('納品日:', data.delivery_day);
     console.log('キャンセル日時:', cancelDeadlineUTC);
-    console.log('現在日時:', now);
 
     const isCancellable = cancelDeadlineUTC > now;
 
@@ -197,6 +230,8 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
         sale_price: data.sale_price ?? 0,
         spice_level: data.spice_level ?? 0,
         stock_count: data.stock_count ?? 0,
+        isOrderDeadlinePassed: isOrderDeadlinePassed,
+        orderCount: orderCount,
       },
       shopData: {
         shop_name: data.t_shops.shop_name,
@@ -215,6 +250,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
         cancel_period_time: user.t_companies.cancel_period_time!.slice(0, 5),
       },
       orderData: orderData ? { t_order_id: orderData.id, order_count: orderData.count, isCancellable } : undefined,
+      paymentTypeString: convertPaymentTypeName(user.payment_type as PaymentType),
     };
 
     return {
@@ -249,19 +285,18 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
 export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiResponse<null>> => {
   const client = await createClient();
   const req = values.request;
-  const today = formatISO(getNow());
   const now = getNow();
 
   try {
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
 
     /* スケジュール情報取得とテーブルロック
   　------------------------------------------------------------------ */
     const { data: menuSchedule, error: scheduleError } = await client
       .from('t_menu_schedule')
-      .select('stock_count')
+      .select('delivery_day, stock_count')
       .eq('id', req.t_menu_schedule_id)
       .eq('cancel_flag', 0)
       .single();
@@ -272,6 +307,20 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
         'メニュースケジュール情報の取得' + ErrorCodes.NOT_FOUND.message,
         ErrorCodes.NOT_FOUND.status
       );
+    }
+
+    /* 注文時間判定
+    ------------------------------------------------------------------ */
+    const orderPeriodDaysBefore = user.t_companies.order_period_day;
+    const orderPeriodTime = user.t_companies.order_period_time;
+    const orderDeadlineUTC = getOrderDeadlineUTC(menuSchedule.delivery_day, orderPeriodDaysBefore, orderPeriodTime);
+
+    console.log('注文期限:', orderDeadlineUTC);
+    console.log('現在日時:', now);
+
+    const isOrderDeadlinePassed = now >= orderDeadlineUTC;
+    if (isOrderDeadlinePassed) {
+      throw new CustomError(ErrorCodes.ORDER_EXPIRED);
     }
 
     /* 自身の注文状況
@@ -287,9 +336,12 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
     if (orderCheckError) {
       throw new CustomError(
         ErrorCodes.NOT_FOUND.code,
-        '既に注文済みです。' + ErrorCodes.NOT_FOUND.message,
+        '注文状況の確認' + ErrorCodes.NOT_FOUND.message,
         ErrorCodes.NOT_FOUND.status
       );
+    }
+    if (orderCheck && orderCheck.id) {
+      throw new CustomError(ErrorCodes.ORDER_ALREADY_PLACED);
     }
 
     /* 現在の在庫数の確認
@@ -355,7 +407,7 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
   try {
     /* ユーザー情報取得
       ------------------------------------------------------------------ */
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
 
     // connection Start
     await pgClient.connect();
@@ -440,6 +492,16 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
       );
     }
 
+    /* 会社負担額
+    ------------------------------------------------------------------ */
+    const burden: number = user.t_companies_employment_status.set_meal_burden ?? 0;
+    const companiesBurdenAmount = req.order_count * burden;
+
+    const amount = menuScheduleData.sale_price! * req.order_count;
+
+    // ユーザー負担額
+    const userBurdenAmount = amount - companiesBurdenAmount;
+
     /* 注文情報の新規登録
     ------------------------------------------------------------------ */
     const insertValues: Omit<t_order, 'id' | 'cancel_datetime' | 'created_at' | 'updated_at'> = {
@@ -455,17 +517,17 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
       // 支払金額類
       count: req.order_count,
       list_price: menuScheduleData.list_price,
-      amount: menuScheduleData.sale_price! * req.order_count!,
+      amount: amount,
       // 支払情報
       payment_type: user.payment_type,
-      // 会社清算
-      user_burden_amount: 0,
-      companies_burden_amount: 0,
-      // クレジットカード情報
+      user_burden_amount: userBurdenAmount,
+      // 会社負担額
+      companies_burden_amount: companiesBurdenAmount,
+      // クレジットカード情報 TASK:置き換え
       gmo_order_id: PaymentType.CREDITCARD === user.payment_type ? '' : '',
       credit_access_id: PaymentType.CREDITCARD === user.payment_type ? '' : '',
       credit_access_password: PaymentType.CREDITCARD === user.payment_type ? '' : '',
-      // paypay情報
+      // paypay情報 TASK:置き換え
       paypay_access_id: PaymentType.PAYPAY === user.payment_type ? '' : '',
       paypay_access_password: PaymentType.PAYPAY === user.payment_type ? '' : '',
     };
@@ -538,7 +600,7 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
   try {
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
-    const user = await getAuth(client);
+    const user = await getLoginUserDetail(client);
 
     /* 注文キャンセル
   　------------------------------------------------------------------ */

@@ -1,18 +1,18 @@
 'use client';
 import { JSX, useEffect, useState } from 'react';
 
+import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
+import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
+import { useApiQuery } from '@/app/_lib/hooks/query/useApiQuery';
 import { AlertType } from '@/app/_types/enum';
-import { QUERY_KEYS } from '@/app/_types/queryKeys';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
-import MenuCard from '@/app/_ui/_parts/MenuCard';
-import MenuCardConfirm from '@/app/_ui/_parts/MenuCardConfirm';
-import MenuCardNone from '@/app/_ui/_parts/MenuCardNone';
-import MenuCardSkeleton from '@/app/_ui/_parts/MenuCardSkeleton';
-import { MenuDateNavigation } from '@/app/_ui/_parts/MenuDateNavigation';
-import { useProcessing } from '@/app/_ui/processing/processingContext';
-import { useSnackBar } from '@/app/_ui/snackBar/snackbarContext';
-import { useApiMutation } from '@/app/_ui/tanstackQuery/useApiMutation';
-import { useApiQuery } from '@/app/_ui/tanstackQuery/useApiQuery';
+import MenuCard from '@/app/_ui/components/organisms/menu/MenuCard';
+import MenuCardConfirm from '@/app/_ui/components/organisms/menu/MenuCardConfirm';
+import MenuCardNone from '@/app/_ui/components/organisms/menu/MenuCardNone';
+import MenuCardSkeleton from '@/app/_ui/components/organisms/menu/MenuCardSkeleton';
+import { MenuDateNavigation } from '@/app/_ui/components/organisms/menu/MenuDateNavigation';
+import { useProcessing } from '@/app/_ui/state/processing/processingContext';
+import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
 
 import { cancelOrderFetcher, getOrderInitFetcher, orderFetcher, preOrderFetcher } from './_lib/fetcher';
 import { CancelOrderRequest, OrderInitRequest, OrderInitResponse, OrderRequest } from './_lib/types';
@@ -115,9 +115,10 @@ export const OrderComponent = (): JSX.Element => {
       const req: ApiRequest<OrderRequest> = { request: { order_count: count, t_menu_schedule_id: id } };
       return orderFetcher(req) as unknown as ApiResponse<null>;
     },
-    onSuccess: async (res) => {
-      setOpenPreOrder(false);
+    onSuccess: async () => {
+      await refetch()
       openSnackbar(AlertType.INFO, '注文が完了しました。');
+      setOpenPreOrder(false);
     },
     onSettled: () => {
       closeProcessing();
@@ -155,37 +156,48 @@ export const OrderComponent = (): JSX.Element => {
 
   /* JSX
   ------------------------------------------------------------------ */
+  // ロード中はスケルトンを表示し、DOM構造のブレを防ぐ
+  if (isLoading || !data) {
+    // データ取得中、またはデータがまだ空の場合はスケルトンを表示
+    // MenuCardNoneを表示するのはデータ取得完了後、かつメニューデータがnullの場合のみ
+    return <MenuCardSkeleton />;
+  }
+
   return (
-    <>{isLoading
-      ? <MenuCardSkeleton />
-      : <>
-        {/* 日付ナビゲーション */}
-        {data && data.menuScheduleData ? (<>
-          {!openPreOrder ? <>
-            <MenuDateNavigation
-              menuDate={data.menuScheduleData.delivery_day as string}
-              moveMenu={moveMenu}
-              nextScheduleId={data.nextScheduleId}
-              previousScheduleId={data.previousScheduleId}
-            />
-            <MenuCard
-              preOrderHandler={preOrderHandler}
-              cancelOrderHandler={cancelOrderHandler}
+    <>
+      {data.menuScheduleData ? (
+        <>
+          {!openPreOrder ? (
+            <>
+              {/* 日付ナビゲーションはデータがあれば常に表示 */}
+              <MenuDateNavigation
+                menuDate={data.menuScheduleData.delivery_day as string}
+                moveMenu={moveMenu}
+                nextScheduleId={data.nextScheduleId}
+                previousScheduleId={data.previousScheduleId}
+              />
+              {/* メインコンテンツ部分の制御 */}
+              <MenuCard
+                preOrderHandler={preOrderHandler}
+                cancelOrderHandler={cancelOrderHandler}
+                data={data}
+                count={count}
+                setCount={setCount}
+              />
+            </>
+          ) : (
+            <MenuCardConfirm
               data={data}
               count={count}
-              setCount={setCount}
-            />
-          </>
-            : <MenuCardConfirm
               backHandler={backHandler}
               orderHandler={orderHandler}
             />
-          }
-        </>) : (
-          <MenuCardNone />
-        )}
-      </>
-    }
+          )}
+        </>
+      ) : (
+        // データが存在しない（メニューがない）場合
+        <MenuCardNone />
+      )}
     </>
   );
 };

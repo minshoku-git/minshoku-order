@@ -11,7 +11,7 @@ import { PasswordResetRequest, PasswordResetResponse } from './types';
  * パスワード変更
  * @returns {Promise<ApiResponse<string>>}
  */
-export const updatePassword = async (
+export const resetPassword = async (
   values: ApiRequest<PasswordResetRequest>
 ): Promise<ApiResponse<PasswordResetResponse>> => {
   const supabase = await createClient();

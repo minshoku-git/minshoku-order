@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { PaymentType } from '@/app/_types/enum';
+
 /**
  * 注文情報 Schema
  */
@@ -49,6 +51,8 @@ export type OrderInitResponse = {
   shopData?: ShopData;
   /** 注文情報 */
   orderData?: OrderData;
+  /** 支払い方法 */
+  paymentTypeString?: string;
 };
 
 /** 注文情報 初期表示 Request */
@@ -110,6 +114,10 @@ export type MenuScheduleData = {
   list_price: number;
   /** 売価 */
   sale_price: number;
+  /** 注文期限超過 */
+  isOrderDeadlinePassed: boolean;
+  /** 注文数 */
+  orderCount: number;
 };
 
 /** 店舗情報 */
