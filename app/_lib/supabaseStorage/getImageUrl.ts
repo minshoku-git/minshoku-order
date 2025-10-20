@@ -6,12 +6,13 @@ import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 /**
  * 画像URLを取得する
- * @param {SupabaseClient} client
+ * @param {SupabaseClient<any, string, any>} client
  * @param {string} bucketName
  * @param {string} filePath
  * @returns {string} - imageUrl
  */
-export const getImageUrl = (client: SupabaseClient, bucketName: string, filePath: string): string => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getImageUrl = (client: SupabaseClient<any, string, any>, bucketName: string, filePath: string): string => {
   try {
     const {
       data: { publicUrl },
