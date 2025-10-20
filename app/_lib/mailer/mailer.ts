@@ -32,7 +32,8 @@ type Props = {
 export const sendMail = async (req: Props): Promise<ApiResponse<null>> => {
   return await transporter
     .sendMail({
-      to: req.to ?? 's.abe@refact.co.jp', // TASK
+      from: `みんなの社食 <${process.env.GOOGLE_MAIL_USER!}>`,
+      to: req.to ?? process.env.GOOGLE_MAIL_USER!,
       subject: req.title,
       text: req.text,
     })
