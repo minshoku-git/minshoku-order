@@ -41,7 +41,7 @@ export const PaymentComponent = (): JSX.Element => {
     defaultValues: { email: '' },
   });
 
-  const moveLoginPage = () => {
+  const moveBackPage = () => {
     router.back();
   };
 
@@ -91,6 +91,9 @@ export const PaymentComponent = (): JSX.Element => {
               <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
                 <Btn label={'送信'} isSubmit={true} isDisabled={!isDirty} />
               </Box>
+              <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
+                <Btn label={'戻る'} bgc={'#707070'} eventhandler={() => moveBackPage()} />
+              </Box>
             </form>
           </Box>
         </>
@@ -104,7 +107,7 @@ export const PaymentComponent = (): JSX.Element => {
               内容をご確認の上、ログインしてください。
             </Typography>
             <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 4 }}>
-              <Btn label={'ログイン画面'} eventhandler={() => moveLoginPage()} />
+              <Btn label={'ログイン画面'} eventhandler={() => moveBackPage()} />
             </Box>
           </Box>
         </>

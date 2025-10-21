@@ -51,7 +51,6 @@ export default function Header() {
                   color: '#ea5315',
                   fontWeight: 'bold',
                   fontSize: 28,
-                  fontFamily: 'Mobo Bold',
                 }}
               >
                 {restaurantName}

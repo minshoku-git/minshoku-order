@@ -1,12 +1,14 @@
 'use client';
 import { Box, Card, CardContent, Divider, Fade, Typography } from '@mui/material';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import Image from 'next/image';
 import { JSX, useEffect, useRef } from 'react';
 
 import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { ApiResponse } from '@/app/_types/types';
 import { LoadingSpinner } from '@/app/_ui/components/atoms/LoadingSpinner';
 
+import foodDishBlankImage from '../../_ui/assets/images/food_dish_blank.png';
 import { getOrderHistoryFetcher } from './_lib/fetcher';
 import { OrderHistoryResponse } from './_lib/types';
 
@@ -84,7 +86,7 @@ export const OrderHistoryComponent = (): JSX.Element => {
       </Typography>
       <Box>
         {orders.map((order) => (
-          <Box key={order.delivery_day} sx={{ mb: 2 }}>
+          <Box key={order.delivery_day}>
             <Fade in={order ? true : false} timeout={500} unmountOnExit >
               <Card sx={{ borderRadius: 4 }}>
                 <CardContent>
@@ -156,10 +158,15 @@ export const OrderHistoryComponent = (): JSX.Element => {
         ))}
         {orders.length === 0 && !isLoading && <> {/* ロード完了後、データがない場合のみ表示 */}
           <Card sx={{ borderRadius: 4 }}>
-            <CardContent >
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignContent: 'center' }}>
-                <Typography sx={{ fontSize: 16 }}>
-                  ご注文履歴がありません。<br />最初のご注文をお待ちしています。
+            <CardContent sx={{ p: 3! }}>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                {/* <Image
+                  src={foodDishBlankImage}
+                  alt={'空のお皿'}
+                  style={{ verticalAlign: 'middle', width: '20%', height: 'auto' }} /> */}
+                <Typography sx={{ fontSize: 16, mt: 0 }}>
+                  注文履歴がありません。<br />最初のご注文をお待ちしています。
                 </Typography>
               </Box>
             </CardContent>

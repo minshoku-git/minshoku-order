@@ -1,6 +1,6 @@
 {
-  "name": "MyWebSite",
-  "short_name": "MySite",
+  "name": "みんなの社食",
+  "short_name": "みんしょく",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -15,7 +15,5 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#00b1b2",
-  "background_color": "#00b1b2",
   "display": "standalone"
 }
