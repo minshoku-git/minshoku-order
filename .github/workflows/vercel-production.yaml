@@ -44,5 +44,5 @@ jobs:
         id: deploy
         run: |
           set -e
-          DEPLOY_URL=$(vercel deploy --prod --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          DEPLOY_URL=$(vercel deploy --prod --prebuilt --token="${{ secrets.VERCEL_TOKEN }}")
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
