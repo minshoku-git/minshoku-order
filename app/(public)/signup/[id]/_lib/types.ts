@@ -127,3 +127,20 @@ export type SignUpResponse = {
   /** 会社ドメイン判定 */
   isCompanyDomain: boolean;
 };
+
+export type ApprovalRequestMessageDetails = {
+  /** ユーザー名 */
+  userName: string;
+  /** ユーザー名カナ */
+  userNameKana: string;
+  /** メールアドレス */
+  userEmail: string;
+  /** 問い合わせ日時 */
+  date: string;
+  /** 会社名 */
+  companyName: string;
+  /** 支店名 */
+  branchName: string;
+  /** ユーザーID */
+  userId: string;
+};

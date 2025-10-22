@@ -1,6 +1,7 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 import { decrypt, encrypt } from '@/app/_lib/encryption/crypto';
+import { sendMail } from '@/app/_lib/mailer/mailer';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import {
   t_companies,
@@ -9,6 +10,7 @@ import {
   t_user,
 } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
+import { formatJstDateTime, getNow } from '@/app/_lib/utils/getDateTime';
 import { isEmailDuplicate } from '@/app/_lib/utils/isEmailDuplicate';
 import { getDomain, getPostgreSqlItems } from '@/app/_lib/utils/utils';
 import { UsageStatus, UserRegistrationStatus } from '@/app/_types/enum';
@@ -17,6 +19,7 @@ import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 import {
+  ApprovalRequestMessageDetails,
   SignUpDecrypt,
   SignUpEncrypt,
   SignUpInitData,
@@ -170,6 +173,7 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
   const req = values.request;
   const supabase = await createClient();
   const pgClient = createPgClient();
+  const now = formatJstDateTime(getNow());
 
   try {
     /* 復号化
@@ -273,6 +277,23 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
           ErrorCodes.NOT_FOUND.status
         );
       }
+    } else {
+      /* 承認依頼メール送信
+  　  ------------------------------------------------------------------ */
+      const message = generateApprovalRequestMessage({
+        date: now,
+        userName: req.user_name,
+        userNameKana: req.user_name_kana,
+        userEmail: req.user_email,
+        companyName: req.t_companies_department_id,
+        branchName: '',
+        userId: signUpEncryptReq,
+      });
+
+      await sendMail({
+        title: '【みんなの社食】ユーザー承認依頼',
+        text: message,
+      });
     }
 
     /* --------------------------------------------------------------- */
@@ -307,4 +328,37 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
     // Transaction End
     await pgClient.end();
   }
+};
+
+const generateApprovalRequestMessage = (details: ApprovalRequestMessageDetails): string => {
+  const { date, userName, userNameKana, userEmail, companyName, branchName, userId } = details;
+
+  return `
+運営ご担当者様
+
+お疲れ様です。  
+下記ユーザーの詳細をご確認の上、ユーザーの承認または否認を行ってください。
+
+────────────────────  
+■ 申請日時  
+${date}
+
+■ ユーザー情報  
+・お名前：${userName}(${userNameKana}) 様
+・会社名：${companyName}  
+・部署名：${branchName}  
+・メールアドレス：${userEmail}
+
+■ 承認
+承認する場合は、下記URLにアクセスしてください。
+http://localhost:3000/decision-result/0?token=${userId}
+
+■ 否認
+否認する場合は、下記URLにアクセスしてください。
+http://localhost:3000/decision-result/1?token=${userId}
+
+
+ご確認のほど、よろしくお願いいたします。
+
+（自動送信）`.trim();
 };
