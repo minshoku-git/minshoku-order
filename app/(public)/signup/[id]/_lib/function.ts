@@ -171,11 +171,16 @@ export const getSignUpInitData = async (
  */
 export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Promise<ApiResponse<SignUpResponse>> => {
   const req = values.request;
-  const supabase = await createClient();
-  const pgClient = createPgClient();
   const now = formatJstDateTime(getNow());
+  const supabase = await createClient();
+
+  // connection Start
+  const pgClient = await createPgClient();
 
   try {
+    // Transaction Start
+    await pgClient.query('BEGIN');
+
     /* 復号化
     ------------------------------------------------------------------ */
     const decryptToken: string = decrypt(req.token);
@@ -188,12 +193,6 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
 
     /* ユーザー新規登録
     ------------------------------------------------------------------ */
-    // connection Start
-    await pgClient.connect();
-    console.log('Connected to the database successfully');
-
-    // Transaction Start
-    await pgClient.query('BEGIN');
 
     /* Select - メールアドレスの重複確認
   　------------------------------------------------------------------ */

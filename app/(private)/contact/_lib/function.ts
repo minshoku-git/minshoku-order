@@ -20,15 +20,13 @@ import { ContactFormValues, ContactMessageDetails } from './types';
  */
 export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Promise<ApiResponse<null>> => {
   const req = values.request;
-  const client = await createClient();
-  const pgClient = createPgClient();
   const now = formatJstDateTime(getNow());
+  const client = await createClient();
+
+  // connection Start
+  const pgClient = await createPgClient();
 
   try {
-    // connection Start
-    await pgClient.connect();
-    console.log('Connected to the database successfully');
-
     // Transaction Start
     await pgClient.query('BEGIN');
 

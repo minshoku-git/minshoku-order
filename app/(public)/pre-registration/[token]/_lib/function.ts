@@ -21,16 +21,14 @@ import { NextPageDecrypt, NextPageInitRequest } from './types';
  * @returns {Promise<ApiResponse<null>>}
  */
 export const preregister = async (values: ApiRequest<NextPageInitRequest>): Promise<ApiResponse<null>> => {
-  const supabase = await createClient();
-  const pgClient = createPgClient();
-
   const req = values.request;
   const timestamp = getNow();
+  const supabase = await createClient();
+
+  // connection Start
+  const pgClient = await createPgClient();
 
   try {
-    // connection Start
-    await pgClient.connect();
-    console.log('Connected to the database successfully');
     // Transaction Start
     await pgClient.query('BEGIN');
 

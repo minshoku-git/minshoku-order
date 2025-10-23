@@ -88,7 +88,7 @@ export const OrderHistoryComponent = (): JSX.Element => {
         {orders.map((order) => (
           <Box key={order.delivery_day}>
             <Fade in={order ? true : false} timeout={500} unmountOnExit >
-              <Card sx={{ borderRadius: 4 }}>
+              <Card sx={{ borderRadius: 4, mb: 2 }}>
                 <CardContent>
                   {/* 日付ヘッダー */}
                   <Typography

@@ -96,15 +96,13 @@ export const getEditPaymentTypeInitData = async (
  */
 export const registerPaymentType = async (values: ApiRequest<UserPaymentFormValues>): Promise<ApiResponse<null>> => {
   const req = values.request;
-  const supabase = await createClient();
-  const pgClient = createPgClient();
   const now = getNow();
+  const supabase = await createClient();
+
+  // connection Start
+  const pgClient = await createPgClient();
 
   try {
-    // connection Start
-    await pgClient.connect();
-    console.log('Connected to the database successfully');
-
     // Transaction Start
     await pgClient.query('BEGIN');
 

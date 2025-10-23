@@ -45,6 +45,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     const selectColumns = `id,
             delivery_day,
             menu_name,
+            menu_description,
             allergen_labelling,
             spice_level,
             list_price,
@@ -397,24 +398,20 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
  * @returns {Promise<ApiResponse<null>>}
  */
 export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiResponse<null>> => {
-  const pgClient = createPgClient();
+  const req = values.request;
+  const now = getNow();
   const client = await createClient();
 
-  const req = values.request;
-  const today = formatISO(getNow());
-  const now = getNow();
+  // connection Start
+  const pgClient = await createPgClient();
 
   try {
-    /* ユーザー情報取得
-      ------------------------------------------------------------------ */
-    const user = await getLoginUserDetail(client);
-
-    // connection Start
-    await pgClient.connect();
-    console.log('Connected to the database successfully');
-
     // Transaction Start
     await pgClient.query('BEGIN');
+
+    /* ユーザー情報取得
+    ------------------------------------------------------------------ */
+    const user = await getLoginUserDetail(client);
 
     /* スケジュール情報取得とテーブルロック
   　------------------------------------------------------------------ */

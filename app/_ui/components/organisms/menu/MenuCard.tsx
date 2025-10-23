@@ -192,15 +192,15 @@ export default function MenuCard(props: Props) {
           >
             <Box
               sx={{
-                maxHeight: expanded ? 'none' : 80, // 折りたたみ時の高さ
+                maxHeight: expanded ? 'none' : 40, // 折りたたみ時の高さ
                 overflow: 'hidden',
                 transition: 'max-height 0.5s',
               }}
             >
               <Typography variant="body2">
-                {menuScheduleData.menu_name}
+                {menuScheduleData.menu_description}
               </Typography>
-              <Typography variant="body2">アレルギー表記：{menuScheduleData.allergen_labelling ?? 'なし'}</Typography>
+              <Typography variant="body2" mt={1}>アレルギー表記：{menuScheduleData.allergen_labelling ?? 'なし'}</Typography>
             </Box>
             {/* フェードオーバーレイ */}
             {!expanded && (
@@ -210,7 +210,7 @@ export default function MenuCard(props: Props) {
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  height: 60,
+                  height: 80,
                   background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, #fff 100%)',
                 }}
               />
