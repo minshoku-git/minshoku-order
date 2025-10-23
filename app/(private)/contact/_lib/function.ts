@@ -132,7 +132,7 @@ const generateContactMessage = (details: ContactMessageDetails): string => {
 運営ご担当者様
 
 お疲れ様です。  
-以下の通り、ユーザーよりお問い合わせがありましたので、共有いたします。
+以下の通り、ユーザーからお問い合わせがありました。内容をご確認のうえ、対応をお願いいたします。
 
 ────────────────────  
 ■ お問い合わせ日時  
@@ -151,9 +151,9 @@ ${contactId}
 ${contactMessage}
 ――――――――――――――――
 
-ご確認のほど、よろしくお願いいたします。
+ご確認のうえ、対応をお願いいたします。
 
-（自動送信）`.trim();
+（本メールは自動送信されています）`.trim();
 };
 
 const generateCustomerMessage = (details: ContactMessageDetails): string => {
@@ -184,5 +184,5 @@ ${contactId}
 ${contactMessage}
 ――――――――――――――――
 
-（自動送信）`.trim();
+（本メールは自動送信されています）`.trim();
 };

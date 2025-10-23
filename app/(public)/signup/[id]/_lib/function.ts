@@ -336,7 +336,7 @@ const generateApprovalRequestMessage = (details: ApprovalRequestMessageDetails):
 運営ご担当者様
 
 お疲れ様です。  
-下記ユーザーの詳細をご確認の上、ユーザーの承認または否認を行ってください。
+以下のユーザー申請内容をご確認のうえ、「承認」または「否認」のご対応をお願いいたします。
 
 ────────────────────  
 ■ 申請日時  
@@ -349,15 +349,15 @@ ${date}
 ・メールアドレス：${userEmail}
 
 ■ 承認
-承認する場合は、下記URLにアクセスしてください。
+承認される場合は、以下のURLにアクセスしてください。
 http://localhost:3000/decision-result/0?token=${userId}
 
 ■ 否認
-否認する場合は、下記URLにアクセスしてください。
+否認される場合は、以下のURLにアクセスしてください。
 http://localhost:3000/decision-result/1?token=${userId}
 
 
 ご確認のほど、よろしくお願いいたします。
 
-（自動送信）`.trim();
+（本メールは自動送信されています）`.trim();
 };
