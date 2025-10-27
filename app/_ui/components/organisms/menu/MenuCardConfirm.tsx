@@ -60,9 +60,9 @@ export default function MenuCardConfirm(props: Props) {
             キャンセル：{companyData.cancel_period_day === 0 ? "当日" : companyData.cancel_period_day + '日前'}
             {companyData.cancel_period_time}まで
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', flexFlow: 'column', gap: 2, mt: 4 }} >
+          <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
             <Btn label="確定" eventhandler={() => props.orderHandler()} />
-            <Btn bgc="#afafaf" label="戻る" eventhandler={() => props.backHandler()} />
+            <Btn label="戻る" eventhandler={() => props.backHandler()} bgc={'#707070'} />
           </Box>
         </CardContent>
       </Card>

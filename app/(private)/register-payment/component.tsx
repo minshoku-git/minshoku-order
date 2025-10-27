@@ -28,7 +28,6 @@ export const PaymentComponent = (): JSX.Element => {
   /* initialize
   ------------------------------------------------------------------ */
   const router = useRouter();
-  const { openSnackbar } = useSnackBar();
   const { openProcessing, closeProcessing } = useProcessing();
 
   /* useState
@@ -42,7 +41,7 @@ export const PaymentComponent = (): JSX.Element => {
     handleSubmit,
     watch,
     reset,
-    formState: { isDirty, errors },
+    formState: { errors },
   } = useForm<UserPaymentFormValues>({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',

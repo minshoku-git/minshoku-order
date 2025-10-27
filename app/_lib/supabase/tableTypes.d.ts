@@ -306,8 +306,10 @@ export type t_contact = {
   t_user_id?: number;
   /** 問い合わせ内容 */
   contact_message?: string;
+  /** 問い合わせ日時 */
+  inquiry_datetime?: Date;
   /** 登録日時 */
-  created_at?: date;
+  created_at?: Date;
   /** 更新日時 */
-  updated_at?: date;
+  updated_at?: Date;
 };

@@ -6,7 +6,13 @@ import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import { t_menu_schedule, t_order } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
 import { getImageSignedUrl } from '@/app/_lib/supabaseStorage/getImageUrl';
-import { formatJstDate, getCancelDeadlineUTC, getNow, getOrderDeadlineUTC } from '@/app/_lib/utils/getDateTime';
+import {
+  formatJstDate,
+  getCancelDeadlineUTC,
+  getNow,
+  getOrderDeadlineUTC,
+  getTodayXHour,
+} from '@/app/_lib/utils/getDateTime';
 import { getPostgreSqlItems } from '@/app/_lib/utils/utils';
 import { convertPaymentTypeName, OrderStatusType, PaymentType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
@@ -33,7 +39,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
   const client = await createClient();
   const menuSchesuleId = values.request.move_t_menu_schedule_id;
   const now = getNow();
-  const today = formatISO(now);
+  const today = formatISO(getTodayXHour());
 
   try {
     /* ユーザー情報取得
@@ -211,7 +217,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     const imageSignedUrl = data.t_shops.shop_image_safe_file_name
       ? await getImageSignedUrl(
           client,
-          BUCKET_SHOP_IMAGES,
+          process.env.SUPABASE_STORAGE!,
           `${BUCKET_SHOP_IMAGES}/${data.t_shops.id}/${data.t_shops.shop_image_safe_file_name}`
         )
       : '';
@@ -591,7 +597,6 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
 export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promise<ApiResponse<null>> => {
   const client = await createClient();
   const req = values.request;
-  const today = formatISO(getNow());
   const now = getNow();
 
   try {

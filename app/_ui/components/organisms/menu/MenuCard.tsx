@@ -302,7 +302,7 @@ export default function MenuCard(props: Props) {
                 (<Grid>
                   <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
                     <Typography textAlign="right" sx={{ fontSize: 18, fontWeight: 'bold', mr: 2, mt: 2 }}>
-                      本日分完売しました！
+                      本日分は完売しました！
                     </Typography>
                   </Box>
                 </Grid>)}

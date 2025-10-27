@@ -20,7 +20,8 @@ import { ContactFormValues, ContactMessageDetails } from './types';
  */
 export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Promise<ApiResponse<null>> => {
   const req = values.request;
-  const now = formatJstDateTime(getNow());
+  const now = getNow();
+  const JstDateTime = formatJstDateTime(now);
   const client = await createClient();
 
   // connection Start
@@ -42,6 +43,7 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
       t_companies_employment_status_id: user.t_companies_employment_status_id,
       t_user_id: user.id,
       contact_message: req.contactMessage,
+      inquiry_datetime: now,
     };
     const { columns, placeholders, values } = getPostgreSqlItems(insertValues);
     const insertUserText = `INSERT INTO t_contact (${columns.join(',')}) VALUES (${placeholders}) RETURNING id;`;
@@ -58,9 +60,8 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
     /* メール送信(利用者)
   　------------------------------------------------------------------ */
     const customerMessage = generateCustomerMessage({
-      contactId: result.rows[0].id,
       contactMessage: req.contactMessage,
-      date: now,
+      date: JstDateTime,
       userName: user.user_name,
       userNameKana: user.user_name_kana,
       userEmail: user.user_email,
@@ -77,9 +78,8 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
     /* メール送信(運営)
   　------------------------------------------------------------------ */
     const message = generateContactMessage({
-      contactId: result.rows[0].id,
       contactMessage: req.contactMessage,
-      date: now,
+      date: JstDateTime,
       userName: user.user_name,
       userNameKana: user.user_name_kana,
       userEmail: user.user_email,
@@ -126,7 +126,7 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
 };
 
 const generateContactMessage = (details: ContactMessageDetails): string => {
-  const { contactId, contactMessage, date, userName, userNameKana, userEmail, companyName, branchName } = details;
+  const { contactMessage, date, userName, userNameKana, userEmail, companyName, branchName } = details;
 
   return `
 運営ご担当者様
@@ -137,8 +137,6 @@ const generateContactMessage = (details: ContactMessageDetails): string => {
 ────────────────────  
 ■ お問い合わせ日時  
 ${date}
-■ お問合せ番号
-${contactId}
 
 ■ ユーザー情報  
 ・お名前：${userName}(${userNameKana}) 様
@@ -157,7 +155,7 @@ ${contactMessage}
 };
 
 const generateCustomerMessage = (details: ContactMessageDetails): string => {
-  const { contactId, contactMessage, date, userName, userNameKana, userEmail, companyName, branchName } = details;
+  const { contactMessage, date, userName, userNameKana, userEmail, companyName, branchName } = details;
 
   return `
 ${userName} 様
@@ -170,8 +168,6 @@ ${userName} 様
 ────────────────────  
 ■ お問い合わせ日時  
 ${date}
-■ お問合せ番号
-${contactId}
 
 ■ ユーザー情報  
 ・お名前：${userName}(${userNameKana}) 様
