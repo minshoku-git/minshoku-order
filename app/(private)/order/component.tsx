@@ -32,7 +32,7 @@ export const OrderComponent = (): JSX.Element => {
   const [openPreOrder, setOpenPreOrder] = useState<boolean>(false);
   const [scheduleID, setScheduleID] = useState<number | undefined>(undefined);
   const [count, setCount] = useState(1);
-  const [condition, setCondition] = useState<ApiRequest<OrderInitRequest>>({ request: { move_t_menu_schedule_id: undefined } });
+  const [condition, setCondition] = useState<ApiRequest<OrderInitRequest>>({ request: { moveMenuScheduleId: undefined } });
 
   /* useQuery - 初期取得
   ------------------------------------------------------------------ */
@@ -76,7 +76,7 @@ export const OrderComponent = (): JSX.Element => {
   ------------------------------------------------------------------ */
   const moveMenu = (id: number) => {
     const req: ApiRequest<OrderInitRequest> = {
-      request: { move_t_menu_schedule_id: id }
+      request: { moveMenuScheduleId: id }
     }
     setCondition(req);
   }
@@ -91,7 +91,7 @@ export const OrderComponent = (): JSX.Element => {
   const preOrderMutate = useApiMutation({
     mutationFn: async (id: number) => {
       openProcessing();
-      const req: ApiRequest<OrderRequest> = { request: { order_count: count, t_menu_schedule_id: id } };
+      const req: ApiRequest<OrderRequest> = { request: { orderCount: count, menuScheduleId: id } };
       return preOrderFetcher(req) as unknown as ApiResponse<null>;
     },
     onSuccess: () => {
@@ -112,7 +112,7 @@ export const OrderComponent = (): JSX.Element => {
   const orderMutate = useApiMutation({
     mutationFn: async (id: number) => {
       openProcessing();
-      const req: ApiRequest<OrderRequest> = { request: { order_count: count, t_menu_schedule_id: id } };
+      const req: ApiRequest<OrderRequest> = { request: { orderCount: count, menuScheduleId: id } };
       return orderFetcher(req) as unknown as ApiResponse<null>;
     },
     onSuccess: async () => {
@@ -135,7 +135,7 @@ export const OrderComponent = (): JSX.Element => {
   const cancelOrderMutate = useApiMutation({
     mutationFn: async (id: number) => {
       openProcessing();
-      const req: ApiRequest<CancelOrderRequest> = { request: { t_menu_schedule_id: id } };
+      const req: ApiRequest<CancelOrderRequest> = { request: { menuScheduleId: id } };
       return cancelOrderFetcher(req) as unknown as ApiResponse<null>;
     },
     onSuccess: async () => {

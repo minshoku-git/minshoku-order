@@ -7,7 +7,7 @@ import { PaymentType } from '@/app/_types/enum';
  */
 export const OrderSchema = z.object({
   /** スケジュールID */
-  t_menu_schedule_id: z.string(),
+  menuScheduleId: z.string(),
   /** 注文数 */
   order_count: z.number().min(1),
 });
@@ -20,21 +20,21 @@ export type OrderFormValues = z.infer<typeof OrderSchema>;
 /** 注文情報 初期表示 Request */
 export type OrderInitRequest = {
   /** 指定のスケジュールID */
-  move_t_menu_schedule_id?: number;
+  moveMenuScheduleId?: number;
 };
 
 /** 注文情報 Request */
 export type OrderRequest = {
   /** 指定のスケジュールID */
-  t_menu_schedule_id: number;
+  menuScheduleId: number;
   /** 注文数 */
-  order_count: number;
+  orderCount: number;
 };
 
 /** 注文情報 Request */
 export type CancelOrderRequest = {
   /** 指定のスケジュールID */
-  t_menu_schedule_id: number;
+  menuScheduleId: number;
 };
 
 /** 注文情報 初期表示 Request */
@@ -110,7 +110,7 @@ export type MenuScheduleData = {
   spice_level: number;
   /** 在庫数 */
   stock_count: number;
-  /** 単価 */
+  /** 定価 */
   list_price: number;
   /** 売価 */
   sale_price: number;

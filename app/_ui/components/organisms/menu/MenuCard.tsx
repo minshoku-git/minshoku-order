@@ -37,6 +37,10 @@ export default function MenuCard(props: Props) {
   const handleClose = () => setOpen(false);
   const REST_OF_ORDER = menuScheduleData.stock_count - menuScheduleData.orderCount;
 
+  const amountSalePrice = (menuScheduleData.sale_price * props.count).toLocaleString()
+  const amountListPrice = (menuScheduleData.list_price * props.count).toLocaleString()
+  const isMealBurden = (amountSalePrice !== amountListPrice)
+
   /* functions - 会員情報の更新
   ------------------------------------------------------------------ */
   const moveTabelogSite = () => {
@@ -165,15 +169,17 @@ export default function MenuCard(props: Props) {
           </Typography>
 
           <Typography color="error" fontWeight="bold" fontSize={32} sx={{ color: '#ea5315' }}>
-            ￥{(menuScheduleData.sale_price * props.count).toLocaleString()}
-            <Typography
-              component="span"
-              color="textSecondary"
-              sx={{ textDecoration: 'line-through', fontSize: 16, ml: 1 }}
-            >
-              ￥{(menuScheduleData.list_price * props.count).toLocaleString()}
-            </Typography>
-            <Typography component="span" color="textSecondary" sx={{ fontSize: 16, ml: 1 }}>
+            ￥{(amountSalePrice).toLocaleString()}
+            {isMealBurden && <>
+              <Typography
+                component="span"
+                color="textSecondary"
+                sx={{ textDecoration: 'line-through', fontSize: 16, ml: 1 }}
+              >
+                ￥{(amountListPrice).toLocaleString()}
+              </Typography>
+            </>}
+            <Typography component="span" color="textSecondary" sx={{ fontSize: 16 }}>
               （税込）
             </Typography>
           </Typography>

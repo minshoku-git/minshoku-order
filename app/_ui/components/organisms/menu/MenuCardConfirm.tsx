@@ -18,8 +18,9 @@ export default function MenuCardConfirm(props: Props) {
   const menuScheduleData = props.data.menuScheduleData!
   const companyData = props.data.companyData!
   const paymentTypeString = props.data.paymentTypeString!
-  const amount = (menuScheduleData.sale_price * props.count).toLocaleString()
-  const amount2 = (menuScheduleData.list_price * props.count).toLocaleString()
+  const amountSalePrice = (menuScheduleData.sale_price * props.count).toLocaleString()
+  const amountListPrice = (menuScheduleData.list_price * props.count).toLocaleString()
+  const isMealBurden = (amountSalePrice !== amountListPrice)
 
   return (
     <>
@@ -51,7 +52,7 @@ export default function MenuCardConfirm(props: Props) {
             数量：{props.count}食
           </Typography>
           <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
-            価格：{amount2}円→{amount}円(税込)
+            価格：{amountListPrice}円 {isMealBurden && <>→{amountSalePrice}円</>}(税込)
           </Typography>
           <Typography variant="body2" sx={{ fontSize: 16, mb: 1, fontWeight: 'bold' }}>
             支払い方法：{paymentTypeString}
@@ -62,6 +63,8 @@ export default function MenuCardConfirm(props: Props) {
           </Typography>
           <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
             <Btn label="確定" eventhandler={() => props.orderHandler()} />
+          </Box>
+          <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
             <Btn label="戻る" eventhandler={() => props.backHandler()} bgc={'#707070'} />
           </Box>
         </CardContent>
