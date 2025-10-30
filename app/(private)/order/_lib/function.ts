@@ -265,16 +265,13 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
     console.error(e);
     return {
       success: false,
-      error: { code: ErrorCodes.INTERNAL_SERVER_ERROR.code, message: ErrorCodes.INTERNAL_SERVER_ERROR.message },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
   }
 };
@@ -377,18 +374,12 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
     return {
       success: false,
-      error: {
-        code: ErrorCodes.INTERNAL_SERVER_ERROR.code,
-        message: ErrorCodes.INTERNAL_SERVER_ERROR.message,
-      },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
   }
 };

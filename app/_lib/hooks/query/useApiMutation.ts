@@ -1,7 +1,9 @@
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 
 import { AlertType } from '@/app/_types/enum';
-import { ApiResponse, ApiSuccess, isApiError } from '@/app/_types/types'; // ApiErrorをインポート
+import { ApiResponse, isApiError } from '@/app/_types/types';
+import { CustomError } from '@/app/errors/customError';
+import { MUTATE_FAILURE_MESSAGE } from '@/app/errors/ErrorCodes';
 
 import { showGlobalSnackbar } from '../../../_ui/state/snackBar/snackbarContext';
 
@@ -34,25 +36,24 @@ export const useApiMutation = <TData, TVariables>(options: UseApiMutationOptions
   return useMutation({
     ...options,
 
-    // 既存のonSuccessロジックをラップ
+    // 成功時の処理
     onSuccess: (data, variables, context) => {
-      // 1. サーバー処理エラー(ApiError)のチェック
-      if (isApiError(data)) {
-        // ログ出力（ApiErrorの詳細ログ）
-        console.log('*** TanStack ApiError ***', data.error.code, data.error.message);
-
-        // 共通Snackbarを表示（APIから返された具体的なエラーメッセージを使用）
-        showGlobalSnackbar(AlertType.ERROR, data.error.message);
-
-        // サーバー処理エラーが発生した場合、元のonSuccessは実行しない。
-        return;
-      }
-
-      // 2. サーバー処理が成功した場合 (success: true)
       if (options.onSuccess) {
-        // 💡 成功型 (SuccessResponse) としてアサートして元の onSuccess を呼び出す
-        // TypeScriptはここで data が ApiSuccess<TData> であることを知っています。
         options.onSuccess(data as SuccessResponse<ApiResponse<TData>>, variables, context);
+      }
+    },
+
+    // エラー時の処理
+    onError: (error) => {
+      // CustomError がインスタンスの場合、スナックバーにエラーメッセージを表示
+      if (error instanceof CustomError) {
+        // CustomError の場合、エラーメッセージを表示
+        showGlobalSnackbar(AlertType.ERROR, error.message);
+        console.error('Custom Error:', error.code, error.message); // ログに詳細を出力
+      } else {
+        // 予期しないエラーの場合、より詳細なエラーメッセージを表示
+        showGlobalSnackbar(AlertType.ERROR, MUTATE_FAILURE_MESSAGE);
+        console.error('Unexpected Error:', error); // 予期しないエラーをログに出力
       }
     },
   });
