@@ -1,4 +1,4 @@
-import { fetcher, fetcherTest } from '@/app/_lib/fetcher';
+import { fetcher } from '@/app/_lib/fetcher';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 
 import { CancelOrderRequest, OrderInitRequest, OrderInitResponse, OrderRequest } from './types';
@@ -11,7 +11,7 @@ import { CancelOrderRequest, OrderInitRequest, OrderInitResponse, OrderRequest }
 export const getOrderInitFetcher = async (
   condition: ApiRequest<OrderInitRequest> | null
 ): Promise<ApiResponse<OrderInitResponse>> => {
-  return fetcherTest<ApiResponse<OrderInitResponse>>('/api/order/init', {
+  return fetcher<ApiResponse<OrderInitResponse>>('/api/order/init', {
     method: 'POST',
     body: JSON.stringify(condition),
     headers: {
@@ -26,7 +26,7 @@ export const getOrderInitFetcher = async (
  * @returns {Promise<ApiResponse<null>>}
  */
 export const preOrderFetcher = async (condition: ApiRequest<OrderRequest> | null): Promise<ApiResponse<null>> => {
-  return fetcherTest<ApiResponse<null>>('/api/order/pre-order', {
+  return fetcher<ApiResponse<null>>('/api/order/pre-order', {
     method: 'POST',
     body: JSON.stringify(condition),
     headers: {
