@@ -76,7 +76,7 @@ export const sendPasswordResetMail = async (req: ApiRequest<PasswordFormValues>)
     }
     return {
       success: false,
-      error: { code: ErrorCodes.INTERNAL_SERVER_ERROR.code, message: ErrorCodes.INTERNAL_SERVER_ERROR.message },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
   }
 };

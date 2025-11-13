@@ -1,7 +1,7 @@
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 
 import { AlertType } from '@/app/_types/enum';
-import { ApiResponse, isApiError } from '@/app/_types/types';
+import { ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { MUTATE_FAILURE_MESSAGE } from '@/app/errors/ErrorCodes';
 
