@@ -139,10 +139,7 @@ export const getOrderHistory = async (
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
     console.error(e);

@@ -6,12 +6,23 @@ import { CreditCardData } from '@/app/_types/types';
 /**
  * ユーザー支払い情報 Schema
  */
-export const UserPaymentSchema = z.object({
-  /** 支払い種別 */
-  paymentType: z.enum(PaymentType),
-  /** クレジットカード番号 */
-  creditcard: z.string().optional(),
-});
+export const UserPaymentSchema = z
+  .object({
+    /** 支払い種別 */
+    paymentType: z.enum(PaymentType),
+    /** クレジットカード番号 */
+    creditcard: z.string().optional(),
+  })
+  .check((ctx) => {
+    if (ctx.value.paymentType === PaymentType.CREDITCARD && !ctx.value.creditcard) {
+      ctx.issues.push({
+        code: 'custom',
+        path: ['paymentType'],
+        message: '登録済みのクレジットカード番号を選択してください。',
+        input: ctx.value,
+      });
+    }
+  });
 
 /**
  * ユーザー支払い情報 FormValues

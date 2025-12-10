@@ -5,7 +5,7 @@ import { z } from 'zod';
  */
 export const PasswordSchema = z.object({
   /** メールアドレス */
-  email: z.string().email({ message: '有効なメールアドレスを入力してください。' }),
+  email: z.email({ message: '有効なメールアドレスを入力してください。' }),
 });
 
 /**

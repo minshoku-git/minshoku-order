@@ -5,5 +5,8 @@ import { preregister } from '@/app/(public)/pre-registration/[token]/_lib/functi
 export async function PUT(req: NextRequest) {
   const body = await req.json();
   const result = await preregister(body);
-  return NextResponse.json(result);
+  if (result.success) {
+    return NextResponse.json(result);
+  }
+  return NextResponse.json(result.error, { status: result.error.status });
 }

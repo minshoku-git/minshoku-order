@@ -21,16 +21,14 @@ import { NextPageDecrypt, NextPageInitRequest } from './types';
  * @returns {Promise<ApiResponse<null>>}
  */
 export const preregister = async (values: ApiRequest<NextPageInitRequest>): Promise<ApiResponse<null>> => {
-  const supabase = await createClient();
-  const pgClient = createPgClient();
-
   const req = values.request;
   const timestamp = getNow();
+  const supabase = await createClient();
+
+  // connection Start
+  const pgClient = await createPgClient();
 
   try {
-    // connection Start
-    await pgClient.connect();
-    console.log('Connected to the database successfully');
     // Transaction Start
     await pgClient.query('BEGIN');
 
@@ -109,18 +107,12 @@ export const preregister = async (values: ApiRequest<NextPageInitRequest>): Prom
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
     return {
       success: false,
-      error: {
-        code: ErrorCodes.INTERNAL_SERVER_ERROR.code,
-        message: ErrorCodes.INTERNAL_SERVER_ERROR.message,
-      },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
   } finally {
     // Transaction End

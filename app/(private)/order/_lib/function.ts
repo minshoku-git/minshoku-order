@@ -6,7 +6,13 @@ import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import { t_menu_schedule, t_order } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
 import { getImageSignedUrl } from '@/app/_lib/supabaseStorage/getImageUrl';
-import { formatJstDate, getCancelDeadlineUTC, getNow, getOrderDeadlineUTC } from '@/app/_lib/utils/getDateTime';
+import {
+  formatJstDate,
+  getCancelDeadlineUTC,
+  getNow,
+  getOrderDeadlineUTC,
+  getTodayXHour,
+} from '@/app/_lib/utils/getDateTime';
 import { getPostgreSqlItems } from '@/app/_lib/utils/utils';
 import { convertPaymentTypeName, OrderStatusType, PaymentType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
@@ -31,9 +37,9 @@ import {
  */
 export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promise<ApiResponse<OrderInitResponse>> => {
   const client = await createClient();
-  const menuSchesuleId = values.request.move_t_menu_schedule_id;
+  const menuSchesuleId = values.request.moveMenuScheduleId;
   const now = getNow();
-  const today = formatISO(now);
+  const today = formatISO(getTodayXHour());
 
   try {
     /* ユーザー情報取得
@@ -45,10 +51,10 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     const selectColumns = `id,
             delivery_day,
             menu_name,
+            menu_description,
             allergen_labelling,
             spice_level,
             list_price,
-            sale_price,
             stock_count,
             t_shops!inner(
               id,
@@ -149,7 +155,6 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
       .eq('order_status_type', OrderStatusType.VALID)
       .maybeSingle();
     const { data: orderData, error: errorOrder } = (await queryOrder) as PostgrestSingleResponse<t_order>;
-    console.log('スケジュールID', menuSchesuleId ?? data.id);
 
     if (errorOrder) {
       console.error(errorOrder);
@@ -170,7 +175,6 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     const { data: countOrderData, error: errorCountOrder } = (await queryCountOrder) as PostgrestSingleResponse<
       t_order[]
     >;
-    console.log('スケジュールID', menuSchesuleId ?? data.id);
 
     if (errorCountOrder) {
       console.error(errorCountOrder);
@@ -210,7 +214,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     const imageSignedUrl = data.t_shops.shop_image_safe_file_name
       ? await getImageSignedUrl(
           client,
-          BUCKET_SHOP_IMAGES,
+          process.env.SUPABASE_STORAGE!,
           `${BUCKET_SHOP_IMAGES}/${data.t_shops.id}/${data.t_shops.shop_image_safe_file_name}`
         )
       : '';
@@ -224,10 +228,10 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
         id: data.id,
         delivery_day: formatJstDate(data.delivery_day as Date),
         list_price: data.list_price ?? 0,
+        sale_price: data.list_price - (user.t_companies_employment_status.set_meal_burden ?? 0),
         allergen_labelling: data.allergen_labelling ?? '',
         menu_name: data.menu_name ?? '',
         menu_description: data.menu_description ?? '',
-        sale_price: data.sale_price ?? 0,
         spice_level: data.spice_level ?? 0,
         stock_count: data.stock_count ?? 0,
         isOrderDeadlinePassed: isOrderDeadlinePassed,
@@ -261,16 +265,13 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
     console.error(e);
     return {
       success: false,
-      error: { code: ErrorCodes.INTERNAL_SERVER_ERROR.code, message: ErrorCodes.INTERNAL_SERVER_ERROR.message },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
   }
 };
@@ -297,7 +298,7 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
     const { data: menuSchedule, error: scheduleError } = await client
       .from('t_menu_schedule')
       .select('delivery_day, stock_count')
-      .eq('id', req.t_menu_schedule_id)
+      .eq('id', req.menuScheduleId)
       .eq('cancel_flag', 0)
       .single();
 
@@ -328,7 +329,7 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
     const { data: orderCheck, error: orderCheckError } = await client
       .from('t_order')
       .select('id')
-      .eq('t_menu_schedule_id', req.t_menu_schedule_id)
+      .eq('t_menu_schedule_id', req.menuScheduleId)
       .eq('t_user_id', user.id)
       .eq('order_status_type', OrderStatusType.VALID)
       .maybeSingle();
@@ -349,7 +350,7 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
     const { data: orders, error: ordersError } = await client
       .from('t_order')
       .select('count')
-      .eq('t_menu_schedule_id', req.t_menu_schedule_id)
+      .eq('t_menu_schedule_id', req.menuScheduleId)
       .eq('order_status_type', OrderStatusType.VALID);
 
     if (ordersError) {
@@ -360,7 +361,7 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
     const totalOrders = orders.reduce((sum, order) => sum + order.count, 0);
 
     // 納品数を超過しているか
-    if (totalOrders + req.order_count > menuSchedule.stock_count) {
+    if (totalOrders + req.orderCount > menuSchedule.stock_count) {
       throw new CustomError(
         ErrorCodes.NOT_FOUND.code,
         'ご希望の数量は、残り注文可能数を上回っています。' + ErrorCodes.NOT_FOUND.message,
@@ -373,18 +374,12 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
     return {
       success: false,
-      error: {
-        code: ErrorCodes.INTERNAL_SERVER_ERROR.code,
-        message: ErrorCodes.INTERNAL_SERVER_ERROR.message,
-      },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
   }
 };
@@ -397,24 +392,20 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
  * @returns {Promise<ApiResponse<null>>}
  */
 export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiResponse<null>> => {
-  const pgClient = createPgClient();
+  const req = values.request;
+  const now = getNow();
   const client = await createClient();
 
-  const req = values.request;
-  const today = formatISO(getNow());
-  const now = getNow();
+  // connection Start
+  const pgClient = await createPgClient();
 
   try {
-    /* ユーザー情報取得
-      ------------------------------------------------------------------ */
-    const user = await getLoginUserDetail(client);
-
-    // connection Start
-    await pgClient.connect();
-    console.log('Connected to the database successfully');
-
     // Transaction Start
     await pgClient.query('BEGIN');
+
+    /* ユーザー情報取得
+    ------------------------------------------------------------------ */
+    const user = await getLoginUserDetail(client);
 
     /* スケジュール情報取得とテーブルロック
   　------------------------------------------------------------------ */
@@ -426,11 +417,9 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
         WHERE 
           id = $1
           AND cancel_flag = $2
-        -- AND delivery_day = $2
-        -- TASK: 現在日時より前の納品日ではないことを確認する
         FOR UPDATE`; // MEMO: テーブルロック
 
-    const resultMenuSchedule = await pgClient.query<t_menu_schedule>(selectSql, [req.t_menu_schedule_id, 0]);
+    const resultMenuSchedule = await pgClient.query<t_menu_schedule>(selectSql, [req.menuScheduleId, 0]);
     const stockCount = resultMenuSchedule.rows[0].stock_count ? resultMenuSchedule.rows[0].stock_count : 0;
 
     if (resultMenuSchedule.rows.length === 0 || stockCount === 0) {
@@ -456,7 +445,7 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
           AND order_status_type = $3`;
 
     const existingOrderResult = await pgClient.query(selectUserSql, [
-      req.t_menu_schedule_id,
+      req.menuScheduleId,
       user.id,
       OrderStatusType.VALID,
     ]);
@@ -481,10 +470,10 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
           AND order_status_type = $2`;
 
     // Insert
-    const resultOrder = await pgClient.query(selectOrderSql, [req.t_menu_schedule_id, OrderStatusType.VALID]);
+    const resultOrder = await pgClient.query(selectOrderSql, [req.menuScheduleId, OrderStatusType.VALID]);
     const totalCount = resultOrder.rows[0].total_count ? resultOrder.rows[0].total_count : 0;
 
-    if (totalCount + req.order_count > menuScheduleData.stock_count!) {
+    if (totalCount + req.orderCount > menuScheduleData.stock_count!) {
       throw new CustomError(
         ErrorCodes.NOT_FOUND.code,
         '注文上限数を超過しました。' + ErrorCodes.NOT_FOUND.message,
@@ -494,10 +483,10 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
 
     /* 会社負担額
     ------------------------------------------------------------------ */
-    const burden: number = user.t_companies_employment_status.set_meal_burden ?? 0;
-    const companiesBurdenAmount = req.order_count * burden;
+    const mealBurden: number = user.t_companies_employment_status.set_meal_burden ?? 0;
+    const companiesBurdenAmount = req.orderCount * mealBurden;
 
-    const amount = menuScheduleData.sale_price! * req.order_count;
+    const amount = menuScheduleData.list_price! * req.orderCount;
 
     // ユーザー負担額
     const userBurdenAmount = amount - companiesBurdenAmount;
@@ -505,7 +494,7 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
     /* 注文情報の新規登録
     ------------------------------------------------------------------ */
     const insertValues: Omit<t_order, 'id' | 'cancel_datetime' | 'created_at' | 'updated_at'> = {
-      t_menu_schedule_id: req.t_menu_schedule_id,
+      t_menu_schedule_id: req.menuScheduleId,
       t_shops_id: Number(menuScheduleData.t_shops_id),
       t_user_id: user.id,
       t_companies_id: user.t_companies_id,
@@ -515,7 +504,7 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
       order_datetime: now,
       order_status_type: OrderStatusType.VALID,
       // 支払金額類
-      count: req.order_count,
+      count: req.orderCount,
       list_price: menuScheduleData.list_price,
       amount: amount,
       // 支払情報
@@ -545,8 +534,6 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
       );
     }
 
-    // const newUserId: number = result.rows[0]?.id;
-
     /* クレジットカード登録
     　------------------------------------------------------------------ */
     // TODO:クレジットカード登録
@@ -565,18 +552,12 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
     return {
       success: false,
-      error: {
-        code: ErrorCodes.INTERNAL_SERVER_ERROR.code,
-        message: ErrorCodes.INTERNAL_SERVER_ERROR.message,
-      },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
   } finally {
     // Transaction End
@@ -594,7 +575,6 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
 export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promise<ApiResponse<null>> => {
   const client = await createClient();
   const req = values.request;
-  const today = formatISO(getNow());
   const now = getNow();
 
   try {
@@ -607,7 +587,7 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
     const { data, error } = (await client
       .from('t_menu_schedule')
       .select('delivery_day')
-      .eq('id', req.t_menu_schedule_id)
+      .eq('id', req.menuScheduleId)
       .eq('cancel_flag', 0)
       .limit(1)
       .single()) as PostgrestSingleResponse<t_menu_schedule>;
@@ -640,7 +620,7 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
     const { error: orderCheckError } = await client
       .from('t_order')
       .update<t_order>({ order_status_type: OrderStatusType.USER_CANCEL, cancel_datetime: now })
-      .eq('t_menu_schedule_id', req.t_menu_schedule_id)
+      .eq('t_menu_schedule_id', req.menuScheduleId)
       .eq('t_user_id', user.id)
       .eq('order_status_type', OrderStatusType.VALID)
       .maybeSingle();
@@ -658,18 +638,12 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
     return {
       success: false,
-      error: {
-        code: ErrorCodes.INTERNAL_SERVER_ERROR.code,
-        message: ErrorCodes.INTERNAL_SERVER_ERROR.message,
-      },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
   }
 };

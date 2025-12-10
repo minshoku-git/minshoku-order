@@ -20,7 +20,7 @@ import {
 } from './_lib/types';
 
 /**
- * パスワードリセットComponent
+ * パスワードの再設定Component
  * @returns {JSX.Element} JSX
  */
 export const UpdatePasswordComponent = (): JSX.Element => {

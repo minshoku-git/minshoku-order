@@ -280,10 +280,8 @@ export type t_menu_schedule = {
   spice_level?: number;
   /** 在庫数 */
   stock_count?: number;
-  /** 単価 */
+  /** 定価 */
   list_price?: number;
-  /** 売価 */
-  sale_price?: number;
   /** キャンセルフラグ */
   cancel_flag?: string;
   /** 登録日時 */
@@ -306,8 +304,10 @@ export type t_contact = {
   t_user_id?: number;
   /** 問い合わせ内容 */
   contact_message?: string;
+  /** 問い合わせ日時 */
+  inquiry_datetime?: Date;
   /** 登録日時 */
-  created_at?: date;
+  created_at?: Date;
   /** 更新日時 */
-  updated_at?: date;
+  updated_at?: Date;
 };

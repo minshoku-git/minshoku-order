@@ -74,10 +74,7 @@ export const getEditPaymentTypeInitData = async (
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
     return {
@@ -96,15 +93,13 @@ export const getEditPaymentTypeInitData = async (
  */
 export const registerPaymentType = async (values: ApiRequest<UserPaymentFormValues>): Promise<ApiResponse<null>> => {
   const req = values.request;
-  const supabase = await createClient();
-  const pgClient = createPgClient();
   const now = getNow();
+  const supabase = await createClient();
+
+  // connection Start
+  const pgClient = await createPgClient();
 
   try {
-    // connection Start
-    await pgClient.connect();
-    console.log('Connected to the database successfully');
-
     // Transaction Start
     await pgClient.query('BEGIN');
 
@@ -185,18 +180,12 @@ export const registerPaymentType = async (values: ApiRequest<UserPaymentFormValu
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
     return {
       success: false,
-      error: {
-        code: ErrorCodes.INTERNAL_SERVER_ERROR.code,
-        message: ErrorCodes.INTERNAL_SERVER_ERROR.message,
-      },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
   } finally {
     // Transaction End

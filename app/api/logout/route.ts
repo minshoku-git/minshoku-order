@@ -16,20 +16,20 @@ export async function POST(_req: Request) {
       if (error.name === 'AuthSessionMissingError') {
         return NextResponse.json({ message: 'Logged out successfully (session was already missing)' }, { status: 200 });
       }
-      const req: ApiResponse<null> = {
+      const result: ApiResponse<null> = {
         success: false,
-        error: { code: ErrorCodes.LOGOUT_FAILED.code, message: ErrorCodes.LOGOUT_FAILED.message },
+        error: ErrorCodes.LOGOUT_FAILED,
       };
-      return NextResponse.json(req);
+      return NextResponse.json(result.error, { status: result.error.status });
     }
     const req: ApiResponse<null> = { success: true, data: null };
 
     return NextResponse.json(req);
   } catch (e) {
-    const req: ApiResponse<null> = {
+    const result: ApiResponse<null> = {
       success: false,
-      error: { code: ErrorCodes.INTERNAL_SERVER_ERROR.code, message: ErrorCodes.INTERNAL_SERVER_ERROR.message },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
-    return NextResponse.json(req);
+    return NextResponse.json(result.error, { status: result.error.status });
   }
 }

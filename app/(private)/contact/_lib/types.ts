@@ -20,8 +20,6 @@ export type ContactMessageDetails = {
   userNameKana: string;
   /** メールアドレス */
   userEmail: string;
-  /** 問い合わせID */
-  contactId: number;
   /** 本文 */
   contactMessage: string;
   /** 問い合わせ日時 */

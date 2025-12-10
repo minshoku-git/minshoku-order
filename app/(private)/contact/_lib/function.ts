@@ -20,15 +20,14 @@ import { ContactFormValues, ContactMessageDetails } from './types';
  */
 export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Promise<ApiResponse<null>> => {
   const req = values.request;
+  const now = getNow();
+  const JstDateTime = formatJstDateTime(now);
   const client = await createClient();
-  const pgClient = createPgClient();
-  const now = formatJstDateTime(getNow());
+
+  // connection Start
+  const pgClient = await createPgClient();
 
   try {
-    // connection Start
-    await pgClient.connect();
-    console.log('Connected to the database successfully');
-
     // Transaction Start
     await pgClient.query('BEGIN');
 
@@ -44,6 +43,7 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
       t_companies_employment_status_id: user.t_companies_employment_status_id,
       t_user_id: user.id,
       contact_message: req.contactMessage,
+      inquiry_datetime: now,
     };
     const { columns, placeholders, values } = getPostgreSqlItems(insertValues);
     const insertUserText = `INSERT INTO t_contact (${columns.join(',')}) VALUES (${placeholders}) RETURNING id;`;
@@ -60,9 +60,8 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
     /* メール送信(利用者)
   　------------------------------------------------------------------ */
     const customerMessage = generateCustomerMessage({
-      contactId: result.rows[0].id,
       contactMessage: req.contactMessage,
-      date: now,
+      date: JstDateTime,
       userName: user.user_name,
       userNameKana: user.user_name_kana,
       userEmail: user.user_email,
@@ -79,9 +78,8 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
     /* メール送信(運営)
   　------------------------------------------------------------------ */
     const message = generateContactMessage({
-      contactId: result.rows[0].id,
       contactMessage: req.contactMessage,
-      date: now,
+      date: JstDateTime,
       userName: user.user_name,
       userNameKana: user.user_name_kana,
       userEmail: user.user_email,
@@ -108,18 +106,12 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
     return {
       success: false,
-      error: {
-        code: ErrorCodes.INTERNAL_SERVER_ERROR.code,
-        message: ErrorCodes.INTERNAL_SERVER_ERROR.message,
-      },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
   } finally {
     // Transaction End
@@ -128,19 +120,17 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
 };
 
 const generateContactMessage = (details: ContactMessageDetails): string => {
-  const { contactId, contactMessage, date, userName, userNameKana, userEmail, companyName, branchName } = details;
+  const { contactMessage, date, userName, userNameKana, userEmail, companyName, branchName } = details;
 
   return `
 運営ご担当者様
 
 お疲れ様です。  
-以下の通り、ユーザーよりお問い合わせがありましたので、共有いたします。
+以下の通り、ユーザーからお問い合わせがありました。内容をご確認のうえ、対応をお願いいたします。
 
 ────────────────────  
 ■ お問い合わせ日時  
 ${date}
-■ お問合せ番号
-${contactId}
 
 ■ ユーザー情報  
 ・お名前：${userName}(${userNameKana}) 様
@@ -153,13 +143,13 @@ ${contactId}
 ${contactMessage}
 ――――――――――――――――
 
-ご確認のほど、よろしくお願いいたします。
+ご確認のうえ、対応をお願いいたします。
 
-（自動送信）`.trim();
+（本メールは自動送信されています）`.trim();
 };
 
 const generateCustomerMessage = (details: ContactMessageDetails): string => {
-  const { contactId, contactMessage, date, userName, userNameKana, userEmail, companyName, branchName } = details;
+  const { contactMessage, date, userName, userNameKana, userEmail, companyName, branchName } = details;
 
   return `
 ${userName} 様
@@ -172,8 +162,6 @@ ${userName} 様
 ────────────────────  
 ■ お問い合わせ日時  
 ${date}
-■ お問合せ番号
-${contactId}
 
 ■ ユーザー情報  
 ・お名前：${userName}(${userNameKana}) 様
@@ -186,5 +174,5 @@ ${contactId}
 ${contactMessage}
 ――――――――――――――――
 
-（自動送信）`.trim();
+（本メールは自動送信されています）`.trim();
 };

@@ -30,11 +30,11 @@ export async function POST(_req: NextRequest) {
       if (userError) {
         console.warn('Authentication check failed (no user):', userError.message);
       }
-      const res: ApiResponse<AuthContextResponse> = {
+      const result: ApiResponse<AuthContextResponse> = {
         success: true,
         data: { email: null },
       };
-      return NextResponse.json(res);
+      return NextResponse.json(result);
     }
 
     // -----------------------------------------------------
@@ -56,17 +56,17 @@ export async function POST(_req: NextRequest) {
 
     if (userDataError || !userData || !userData.t_companies) {
       console.error('t_user query failed. User exists but data is missing/invalid:', userDataError);
-      const res: ApiResponse<AuthContextResponse> = {
+      const result: ApiResponse<AuthContextResponse> = {
         success: true,
         data: { email: null },
       };
-      return NextResponse.json(res);
+      return NextResponse.json(result);
     }
 
     // -----------------------------------------------------
     // 4. 成功応答を返却
     // -----------------------------------------------------
-    const res: ApiResponse<AuthContextResponse> = {
+    const result: ApiResponse<AuthContextResponse> = {
       success: true,
       data: {
         email: verifiedUser.email ?? '',
@@ -76,13 +76,13 @@ export async function POST(_req: NextRequest) {
       },
     };
 
-    return NextResponse.json(res);
+    return NextResponse.json(result);
   } catch (e) {
     console.error('Internal server error in auth status API:', e);
-    const res: ApiResponse<null> = {
+    const result: ApiResponse<null> = {
       success: false,
-      error: { code: ErrorCodes.INTERNAL_SERVER_ERROR.code, message: ErrorCodes.INTERNAL_SERVER_ERROR.message },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
-    return NextResponse.json(res, { status: 500 });
+    return NextResponse.json(result.error, { status: result.error.status });
   }
 }

@@ -1,6 +1,7 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 import { decrypt, encrypt } from '@/app/_lib/encryption/crypto';
+import { sendMail } from '@/app/_lib/mailer/mailer';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import {
   t_companies,
@@ -9,6 +10,7 @@ import {
   t_user,
 } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
+import { formatJstDateTime, getNow } from '@/app/_lib/utils/getDateTime';
 import { isEmailDuplicate } from '@/app/_lib/utils/isEmailDuplicate';
 import { getDomain, getPostgreSqlItems } from '@/app/_lib/utils/utils';
 import { UsageStatus, UserRegistrationStatus } from '@/app/_types/enum';
@@ -17,6 +19,7 @@ import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 import {
+  ApprovalRequestMessageDetails,
   SignUpDecrypt,
   SignUpEncrypt,
   SignUpInitData,
@@ -142,19 +145,13 @@ export const getSignUpInitData = async (
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
 
     return {
       success: false,
-      error: {
-        code: ErrorCodes.INTERNAL_SERVER_ERROR.code,
-        message: ErrorCodes.INTERNAL_SERVER_ERROR.message,
-      },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
   }
 };
@@ -168,10 +165,16 @@ export const getSignUpInitData = async (
  */
 export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Promise<ApiResponse<SignUpResponse>> => {
   const req = values.request;
+  const now = formatJstDateTime(getNow());
   const supabase = await createClient();
-  const pgClient = createPgClient();
+
+  // connection Start
+  const pgClient = await createPgClient();
 
   try {
+    // Transaction Start
+    await pgClient.query('BEGIN');
+
     /* 復号化
     ------------------------------------------------------------------ */
     const decryptToken: string = decrypt(req.token);
@@ -184,12 +187,6 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
 
     /* ユーザー新規登録
     ------------------------------------------------------------------ */
-    // connection Start
-    await pgClient.connect();
-    console.log('Connected to the database successfully');
-
-    // Transaction Start
-    await pgClient.query('BEGIN');
 
     /* Select - メールアドレスの重複確認
   　------------------------------------------------------------------ */
@@ -273,6 +270,23 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
           ErrorCodes.NOT_FOUND.status
         );
       }
+    } else {
+      /* 承認依頼メール送信
+  　  ------------------------------------------------------------------ */
+      const message = generateApprovalRequestMessage({
+        date: now,
+        userName: req.user_name,
+        userNameKana: req.user_name_kana,
+        userEmail: req.user_email,
+        companyName: req.t_companies_department_id,
+        branchName: '',
+        userId: signUpEncryptReq,
+      });
+
+      await sendMail({
+        title: '【みんなの社食】ユーザー承認依頼',
+        text: message,
+      });
     }
 
     /* --------------------------------------------------------------- */
@@ -290,21 +304,48 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
     if (e instanceof CustomError) {
       return {
         success: false,
-        error: {
-          code: e.code,
-          message: e.message,
-        },
+        error: e,
       };
     }
     return {
       success: false,
-      error: {
-        code: ErrorCodes.INTERNAL_SERVER_ERROR.code,
-        message: ErrorCodes.INTERNAL_SERVER_ERROR.message,
-      },
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
     };
   } finally {
     // Transaction End
     await pgClient.end();
   }
+};
+
+const generateApprovalRequestMessage = (details: ApprovalRequestMessageDetails): string => {
+  const { date, userName, userNameKana, userEmail, companyName, branchName, userId } = details;
+
+  return `
+運営ご担当者様
+
+お疲れ様です。  
+以下のユーザー申請内容をご確認のうえ、「承認」または「否認」のご対応をお願いいたします。
+
+────────────────────  
+■ 申請日時  
+${date}
+
+■ ユーザー情報  
+・お名前：${userName}(${userNameKana}) 様
+・会社名：${companyName}  
+・部署名：${branchName}  
+・メールアドレス：${userEmail}
+
+■ 承認
+承認される場合は、以下のURLにアクセスしてください。
+http://localhost:3000/decision-result/0?token=${userId}
+
+■ 否認
+否認される場合は、以下のURLにアクセスしてください。
+http://localhost:3000/decision-result/1?token=${userId}
+
+
+ご確認のほど、よろしくお願いいたします。
+
+（本メールは自動送信されています）`.trim();
 };

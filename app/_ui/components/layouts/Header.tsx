@@ -23,9 +23,10 @@ export default function Header() {
   } = useAuth();
 
   const isLoginPath = pathname.startsWith('/login/');
-  const nonProtectedPaths = ['/', '/login', '/contact', '/about', '/forgot-password', '/reset-password'];
+  const isSignupPath = pathname.startsWith('/signup/');
+  const nonProtectedPaths = ['/', '/login', '/signup', '/contact', '/about', '/forgot-password', '/reset-password'];
   // ユーザーがログイン不要な公開ページにいるかどうか
-  const isOnPublicPath = nonProtectedPaths.includes(pathname) || isLoginPath;
+  const isOnPublicPath = nonProtectedPaths.includes(pathname) || isLoginPath || isSignupPath;
 
   /** 注文画面遷移 */
   const moveToOrder = () => {
@@ -51,7 +52,6 @@ export default function Header() {
                   color: '#ea5315',
                   fontWeight: 'bold',
                   fontSize: 28,
-                  fontFamily: 'Mobo Bold',
                 }}
               >
                 {restaurantName}

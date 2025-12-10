@@ -37,6 +37,10 @@ export default function MenuCard(props: Props) {
   const handleClose = () => setOpen(false);
   const REST_OF_ORDER = menuScheduleData.stock_count - menuScheduleData.orderCount;
 
+  const amountSalePrice = (menuScheduleData.sale_price * props.count).toLocaleString()
+  const amountListPrice = (menuScheduleData.list_price * props.count).toLocaleString()
+  const isMealBurden = (amountSalePrice !== amountListPrice)
+
   /* functions - 会員情報の更新
   ------------------------------------------------------------------ */
   const moveTabelogSite = () => {
@@ -165,15 +169,17 @@ export default function MenuCard(props: Props) {
           </Typography>
 
           <Typography color="error" fontWeight="bold" fontSize={32} sx={{ color: '#ea5315' }}>
-            ￥{(menuScheduleData.sale_price * props.count).toLocaleString()}
-            <Typography
-              component="span"
-              color="textSecondary"
-              sx={{ textDecoration: 'line-through', fontSize: 16, ml: 1 }}
-            >
-              ￥{(menuScheduleData.list_price * props.count).toLocaleString()}
-            </Typography>
-            <Typography component="span" color="textSecondary" sx={{ fontSize: 16, ml: 1 }}>
+            ￥{(amountSalePrice).toLocaleString()}
+            {isMealBurden && <>
+              <Typography
+                component="span"
+                color="textSecondary"
+                sx={{ textDecoration: 'line-through', fontSize: 16, ml: 1 }}
+              >
+                ￥{(amountListPrice).toLocaleString()}
+              </Typography>
+            </>}
+            <Typography component="span" color="textSecondary" sx={{ fontSize: 16 }}>
               （税込）
             </Typography>
           </Typography>
@@ -192,15 +198,15 @@ export default function MenuCard(props: Props) {
           >
             <Box
               sx={{
-                maxHeight: expanded ? 'none' : 80, // 折りたたみ時の高さ
+                maxHeight: expanded ? 'none' : 40, // 折りたたみ時の高さ
                 overflow: 'hidden',
                 transition: 'max-height 0.5s',
               }}
             >
               <Typography variant="body2">
-                {menuScheduleData.menu_name}
+                {menuScheduleData.menu_description}
               </Typography>
-              <Typography variant="body2">アレルギー表記：{menuScheduleData.allergen_labelling ?? 'なし'}</Typography>
+              <Typography variant="body2" mt={1}>アレルギー表記：{menuScheduleData.allergen_labelling ?? 'なし'}</Typography>
             </Box>
             {/* フェードオーバーレイ */}
             {!expanded && (
@@ -210,7 +216,7 @@ export default function MenuCard(props: Props) {
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  height: 60,
+                  height: 80,
                   background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, #fff 100%)',
                 }}
               />
@@ -302,7 +308,7 @@ export default function MenuCard(props: Props) {
                 (<Grid>
                   <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
                     <Typography textAlign="right" sx={{ fontSize: 18, fontWeight: 'bold', mr: 2, mt: 2 }}>
-                      本日分完売しました！
+                      本日分は完売しました！
                     </Typography>
                   </Box>
                 </Grid>)}

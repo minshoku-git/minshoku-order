@@ -4,17 +4,8 @@ import { persistQueryClient } from '@tanstack/react-query-persist-client';
 
 import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 
-import { AlertType } from '../../../_types/enum';
-import { showGlobalSnackbar } from '../../../_ui/state/snackBar/snackbarContext';
-
-// エラーメッセージの定義
-const FETCH_FAILURE_MESSAGE =
-  'データの取得に失敗しました。ネットワーク接続を確認するか、しばらくしてから再度お試しください。';
-const MUTATE_FAILURE_MESSAGE =
-  'データの更新に失敗しました。ネットワーク接続を確認するか、しばらくしてから再度お試しください。';
-
 // 外部にエクスポートするQueryClientインスタンスを定義
-export const queryClientInstance = newQueryClient(); // 修正: newQueryClientの戻り値で初期化
+export const queryClientInstance = newQueryClient();
 
 /**
  * TanStack QueryのQueryClientインスタンスを作成・設定する関数
@@ -29,7 +20,7 @@ function newQueryClient(): QueryClient {
       queries: {
         staleTime: 1000 * 60 * 5, // 5分間はStaleではないと見なす
         gcTime: 1000 * 60 * 30, // 30分間はキャッシュに残す (gcTime > staleTime)
-        retry: 2, // 2回リトライ
+        retry: 0, // リトライしない
         refetchOnWindowFocus: false, // ウィンドウフォーカス時のリフェッチを無効化
       },
     },
@@ -37,35 +28,13 @@ function newQueryClient(): QueryClient {
     // 2. クエリエラーのグローバルロギングとSnackbar表示 (Fetching/useQuery)
     // ------------------------------------------------------------------
     queryCache: new QueryCache({
-      onError: (error, query) => {
-        const API_ERROR_PREFIX = 'API_LOGIC_ERROR: ';
-
-        console.error('*** TanStack Query Fetch Error ***');
-        console.error('Query Key:', query.queryKey);
-        console.error('Error:', error);
-
-        // サーバー側ApiErrorの場合（useApiQueryでSnackbar表示済み）
-        if (error instanceof Error && error.message.startsWith(API_ERROR_PREFIX)) {
-          // **何もしない。Snackbar表示をスキップする**
-          return;
-        }
-
-        // ユーザー向けSnackbar表示: 共通メッセージ
-        showGlobalSnackbar(AlertType.ERROR, FETCH_FAILURE_MESSAGE);
-      },
+      // MEMO: エラーハンドリングは`useApiQuery`で実施する。キャッシュとクエリの状態管理のみ。
     }),
     // ------------------------------------------------------------------
     // 3. ミューテーションエラーのグローバルロギングとSnackbar表示 (Mutating/useMutation)
     // ------------------------------------------------------------------
     mutationCache: new MutationCache({
-      onError: (error, variables, context, mutation) => {
-        console.error('*** TanStack Mutation Update Error ***');
-        console.error('Mutation Key:', mutation.options.mutationKey || 'N/A'); // MutationKeyがあれば表示
-        console.error('Error:', error);
-
-        // ユーザー向けSnackbar表示: 共通メッセージ
-        showGlobalSnackbar(AlertType.ERROR, MUTATE_FAILURE_MESSAGE);
-      },
+      // MEMO: エラーハンドリングは`useApiMutation`で実施する。キャッシュとクエリの状態管理のみ。
     }),
   });
 

@@ -52,7 +52,7 @@ export const SignUpComponent = (): JSX.Element => {
 
   /* useForm
   ------------------------------------------------------------------ */
-  const { handleSubmit, control } = useForm<SignUpFormValues>({
+  const { handleSubmit, control, getValues } = useForm<SignUpFormValues>({
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
     resolver: zodResolver(SignUpSchema),
@@ -265,7 +265,7 @@ export const SignUpComponent = (): JSX.Element => {
                     <Btn label={'仮登録'} isSubmit={true} />
                   </Box>
                   <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
-                    <Btn label={'戻る'} isSubmit={false} eventhandler={() => router.back()} />
+                    <Btn label={'戻る'} bgc={'#707070'} eventhandler={() => router.back()} />
                   </Box>
                 </form>
               </Box>
@@ -286,7 +286,7 @@ export const SignUpComponent = (): JSX.Element => {
                   </Typography>
                   <br />
                   <Typography variant="body1">
-                    ご登録いただいたメールアドレス宛に、確認メールを送信いたしました。
+                    ご登録いただいたメールアドレス宛（{getValues('user_email')}）に、確認メールを送信いたしました。
                   </Typography>
                   <Typography variant="body1">
                     メールに記載されているURLにアクセスし、認証手続きを行っていただくことで、本登録が完了します。
@@ -309,6 +309,9 @@ export const SignUpComponent = (): JSX.Element => {
                     ※30分以上経っても確認メールが届かない場合は、お手数ですが管理者までお問い合わせください。
                   </Typography>
                 </Box>
+                <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
+                  <Btn label={'戻る'} bgc={'#707070'} eventhandler={() => router.back()} />
+                </Box>
               </>
             ) : (
               <>
@@ -322,7 +325,7 @@ export const SignUpComponent = (): JSX.Element => {
                   </Typography>
                   <br />
                   <Typography variant="body1">
-                    ご登録いただいたメールアドレスが、会社ドメイン以外のアドレス（例：Gmail、Yahooメールなど）であったため、現在、
+                    ご登録いただいたメールアドレス（{getValues('user_email')}）が、会社ドメイン以外のアドレスであったため、現在、
                     <Box component="span" sx={{ color: '#ea5315' }}>
                       管理者による承認待ち
                     </Box>
@@ -337,6 +340,10 @@ export const SignUpComponent = (): JSX.Element => {
                     お手数をおかけいたしますが、管理者の承認完了まで、今しばらくお待ちくださいますようお願いいたします。
                   </Typography>
                 </Box>
+                <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
+                  <Btn label={'戻る'} bgc={'#707070'} eventhandler={() => router.back()} />
+                </Box>
+
               </>
             )}
           </>
