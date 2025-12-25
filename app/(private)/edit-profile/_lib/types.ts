@@ -5,29 +5,40 @@ import { formatString } from '@/app/_lib/utils/utils';
 import { SelectOption } from '@/app/_types/types';
 
 /**
- * ユーザー情報 Schema
+ * ユーザー情報 入力用バリデーションスキーマ
  */
-export const UserProfileSchema = z.object({
-  /** ユーザー名 */
-  user_name: z
-    .string()
-    .nonempty({ message: formatString(MSG_REQUIRED, 'ユーザー名') })
-    .max(64, formatString(MSG_MAX, 'ユーザー名', '64')),
-  /** ユーザー名カナ */
-  user_name_kana: z
-    .string()
-    .nonempty({ message: formatString(MSG_REQUIRED, 'ユーザー名(カナ)') })
-    .regex(new RegExp(REG_ZENKAKU_KANA), '全角カナで入力してください。')
-    .max(256, formatString(MSG_MAX, 'ユーザー名(カナ)', '256')),
-  /** 企業部署ID */
-  t_companies_department_id: z.string(),
-  /** 企業雇用形態ID */
-  t_companies_employment_status_id: z.string(),
-  /** 任意項目_回答1 */
-  optional_item_answer_1: z.string().optional(),
-  /** 任意項目_回答2 */
-  optional_item_answer_2: z.string().optional(),
-});
+export const UserProfileSchema = z
+  .object({
+    /** ユーザー名 */
+    user_name: z
+      .string()
+      .nonempty({ message: formatString(MSG_REQUIRED, 'ユーザー名') })
+      .max(64, formatString(MSG_MAX, 'ユーザー名', '64')),
+    /** ユーザー名カナ */
+    user_name_kana: z
+      .string()
+      .nonempty({ message: formatString(MSG_REQUIRED, 'ユーザー名(カナ)') })
+      .regex(new RegExp(REG_ZENKAKU_KANA), '全角カナで入力してください。')
+      .max(256, formatString(MSG_MAX, 'ユーザー名(カナ)', '256')),
+    /** 企業部署ID */
+    t_companies_department_id: z.string(),
+    /** 企業雇用形態ID */
+    t_companies_employment_status_id: z.string(),
+    /** 任意項目_回答1 */
+    optional_item_answer_1: z.string().optional(),
+    /** 任意項目_回答2 */
+    optional_item_answer_2: z.string().optional(),
+  })
+  .strict();
+
+/**
+ * ユーザー情報 API用バリデーションスキーマ
+ */
+export const UserProfileApiSchema = z
+  .object({
+    request: UserProfileSchema,
+  })
+  .strict();
 
 /**
  * ユーザー情報 FormValues

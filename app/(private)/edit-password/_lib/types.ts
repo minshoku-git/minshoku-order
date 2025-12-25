@@ -4,7 +4,7 @@ import { MSG_PASSWORD, MSG_REQUIRED, REG_PASSWORD } from '@/app/_config/constant
 import { formatString } from '@/app/_lib/utils/utils';
 
 /**
- * パスワード変更 Schema
+ * パスワード変更 入力用バリデーションスキーマ
  */
 export const EditPasswordSchema = z
   .object({
@@ -30,7 +30,17 @@ export const EditPasswordSchema = z
         input: ctx.value,
       });
     }
-  });
+  })
+  .strict();
+
+/**
+ * パスワード変更 API用バリデーションスキーマ
+ */
+export const EditPasswordApiSchema = z
+  .object({
+    request: EditPasswordSchema,
+  })
+  .strict();
 
 /**
  * パスワード変更 FormValues

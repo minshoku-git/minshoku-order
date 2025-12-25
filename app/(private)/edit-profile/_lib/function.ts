@@ -17,10 +17,9 @@ import { UserProfileFormValues, UserProfileInitData } from './types';
  * getUserProfileInitData
  * 「会員情報の変更」の初期表示情報を取得する。
  *
- * @param {ApiRequest<number>} values - いらないかも！
  * @returns {Promise<UserDetailFormValues>} 初期表示情報
  */
-export const getUserProfileInitData = async (values: ApiRequest<number>): Promise<ApiResponse<UserProfileInitData>> => {
+export const getUserProfileInitData = async (): Promise<ApiResponse<UserProfileInitData>> => {
   const supabase = await createClient();
 
   try {

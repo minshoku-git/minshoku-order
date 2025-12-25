@@ -4,14 +4,25 @@ import { MSG_EMAIL, MSG_REQUIRED } from '@/app/_config/constants';
 import { formatString } from '@/app/_lib/utils/utils';
 
 /**
- * パスワード Schema
+ * パスワード 入力用バリデーションスキーマ
  */
-export const PasswordSchema = z.object({
-  /** メールアドレス */
-  email: z
-    .email(formatString(MSG_EMAIL, 'メールアドレス'))
-    .nonempty({ message: formatString(MSG_REQUIRED, 'メールアドレス') }),
-});
+export const PasswordSchema = z
+  .object({
+    /** メールアドレス */
+    email: z
+      .email(formatString(MSG_EMAIL, 'メールアドレス'))
+      .nonempty({ message: formatString(MSG_REQUIRED, 'メールアドレス') }),
+  })
+  .strict();
+
+/**
+ * パスワード API用バリデーションスキーマ
+ */
+export const PasswordApiSchema = z
+  .object({
+    request: PasswordSchema,
+  })
+  .strict();
 
 /**
  * パスワード FormValues

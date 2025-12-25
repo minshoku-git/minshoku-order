@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { validateRequest } from '@/app/_lib/validation';
 import { getSignUpInitData } from '@/app/(public)/signup/[id]/_lib/function';
+import { SignUpInitApiSchema } from '@/app/(public)/signup/[id]/_lib/types';
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const result = await getSignUpInitData(body);
+  // --- 1. リクエスト検証 ---
+  const validationResult = await validateRequest(req, SignUpInitApiSchema);
+
+  if (!validationResult.success) {
+    return NextResponse.json(validationResult.error, { status: validationResult.error.status });
+  }
+
+  // --- 2. データ取得・加工 ---
+  const result = await getSignUpInitData(validationResult.data);
+
+  // --- 3. レスポンス返却 ---
   if (result.success) {
     return NextResponse.json(result);
   }

@@ -17,12 +17,9 @@ import { RegisterPaymentInitData, UserAndCompaniesEmploymentStatus, UserPaymentF
  * getUserProfileInitData
  * 「会員情報の変更」の初期表示情報を取得する。
  *
- * @param {ApiRequest<null>} values - いらないかも！
  * @returns {Promise<RegisterPaymentInitData>} 初期表示情報
  */
-export const getEditPaymentTypeInitData = async (
-  values: ApiRequest<null>
-): Promise<ApiResponse<RegisterPaymentInitData>> => {
+export const getEditPaymentTypeInitData = async (): Promise<ApiResponse<RegisterPaymentInitData>> => {
   const supabase = await createClient();
 
   try {

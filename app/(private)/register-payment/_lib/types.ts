@@ -4,7 +4,7 @@ import { PaymentType, SelectType } from '@/app/_types/enum';
 import { CreditCardData } from '@/app/_types/types';
 
 /**
- * ユーザー支払い情報 Schema
+ * ユーザー支払い情報 入力用バリデーションスキーマ
  */
 export const UserPaymentSchema = z
   .object({
@@ -22,7 +22,17 @@ export const UserPaymentSchema = z
         input: ctx.value,
       });
     }
-  });
+  })
+  .strict();
+
+/**
+ * ユーザー支払い情報 API用バリデーションスキーマ
+ */
+export const UserPaymentApiSchema = z
+  .object({
+    request: UserPaymentSchema,
+  })
+  .strict();
 
 /**
  * ユーザー支払い情報 FormValues

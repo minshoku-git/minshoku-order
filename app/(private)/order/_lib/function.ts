@@ -23,9 +23,9 @@ import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetai
 import {
   CancelOrderRequest,
   OmitMenuScheduleAndShop,
+  OrderFormValues,
   OrderInitRequest,
   OrderInitResponse,
-  OrderRequest,
 } from './types';
 
 /**
@@ -280,10 +280,10 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
  * preOrder
  * 注文状況を確認します。
  *
- * @param {ApiRequest<OrderRequest>} values
+ * @param {ApiRequest<OrderFormValues>} values
  * @returns {Promise<ApiResponse<null>>}
  */
-export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiResponse<null>> => {
+export const preOrder = async (values: ApiRequest<OrderFormValues>): Promise<ApiResponse<null>> => {
   const client = await createClient();
   const req = values.request;
   const now = getNow();
@@ -391,7 +391,7 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
  * @param {ApiRequest<OrderRequest>} values
  * @returns {Promise<ApiResponse<null>>}
  */
-export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiResponse<null>> => {
+export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<ApiResponse<null>> => {
   const req = values.request;
   const now = getNow();
   const client = await createClient();

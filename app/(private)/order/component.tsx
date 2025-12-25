@@ -15,7 +15,7 @@ import { useProcessing } from '@/app/_ui/state/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
 
 import { cancelOrderFetcher, getOrderInitFetcher, orderFetcher, preOrderFetcher } from './_lib/fetcher';
-import { CancelOrderRequest, OrderInitRequest, OrderInitResponse, OrderRequest } from './_lib/types';
+import { CancelOrderRequest, OrderFormValues, OrderInitRequest, OrderInitResponse } from './_lib/types';
 
 /**
  * 注文Component
@@ -91,7 +91,7 @@ export const OrderComponent = (): JSX.Element => {
   const preOrderMutate = useApiMutation({
     mutationFn: async (id: number) => {
       openProcessing();
-      const req: ApiRequest<OrderRequest> = { request: { orderCount: count, menuScheduleId: id } };
+      const req: ApiRequest<OrderFormValues> = { request: { orderCount: count, menuScheduleId: id } };
       return preOrderFetcher(req) as unknown as ApiResponse<null>;
     },
     onSuccess: () => {
@@ -112,7 +112,7 @@ export const OrderComponent = (): JSX.Element => {
   const orderMutate = useApiMutation({
     mutationFn: async (id: number) => {
       openProcessing();
-      const req: ApiRequest<OrderRequest> = { request: { orderCount: count, menuScheduleId: id } };
+      const req: ApiRequest<OrderFormValues> = { request: { orderCount: count, menuScheduleId: id } };
       return orderFetcher(req) as unknown as ApiResponse<null>;
     },
     onSuccess: async () => {
