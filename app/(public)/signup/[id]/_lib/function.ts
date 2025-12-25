@@ -336,6 +336,8 @@ ${date}
 ・部署名：${branchName}  
 ・メールアドレス：${userEmail}
 
+――――――――――――――――
+
 ■ 承認
 承認される場合は、以下のURLにアクセスしてください。
 http://localhost:3000/decision-result/0?token=${userId}
@@ -344,8 +346,14 @@ http://localhost:3000/decision-result/0?token=${userId}
 否認される場合は、以下のURLにアクセスしてください。
 http://localhost:3000/decision-result/1?token=${userId}
 
+――――――――――――――――
 
 ご確認のほど、よろしくお願いいたします。
 
-（本メールは自動送信されています）`.trim();
+（本メールは自動送信されています）
+
+──────────────────── 
+株式会社みんなの社食
+「働く人のランチを楽しく、豊かに」
+`.trim();
 };
