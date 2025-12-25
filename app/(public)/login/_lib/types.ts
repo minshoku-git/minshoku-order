@@ -6,14 +6,16 @@ import { formatString } from '@/app/_lib/utils/utils';
 /**
  * ユーザーログイン 入力用バリデーションスキーマ
  */
-export const UserLoginSchema = z.object({
-  /** メールアドレス */
-  email: z
-    .email(formatString(MSG_EMAIL, 'メールアドレス'))
-    .nonempty({ message: formatString(MSG_REQUIRED, 'メールアドレス') }),
-  /** パスワード */
-  password: z.string().nonempty({ message: formatString(MSG_REQUIRED, 'パスワード') }),
-});
+export const UserLoginSchema = z
+  .object({
+    /** メールアドレス */
+    email: z
+      .email(formatString(MSG_EMAIL, 'メールアドレス'))
+      .nonempty({ message: formatString(MSG_REQUIRED, 'メールアドレス') }),
+    /** パスワード */
+    password: z.string().nonempty({ message: formatString(MSG_REQUIRED, 'パスワード') }),
+  })
+  .strict();
 
 /**
  * ユーザーログイン API用バリデーションスキーマ
