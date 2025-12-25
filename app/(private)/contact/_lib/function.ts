@@ -51,9 +51,9 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
     const result = await pgClient.query(insertUserText, values);
     if (result.rowCount === 0) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '問い合わせ情報の新規登録' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '問い合わせ情報の新規登録' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 

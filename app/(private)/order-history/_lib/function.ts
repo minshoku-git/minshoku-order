@@ -45,9 +45,9 @@ export const getOrderHistory = async (
 
     if (errorDays) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '注文履歴情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '注文履歴情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -92,9 +92,9 @@ export const getOrderHistory = async (
     if (error) {
       console.error('query error', error);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '注文履歴の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '注文履歴の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 

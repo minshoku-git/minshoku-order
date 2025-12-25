@@ -51,9 +51,9 @@ export const getEditPaymentTypeInitData = async (
     if (error) {
       console.error(error);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '支払い情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '支払い情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -130,9 +130,9 @@ export const updatePaymentType = async (values: ApiRequest<EditPaymentFormValues
     const domainCheck = await pgClient.query(selectSql, values);
     if (!domainCheck.rowCount) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '支払い方法の更新' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '支払い方法の更新' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 

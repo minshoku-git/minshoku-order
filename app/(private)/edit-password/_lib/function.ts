@@ -52,9 +52,9 @@ export const updatePassword = async (values: ApiRequest<EditPasswordFormValues>)
         throw new CustomError(ErrorCodes.PASSWORD_SAME_AS_OLD);
       }
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        'パスワードの更新' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        'パスワードの更新' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 

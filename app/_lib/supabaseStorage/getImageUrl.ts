@@ -20,9 +20,9 @@ export const getImageUrl = (client: SupabaseClient<any, string, any>, bucketName
 
     if (!publicUrl) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '店舗画像の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '店舗画像の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -64,9 +64,9 @@ export const getImageSignedUrl = async (
     if (error) {
       console.error(error);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '店舗画像の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '店舗画像の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
     return data.signedUrl;

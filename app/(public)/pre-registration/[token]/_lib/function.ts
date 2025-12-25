@@ -88,9 +88,9 @@ export const preregister = async (values: ApiRequest<NextPageInitRequest>): Prom
     if (signInError) {
       console.error(signInError);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        'ログイン' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        'ログイン' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
     /* --------------------------------------------------------------- */

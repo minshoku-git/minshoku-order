@@ -59,9 +59,9 @@ export const getUserProfileInitData = async (values: ApiRequest<number>): Promis
     if (error || !data) {
       console.error(error);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '会員情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '会員情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -79,9 +79,9 @@ export const getUserProfileInitData = async (values: ApiRequest<number>): Promis
     if (errorDep || !dataDep) {
       console.error(dataDep);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '部署情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '部署情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -106,9 +106,9 @@ export const getUserProfileInitData = async (values: ApiRequest<number>): Promis
     if (errorEmp || !dataEmp) {
       console.error(errorEmp);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '雇用種別情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '雇用種別情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -174,9 +174,9 @@ export const updateProfile = async (values: ApiRequest<UserProfileFormValues>): 
     if (error) {
       console.error(error);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        'ユーザー情報の更新' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        'ユーザー情報の更新' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 

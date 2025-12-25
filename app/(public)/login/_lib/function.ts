@@ -70,9 +70,9 @@ export const login = async (req: ApiRequest<UserLoginFormValues>): Promise<ApiRe
     if (signInError) {
       console.error('Error signing in:', signInError);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        'ログイン' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        'ログイン' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
     return { success: true, data: null };
