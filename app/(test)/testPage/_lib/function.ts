@@ -18,7 +18,7 @@ export const getAuth = async (values: ApiRequest<null>): Promise<ApiResponse<Get
     const { error, data } = await supabase.auth.getUser();
 
     if (error) {
-      throw new CustomError(ErrorCodes.NOT_FOUND);
+      throw new CustomError(ErrorCodes.DB_QUERY_FAILED);
     }
 
     return { success: true, data: { id: data.user.id ?? '', email: data.user.email ?? '' } };

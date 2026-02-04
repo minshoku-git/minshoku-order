@@ -58,7 +58,7 @@ export const resetPassword = async (
       }
       return {
         success: true,
-        data: { result: false, ErrorMessage: 'パスワードの再設定' + ErrorCodes.NOT_FOUND.message },
+        data: { result: false, ErrorMessage: 'パスワードの再設定' + ErrorCodes.DB_QUERY_FAILED.message },
       };
     }
 

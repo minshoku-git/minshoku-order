@@ -17,12 +17,9 @@ import { EditPaymentFormValues, EditPaymentInitData, UserAndCompaniesEmploymentS
  * getUserProfileInitData
  * 「会員情報の変更」の初期表示情報を取得する。
  *
- * @param {ApiRequest<null>} values - いらないかも！
  * @returns {Promise<EditPaymentInitData>} 初期表示情報
  */
-export const getEditPaymentTypeInitData = async (
-  values: ApiRequest<number>
-): Promise<ApiResponse<EditPaymentInitData>> => {
+export const getEditPaymentTypeInitData = async (): Promise<ApiResponse<EditPaymentInitData>> => {
   const supabase = await createClient();
 
   try {
@@ -51,9 +48,9 @@ export const getEditPaymentTypeInitData = async (
     if (error) {
       console.error(error);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '支払い情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '支払い情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -130,9 +127,9 @@ export const updatePaymentType = async (values: ApiRequest<EditPaymentFormValues
     const domainCheck = await pgClient.query(selectSql, values);
     if (!domainCheck.rowCount) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '支払い方法の更新' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '支払い方法の更新' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 

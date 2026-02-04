@@ -67,9 +67,9 @@ export const getSignUpInitData = async (
     if (error) {
       console.error('query error', error);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '会社情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '会社情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -87,9 +87,9 @@ export const getSignUpInitData = async (
     if (errorDep || !dataDep) {
       console.error(dataDep);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '部署情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '部署情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -112,9 +112,9 @@ export const getSignUpInitData = async (
     if (errorEmp || !dataEmp) {
       console.error(errorEmp);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '雇用種別情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '雇用種別情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -239,9 +239,9 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
     const result = await pgClient.query(insertUserText, values);
     if (result.rowCount === 0) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '会員情報の新規登録' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '会員情報の新規登録' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -265,9 +265,9 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
       if (signUpError) {
         console.error('Error signing up:', signUpError);
         throw new CustomError(
-          ErrorCodes.NOT_FOUND.code,
-          '認証メール送信' + ErrorCodes.NOT_FOUND.message,
-          ErrorCodes.NOT_FOUND.status
+          ErrorCodes.DB_QUERY_FAILED.code,
+          '認証メール送信' + ErrorCodes.DB_QUERY_FAILED.message,
+          ErrorCodes.DB_QUERY_FAILED.status
         );
       }
     } else {
@@ -336,6 +336,8 @@ ${date}
 ・部署名：${branchName}  
 ・メールアドレス：${userEmail}
 
+――――――――――――――――
+
 ■ 承認
 承認される場合は、以下のURLにアクセスしてください。
 http://localhost:3000/decision-result/0?token=${userId}
@@ -344,8 +346,14 @@ http://localhost:3000/decision-result/0?token=${userId}
 否認される場合は、以下のURLにアクセスしてください。
 http://localhost:3000/decision-result/1?token=${userId}
 
+――――――――――――――――
 
 ご確認のほど、よろしくお願いいたします。
 
-（本メールは自動送信されています）`.trim();
+（本メールは自動送信されています）
+
+──────────────────── 
+株式会社みんなの社食
+「働く人のランチを楽しく、豊かに」
+`.trim();
 };

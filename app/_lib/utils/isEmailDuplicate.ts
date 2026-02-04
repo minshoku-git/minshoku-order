@@ -26,9 +26,9 @@ export async function isEmailDuplicate(props: Props) {
 
   if (error) {
     throw new CustomError(
-      ErrorCodes.NOT_FOUND.code,
-      'ユーザー情報の取得' + ErrorCodes.NOT_FOUND.message,
-      ErrorCodes.NOT_FOUND.status
+      ErrorCodes.DB_QUERY_FAILED.code,
+      'ユーザー情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+      ErrorCodes.DB_QUERY_FAILED.status
     );
   }
   if (data) {
@@ -43,9 +43,9 @@ export async function isEmailDuplicate(props: Props) {
 
   if (errorAdmin) {
     throw new CustomError(
-      ErrorCodes.NOT_FOUND.code,
-      'ユーザー情報の取得' + ErrorCodes.NOT_FOUND.message,
-      ErrorCodes.NOT_FOUND.status
+      ErrorCodes.DB_QUERY_FAILED.code,
+      'ユーザー情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+      ErrorCodes.DB_QUERY_FAILED.status
     );
   }
   if (dataAdmin) {

@@ -68,9 +68,9 @@ export const getLoginUserDetail = async (client: SupabaseClient<any>): Promise<U
     if (error || !data) {
       console.error('query error', error);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        'ユーザー情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        'ユーザー情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
     /* 返却

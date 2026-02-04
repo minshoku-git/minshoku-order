@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { PaymentType, SelectType } from '@/app/_types/enum';
 
 /**
- * 支払い方法の更新 Schema
+ * 支払い方法の更新 入力用バリデーションスキーマ
  */
 export const EditPaymentSchema = z
   .object({
@@ -21,7 +21,17 @@ export const EditPaymentSchema = z
         input: ctx.value,
       });
     }
-  });
+  })
+  .strict();
+
+/**
+ * 支払い方法の更新 API用バリデーションスキーマ
+ */
+export const EditPaymentApiSchema = z
+  .object({
+    request: EditPaymentSchema,
+  })
+  .strict();
 
 /**
  * 支払い方法の更新 FormValues

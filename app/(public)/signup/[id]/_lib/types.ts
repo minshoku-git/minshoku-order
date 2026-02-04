@@ -12,7 +12,29 @@ import { formatString } from '@/app/_lib/utils/utils';
 import { SelectOption } from '@/app/_types/types';
 
 /**
- * ユーザー基本情報 Schema
+ * ユーザー基本情報初期表示情報 入力用バリデーションスキーマ
+ */
+export const SignUpInitSchema = z
+  .object({
+    /** 暗号 */
+    token: z.string(),
+  })
+  .strict();
+/**
+ * ユーザー基本情報初期表示情報 API用バリデーションスキーマ
+ */
+export const SignUpInitApiSchema = z
+  .object({
+    request: SignUpInitSchema,
+  })
+  .strict();
+/**
+ * ユーザー基本情報初期表示情報 リクエスト
+ */
+export type SignUpInitRequest = z.infer<typeof SignUpInitSchema>;
+
+/**
+ * ユーザー基本情報 入力用バリデーションスキーマ
  */
 export const SignUpSchema = z
   .object({
@@ -59,7 +81,8 @@ export const SignUpSchema = z
         input: ctx.value,
       });
     }
-  });
+  })
+  .strict();
 
 /**
  * ユーザー基本情報 FormValues
@@ -67,20 +90,21 @@ export const SignUpSchema = z
 export type SignUpFormValues = z.infer<typeof SignUpSchema>;
 
 /**
- * ユーザー基本情報 FormValues
+ * ユーザー基本情報新規登録 API用バリデーションスキーマ
  */
-export type SignUpRequest = {
-  /** 暗号 */
-  token: string;
-} & SignUpFormValues;
+export const SignUpRequestApiSchema = z
+  .object({
+    request: z.object({
+      ...SignUpSchema.shape,
+      ...SignUpInitSchema.shape,
+    }),
+  })
+  .strict();
 
 /**
- * ユーザー基本情報 初期表示情報リクエスト
+ * ユーザー基本情報 FormValues
  */
-export type SignUpInitRequest = {
-  /** 暗号 */
-  token: string;
-};
+export type SignUpRequest = z.infer<typeof SignUpRequestApiSchema>['request'];
 
 /**
  * ユーザー基本情報 復号後

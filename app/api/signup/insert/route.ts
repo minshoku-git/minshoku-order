@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { validateRequest } from '@/app/_lib/validation';
 import { insertUserProfile } from '@/app/(public)/signup/[id]/_lib/function';
+import { SignUpRequestApiSchema } from '@/app/(public)/signup/[id]/_lib/types';
 
 export async function PUT(req: NextRequest) {
-  const body = await req.json();
-  const result = await insertUserProfile(body);
+  // --- 1. リクエスト検証 ---
+  const validationResult = await validateRequest(req, SignUpRequestApiSchema);
+
+  if (!validationResult.success) {
+    return NextResponse.json(validationResult.error, { status: validationResult.error.status });
+  }
+
+  // --- 2. データ取得・加工 ---
+  const result = await insertUserProfile(validationResult.data);
+
+  // --- 3. レスポンス返却 ---
   if (result.success) {
     return NextResponse.json(result);
   }

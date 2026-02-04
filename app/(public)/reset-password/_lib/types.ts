@@ -4,7 +4,7 @@ import { MSG_PASSWORD, MSG_REQUIRED, REG_PASSWORD } from '@/app/_config/constant
 import { formatString } from '@/app/_lib/utils/utils';
 
 /**
- * パスワード再設定 Schema
+ * パスワード再設定 入力用バリデーションスキーマ
  */
 export const PasswordResetSchema = z
   .object({
@@ -28,7 +28,8 @@ export const PasswordResetSchema = z
         input: ctx.value,
       });
     }
-  });
+  })
+  .strict();
 
 /**
  * パスワード再設定 FormValues
@@ -36,15 +37,34 @@ export const PasswordResetSchema = z
 export type PasswordResetFormValues = z.infer<typeof PasswordResetSchema>;
 
 /**
- * パスワード再設定 Request
+ * 暗号 入力用バリデーションスキーマ
  */
-export type PasswordResetRequest = {
-  /** 暗号 */
-  token: string;
-} & PasswordResetFormValues;
+export const TokenSchema = z
+  .object({
+    /** 暗号 */
+    token: z.string(),
+  })
+  .strict();
+
+/**
+ * パスワード再設定 API用バリデーションスキーマ
+ */
+export const PasswordResetApiSchema = z
+  .object({
+    request: z.object({
+      ...PasswordResetSchema.shape,
+      ...TokenSchema.shape,
+    }),
+  })
+  .strict();
 
 /**
  * パスワード再設定 Request
+ */
+export type PasswordResetRequest = z.infer<typeof PasswordResetApiSchema>['request'];
+
+/**
+ * パスワード再設定 Response
  */
 export type PasswordResetResponse = {
   /** 結果 */

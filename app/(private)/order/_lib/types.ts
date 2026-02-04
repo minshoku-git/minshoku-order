@@ -1,41 +1,70 @@
 import { z } from 'zod';
 
-import { PaymentType } from '@/app/_types/enum';
+/**
+ * 注文情報初期表示 入力用バリデーションスキーマ
+ */
+export const OrderInitSchema = z
+  .object({
+    /** 指定のスケジュールID */
+    moveMenuScheduleId: z.number().optional(),
+  })
+  .strict();
+/**
+ * 注文情報初期表示 API用バリデーションスキーマ
+ */
+export const OrderInitApiSchema = z
+  .object({
+    request: OrderInitSchema,
+  })
+  .strict();
+/**
+ * 注文情報初期表示 FormValues
+ */
+export type OrderInitRequest = z.infer<typeof OrderInitSchema>;
 
 /**
- * 注文情報 Schema
+ * 注文情報 入力用バリデーションスキーマ
  */
-export const OrderSchema = z.object({
-  /** スケジュールID */
-  menuScheduleId: z.string(),
-  /** 注文数 */
-  order_count: z.number().min(1),
-});
-
+export const OrderSchema = z
+  .object({
+    /** スケジュールID */
+    menuScheduleId: z.number(),
+    /** 注文数 */
+    orderCount: z.number().min(1),
+  })
+  .strict();
+/**
+ * 注文情報 API用バリデーションスキーマ
+ */
+export const OrderApiSchema = z
+  .object({
+    request: OrderSchema,
+  })
+  .strict();
 /**
  * 注文情報 FormValues
  */
 export type OrderFormValues = z.infer<typeof OrderSchema>;
 
-/** 注文情報 初期表示 Request */
-export type OrderInitRequest = {
-  /** 指定のスケジュールID */
-  moveMenuScheduleId?: number;
-};
-
-/** 注文情報 Request */
-export type OrderRequest = {
-  /** 指定のスケジュールID */
-  menuScheduleId: number;
-  /** 注文数 */
-  orderCount: number;
-};
-
-/** 注文情報 Request */
-export type CancelOrderRequest = {
-  /** 指定のスケジュールID */
-  menuScheduleId: number;
-};
+/**
+ * 注文情報キャンセル 入力用バリデーションスキーマ
+ */
+export const CancelOrderSchema = z
+  .object({
+    /** スケジュールID */
+    menuScheduleId: z.number(),
+  })
+  .strict();
+/**
+ * 注文情報キャンセル API用バリデーションスキーマ
+ */
+export const CancelOrderApiSchema = z
+  .object({
+    request: CancelOrderSchema,
+  })
+  .strict();
+/** 注文情報キャンセル Request */
+export type CancelOrderRequest = z.infer<typeof CancelOrderSchema>;
 
 /** 注文情報 初期表示 Request */
 export type OrderInitResponse = {

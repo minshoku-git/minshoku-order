@@ -1,7 +1,7 @@
 import { fetcher } from '@/app/_lib/fetcher';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 
-import { CancelOrderRequest, OrderInitRequest, OrderInitResponse, OrderRequest } from './types';
+import { CancelOrderRequest, OrderFormValues, OrderInitRequest, OrderInitResponse } from './types';
 
 /**
  * getOrderInitFetcher
@@ -22,10 +22,10 @@ export const getOrderInitFetcher = async (
 
 /**
  * preOrderFetcher
- * @param {ApiRequest<OrderRequest>} condition
+ * @param {ApiRequest<OrderFormValues>} condition
  * @returns {Promise<ApiResponse<null>>}
  */
-export const preOrderFetcher = async (condition: ApiRequest<OrderRequest> | null): Promise<ApiResponse<null>> => {
+export const preOrderFetcher = async (condition: ApiRequest<OrderFormValues> | null): Promise<ApiResponse<null>> => {
   return fetcher<ApiResponse<null>>('/api/order/pre-order', {
     method: 'POST',
     body: JSON.stringify(condition),
@@ -37,10 +37,10 @@ export const preOrderFetcher = async (condition: ApiRequest<OrderRequest> | null
 
 /**
  * orderFetcher
- * @param {ApiRequest<OrderRequest>} condition
+ * @param {ApiRequest<OrderFormValues>} condition
  * @returns {Promise<ApiResponse<null>>}
  */
-export const orderFetcher = async (condition: ApiRequest<OrderRequest> | null): Promise<ApiResponse<null>> => {
+export const orderFetcher = async (condition: ApiRequest<OrderFormValues> | null): Promise<ApiResponse<null>> => {
   return fetcher<ApiResponse<null>>('/api/order/order', {
     method: 'POST',
     body: JSON.stringify(condition),

@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { validateRequest } from '@/app/_lib/validation';
 import { getEditPaymentTypeInitData } from '@/app/(private)/register-payment/_lib/function';
 
-export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const result = await getEditPaymentTypeInitData(body);
+export async function POST(_req: NextRequest) {
+  // --- 1. リクエスト検証 ---
+  // MEMO: リクエストなし
+
+  // --- 2. データ取得・加工 ---
+  const result = await getEditPaymentTypeInitData();
+
+  // --- 3. レスポンス返却 ---
   if (result.success) {
     return NextResponse.json(result);
   }

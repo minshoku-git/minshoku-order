@@ -60,9 +60,9 @@ export const sendPasswordResetMail = async (req: ApiRequest<PasswordFormValues>)
     if (signInError) {
       console.error('Error signing in:', signInError);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        'パスワードリセット送信' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        'パスワードリセット送信' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
     return { success: true, data: null };

@@ -23,9 +23,9 @@ import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetai
 import {
   CancelOrderRequest,
   OmitMenuScheduleAndShop,
+  OrderFormValues,
   OrderInitRequest,
   OrderInitResponse,
-  OrderRequest,
 } from './types';
 
 /**
@@ -88,9 +88,9 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     if (error) {
       console.error('query error', error);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        'メニュースケジュール情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        'メニュースケジュール情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -118,9 +118,9 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     if (errorPreviousSchedule) {
       console.error('query error', errorPreviousSchedule);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '前の日付のスケジュール取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '前の日付のスケジュール取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
     /* 次のスケジュール取得
@@ -139,9 +139,9 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     if (errorNextSchedule) {
       console.error('query error', errorNextSchedule);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '次の日付のスケジュールデータ取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '次の日付のスケジュールデータ取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -159,9 +159,9 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     if (errorOrder) {
       console.error(errorOrder);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        'オーダー情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        'オーダー情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -179,9 +179,9 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     if (errorCountOrder) {
       console.error(errorCountOrder);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '現在の注文数の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '現在の注文数の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -280,10 +280,10 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
  * preOrder
  * 注文状況を確認します。
  *
- * @param {ApiRequest<OrderRequest>} values
+ * @param {ApiRequest<OrderFormValues>} values
  * @returns {Promise<ApiResponse<null>>}
  */
-export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiResponse<null>> => {
+export const preOrder = async (values: ApiRequest<OrderFormValues>): Promise<ApiResponse<null>> => {
   const client = await createClient();
   const req = values.request;
   const now = getNow();
@@ -304,9 +304,9 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
 
     if (scheduleError) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        'メニュースケジュール情報の取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        'メニュースケジュール情報の取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -336,9 +336,9 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
 
     if (orderCheckError) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '注文状況の確認' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '注文状況の確認' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
     if (orderCheck && orderCheck.id) {
@@ -363,9 +363,9 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
     // 納品数を超過しているか
     if (totalOrders + req.orderCount > menuSchedule.stock_count) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        'ご希望の数量は、残り注文可能数を上回っています。' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        'ご希望の数量は、残り注文可能数を上回っています。' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -391,7 +391,7 @@ export const preOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiRes
  * @param {ApiRequest<OrderRequest>} values
  * @returns {Promise<ApiResponse<null>>}
  */
-export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<ApiResponse<null>> => {
+export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<ApiResponse<null>> => {
   const req = values.request;
   const now = getNow();
   const client = await createClient();
@@ -424,9 +424,9 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
 
     if (resultMenuSchedule.rows.length === 0 || stockCount === 0) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '在庫切れ' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '在庫切れ' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -452,9 +452,9 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
 
     if (existingOrderResult.rows.length > 0) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '既に注文済みです。' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '既に注文済みです。' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -475,9 +475,9 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
 
     if (totalCount + req.orderCount > menuScheduleData.stock_count!) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '注文上限数を超過しました。' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '注文上限数を超過しました。' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -528,9 +528,9 @@ export const insertOrder = async (values: ApiRequest<OrderRequest>): Promise<Api
     const result = await pgClient.query(insertUserText, values);
     if (result.rowCount === 0) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '会員情報の新規登録' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '会員情報の新規登録' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -595,9 +595,9 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
     if (error) {
       console.error('query error', error);
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '前の日付のスケジュール取得' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '前の日付のスケジュール取得' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -609,9 +609,9 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
 
     if (now > cancelDeadlineUTC) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
+        ErrorCodes.DB_QUERY_FAILED.code,
         'キャンセル日時を超過しています。キャンセル日時:' + cancelDeadlineUTC + ', 現在日時:' + now,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
@@ -627,9 +627,9 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
 
     if (orderCheckError) {
       throw new CustomError(
-        ErrorCodes.NOT_FOUND.code,
-        '注文キャンセル' + ErrorCodes.NOT_FOUND.message,
-        ErrorCodes.NOT_FOUND.status
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '注文キャンセル' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
       );
     }
 
