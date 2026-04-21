@@ -23,6 +23,7 @@ type Props = {
 };
 
 export default function MenuCard(props: Props) {
+  /*  test */
   /* initialize
   ------------------------------------------------------------------ */
   const menuScheduleData = props.data.menuScheduleData!
