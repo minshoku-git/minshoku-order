@@ -5,6 +5,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 import { JSX, useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form-mui';
 
@@ -19,6 +20,13 @@ import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
 
 import { getRegisterPaymentTypeInitDataFetcher, registerPaymentTypeFetcher } from './_lib/fetcher';
 import { RegisterPaymentInitData, UserPaymentFormValues, UserPaymentSchema } from './_lib/types';
+
+// window オブジェクトの型拡張（TypeScriptエラー回避）
+declare global {
+  interface Window {
+    Multipayment: any;
+  }
+}
 
 /**
  * 支払方法登録Component
@@ -52,6 +60,7 @@ export const PaymentComponent = (): JSX.Element => {
     },
   });
   const paymentMethod = watch('paymentType');
+  const selectedCardId = watch('creditcard');
 
   /* useQuery - 初期表示情報取得
   ------------------------------------------------------------------ */
@@ -67,8 +76,47 @@ export const PaymentComponent = (): JSX.Element => {
 
   /* functions - send
   ------------------------------------------------------------------ */
-  const registerHandler: SubmitHandler<UserPaymentFormValues> = async (data) => {
-    registerMutate.mutate(data);
+  const registerHandler: SubmitHandler<UserPaymentFormValues> = async (formData) => {
+    // 新規クレジットカード登録が必要なケースか判定
+    const isNewCreditCard = formData.paymentType === PaymentType.CREDITCARD && formData.creditcard === 'new';
+    if (isNewCreditCard) {
+      openProcessing();
+
+      // 1. ショップIDで初期化（環境変数からの取得を推奨）
+      const shopId = process.env.NEXT_PUBLIC_GMO_SHOP_ID || 'tshop00076633';
+      window.Multipayment.init(shopId);
+
+      // 2. DOMから直接カード情報を取得（前回の PaymentForm で id 指定したフィールド）
+      const cardNo = (document.getElementById('cardNo') as HTMLInputElement)?.value;
+      const expireMonth = (document.getElementById('expireMonth') as HTMLInputElement)?.value;
+      const expireYear = (document.getElementById('expireYear') as HTMLInputElement)?.value;
+      const securityCode = (document.getElementById('securityCode') as HTMLInputElement)?.value;
+
+      // 3. トークン取得の実行
+      window.Multipayment.getToken({
+        cardno: cardNo,
+        expire: expireYear + expireMonth, // YYMM形式
+        securitycode: securityCode,
+        holdername: '',
+      }, (response: any) => {
+        console.log('GMO-PG Response:', response);
+        if (response.resultCode === '000') {
+          // トークン取得成功：API送信用データにトークンをセット
+          const token = response.tokenObject.token[0];
+          registerMutate.mutate({
+            ...formData,
+            token: token, // ここでサーバーに渡す用のトークンを追加
+          });
+        } else {
+          // トークン取得失敗
+          closeProcessing();
+          alert('クレジットカード情報が正しくありません。');
+        }
+      });
+    } else {
+      // 給与天引きや既存カードの場合はそのまま送信
+      registerMutate.mutate(formData);
+    }
   };
 
   const registerMutate = useApiMutation({
@@ -116,6 +164,12 @@ export const PaymentComponent = (): JSX.Element => {
 
   return (
     <>
+      {/* GMO-PG トークン取得 JS を読み込む */}
+      <Script 
+        src="https://static.mul-pay.jp/ext/js/token.js" 
+        strategy="beforeInteractive" // フォーム表示前に読み込んでおく
+      />
+
       {/* 上部リンク */}
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', fontSize: 20 }}>
@@ -127,6 +181,7 @@ export const PaymentComponent = (): JSX.Element => {
         <PaymentForm
           handleSubmit={handleSubmit}
           submitHandler={registerHandler}
+          onError={(errors) => console.log('Validation Errors:', errors)} 
           control={control}
           paymentMethod={paymentMethod}
           cards={creditCardOptions}

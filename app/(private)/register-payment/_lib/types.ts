@@ -12,6 +12,8 @@ export const UserPaymentSchema = z
     paymentType: z.enum(PaymentType),
     /** クレジットカード番号 */
     creditcard: z.string().optional(),
+    /** GMO-PGトークン */
+    token: z.string().optional(),
   })
   .check((ctx) => {
     if (ctx.value.paymentType === PaymentType.CREDITCARD && !ctx.value.creditcard) {

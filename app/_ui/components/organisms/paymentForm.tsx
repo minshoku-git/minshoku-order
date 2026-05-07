@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import { AddCard } from '@mui/icons-material';
+import { useState } from 'react';
+import { AddCard, CreditCard } from '@mui/icons-material';
 import {
     Box,
     Button,
@@ -11,6 +12,8 @@ import {
     Radio,
     RadioGroup,
     Typography,
+    TextField,
+    Grid2,
 } from '@mui/material';
 import { JSX } from 'react';
 import { Controller, FieldError, FieldErrors, SubmitHandler, UseFormHandleSubmit } from 'react-hook-form';
@@ -45,12 +48,13 @@ export const PaymentForm = (props: Props): JSX.Element => {
 
     /* initialize
     ------------------------------------------------------------------ */
+    const [showNewCardForm, setShowNewCardForm] = useState(false);
 
     return (
         <>
             <Divider sx={{ mb: 2, mt: 4 }} />
             {/* 給与天引き */}
-            <form onSubmit={props.handleSubmit(props.submitHandler)}>
+            <form onSubmit={props.handleSubmit(props.submitHandler, props.onError)}>
                 <FormControl component="fieldset" sx={{ width: '100%' }}>
                     <Controller
                         name="paymentType"
@@ -76,52 +80,93 @@ export const PaymentForm = (props: Props): JSX.Element => {
                                     <Divider sx={{ my: 2 }} />
                                 </>}
                                 {/* CREDITCARD */}
-                                {props.credit_flag === SelectType.SELECTED && <>
+                                {/* クレジットカード決済 */}
+                            {props.credit_flag === SelectType.SELECTED && (
+                                <>
                                     <FormControlLabel
                                         value={PaymentType.CREDITCARD}
                                         control={<Radio />}
                                         label={<Typography fontWeight="bold">クレジットカード決済</Typography>}
                                     />
-                                    {props.paymentMethod === PaymentType.CREDITCARD && (
-                                        <>
-                                            <Box sx={{ pl: 2 }}>
-                                                <Controller
-                                                    name="creditcard"
-                                                    control={props.control}
-                                                    render={({ field: creditField }) => (
-                                                        <RadioGroup {...creditField}>
-                                                            {props.cards && props.cards.map((card, i) => (
-                                                                <FormControlLabel
-                                                                    key={i}
-                                                                    value={card.creditcardId}
-                                                                    control={<Radio />}
-                                                                    sx={{ ml: 1 }}
-                                                                    label={<Typography fontWeight="bold">カード番号{card.maskedCardNumber}</Typography>}
-                                                                />
-                                                            ))}
-                                                            <Button
-                                                                startIcon={<AddCard />}
-                                                                sx={{
-                                                                    border: '1px solid #ddd',
-                                                                    fontWeight: 'bold',
-                                                                    mr: 3,
-                                                                    ml: 1,
-                                                                    pl: 2,
-                                                                    background: '#fff',
-                                                                    borderRadius: 1,
-                                                                    justifyContent: 'flex-start',
-                                                                }}
-                                                            >
-                                                                新しいクレジットカードを登録する
-                                                            </Button>
-                                                            {props.error && <Typography sx={{ 'color': '#d32f2f', 'fontSize': '0.75rem', mt: 1, ml: 1 }}>{props.error.message}</Typography>}
-                                                        </RadioGroup>
-                                                    )}
-                                                />
-                                            </Box>
-                                        </>
-                                    )}
-                                </>}
+                                    {/* クレジットカード決済が選択されている時のみ表示 */}
+{props.paymentMethod === PaymentType.CREDITCARD && (
+    <Box sx={{ pl: 4, mt: 1 }}>
+        <Controller
+            name="creditcard"
+            control={props.control}
+            render={({ field }) => (
+                <RadioGroup {...field}>
+                    {/* 1. 既存カードのリスト表示 */}
+                    {props.cards?.map((card, i) => (
+                        <FormControlLabel
+                            key={i}
+                            value={card.creditcardId}
+                            control={<Radio />}
+                            label={`カード番号: **** **** **** ${card.maskedCardNumber}`}
+                            onClick={() => setShowNewCardForm(false)} // 既存選択時はフォームを閉じる
+                        />
+                    ))}
+
+                    {/* 2. 新規登録ボタン */}
+                    <Button
+                        variant="outlined"
+                        startIcon={<AddCard />}
+                        onClick={() => {
+                            setShowNewCardForm(true); // フォームを表示
+                            field.onChange('new');    // 値を 'new' にしてバリデーションを通す
+                        }}
+                        sx={{ mt: 1, textTransform: 'none', justifyContent: 'flex-start' }}
+                        fullWidth
+                    >
+                        新しいクレジットカードを登録する
+                    </Button>
+
+                    {/* 3. 【ここが消えていた部分】新規カード入力フォーム */}
+                    {showNewCardForm && (
+                        <Box sx={{ mt: 3, p: 2, bgcolor: '#f9f9f9', borderRadius: 1, border: '1px solid #ddd' }}>
+                            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                <CreditCard sx={{ verticalAlign: 'middle', mr: 1 }} />
+                                新規カード情報入力
+                            </Typography>
+                            
+                            <Grid2 container spacing={2}>
+                                <Grid2 size={12}>
+                                    <TextField
+                                        id="cardNo" // 後のトークン取得で使用
+                                        label="カード番号"
+                                        fullWidth
+                                        size="small"
+                                        inputProps={{ maxLength: 16 }}
+                                    />
+                                </Grid2>
+                                <Grid2 size={4}>
+                                    <TextField id="expireMonth" label="月(MM)" fullWidth size="small" inputProps={{ maxLength: 2 }} />
+                                </Grid2>
+                                <Grid2 size={4}>
+                                    <TextField id="expireYear" label="年(YY)" fullWidth size="small" inputProps={{ maxLength: 2 }} />
+                                </Grid2>
+                                <Grid2 size={4}>
+                                    <TextField id="securityCode" label="CVV" type="password" fullWidth size="small" inputProps={{ maxLength: 4 }} />
+                                </Grid2>
+                            </Grid2>
+                            <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                                ※入力されたカード情報は直接決済会社へ送信され、弊社サーバーには保存されません。
+                            </Typography>
+                        </Box>
+                    )}
+                </RadioGroup>
+            )}
+        />
+        {/* バリデーションエラーメッセージの表示 */}
+        {props.error && (
+            <Typography sx={{ color: '#d32f2f', fontSize: '0.75rem', mt: 1 }}>
+                {props.error.message}
+            </Typography>
+        )}
+    </Box>
+)}
+                                </>
+                            )}
                                 {/* Credit Card Payment */}
                             </RadioGroup>
                         )}
