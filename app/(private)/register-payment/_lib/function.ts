@@ -9,7 +9,7 @@ import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 import { RegisterPaymentInitData, UserAndCompaniesEmploymentStatus, UserPaymentFormValues } from './types';
-
+import { saveGmoMember, saveGmoCard, searchGmoCards } from './gmoApi';
 /* 支払い情報の新規登録
 ------------------------------------------------------------------ */
 
@@ -92,100 +92,79 @@ export const registerPaymentType = async (values: ApiRequest<UserPaymentFormValu
   const req = values.request;
   const now = getNow();
   const supabase = await createClient();
-
-  // connection Start
   const pgClient = await createPgClient();
 
   try {
-    // Transaction Start
     await pgClient.query('BEGIN');
 
-    /* Update - t_user
-  　------------------------------------------------------------------ */
-    const { data: user, error } = await supabase.auth.getUser();
-    if (error || !user.user.email) {
-      throw new CustomError(ErrorCodes.LOGGED_OUT);
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user?.email) throw new CustomError(ErrorCodes.LOGGED_OUT);
+
+    // 1. ユーザーIDを取得して12桁のMemberIDを生成
+    const { data: userData } = await supabase
+      .from('t_user')
+      .select('id')
+      .eq('user_email', authData.user.email)
+      .single();
+
+    if (!userData) throw new Error('ユーザーが見つかりません');
+    const memberId = String(userData.id).padStart(12, '0'); // ★12桁0埋め
+
+    let finalCardSeq = '';
+
+    /* 2. クレジットカード登録 (GMO連携)
+    ------------------------------------------------------------------ */
+    if (req.paymentType === PaymentType.CREDITCARD && req.token) {
+      // GMO会員登録
+      const memberRes = await saveGmoMember(memberId);
+      if (!memberRes.success) throw new Error(`GMO会員登録失敗: ${memberRes.errInfo}`);
+
+      // GMOカード登録
+      const cardRes = await saveGmoCard(memberId, req.token);
+      if (cardRes.ErrCode) throw new Error(`GMOカード登録失敗: ${cardRes.ErrInfo}`);
+
+      finalCardSeq = cardRes.CardSeq || '0';
     }
-    console.log('user.user.email', user.user.email);
 
-    /* Update - t_user
-  　------------------------------------------------------------------ */
-    // TASK: ある程度実装出来たらパスワード削除を追加する。
-    // const selectSql = `
-    //   UPDATE
-    //     t_user
-    //   SET
-    //     payment_type = $1,
-    //     user_registration_status = $2,
-    //     updated_at = $3,
-    //     signup_password = $4
-    //   WHERE
-    //     user_email = $5
-    //   AND
-    //     user_registration_status = $6
-    //   AND
-    //     usage_status = $7;`;
-
-    const selectSql = `
-      UPDATE
-        t_user
+    /* 3. DB更新 (t_user)
+    ------------------------------------------------------------------ */
+    const updateSql = `
+      UPDATE t_user
       SET
         payment_type = $1,
         user_registration_status = $2,
-        updated_at = $3
+        credit_member_id = $3,
+        credit_seq_choice = $4,
+        updated_at = $5
       WHERE
-        user_email = $4
+        user_email = $6
       AND
-        user_registration_status = $5
+        user_registration_status = $7
       AND
-        usage_status = $6;`;
+        usage_status = $8;`;
 
-    // Insert
-    const values = [
+    const updateValues = [
       req.paymentType,
-      UserRegistrationStatus.REGISTERED,
+      UserRegistrationStatus.REGISTERED, // 完了ステータスへ
+      memberId,         // 12桁ID
+      finalCardSeq,     // カード連番
       now,
-      // '', // MEMO: パスワード削除
-      user.user.email,
+      authData.user.email,
       UserRegistrationStatus.WAITING_PAYMENT_SETUP,
       UsageStatus.AVAILABLE,
     ];
-    const domainCheck = await pgClient.query(selectSql, values);
-    if (!domainCheck.rowCount) {
-      throw new CustomError(
-        ErrorCodes.DB_QUERY_FAILED.code,
-        '支払い方法の登録' + ErrorCodes.DB_QUERY_FAILED.message,
-        ErrorCodes.DB_QUERY_FAILED.status
-      );
-    }
 
-    /* クレジットカード登録
-  　------------------------------------------------------------------ */
-    // MEMO: 念のため残しておく。ロールバック不要になったら、supabase-jsのみに変更修正。
+    const result = await pgClient.query(updateSql, updateValues);
+    if (!result.rowCount) throw new Error('DB更新に失敗しました');
 
-    /* --------------------------------------------------------------- */
-    // throw new Error('疑似エラー:ロールバックを確認しました。');
-
-    // Commit
     await pgClient.query('COMMIT');
-
     return { success: true, data: null };
-  } catch (e: unknown) {
-    console.error('Transaction failed:', e);
-    await rollbackWithLog(pgClient);
 
-    if (e instanceof CustomError) {
-      return {
-        success: false,
-        error: e,
-      };
-    }
-    return {
-      success: false,
-      error: ErrorCodes.INTERNAL_SERVER_ERROR,
-    };
+  } catch (e: any) {
+    await pgClient.query('ROLLBACK');
+    console.error('Registration failed:', e);
+    return { success: false, error: { code: 'REGISTER_ERROR', message: e.message } };
   } finally {
-    // Transaction End
     await pgClient.end();
   }
 };

@@ -55,7 +55,7 @@ export const preregister = async (values: ApiRequest<NextPageInitRequest>): Prom
 
     /* ステータス更新
     ------------------------------------------------------------------ */
-    if (UserRegistrationStatus.WAITING_EMAIL_VERIFICATION) {
+    if (dataUser.user_registration_status === UserRegistrationStatus.WAITING_EMAIL_VERIFICATION) {
       const query = supabase
         .from('t_user')
         .update<t_user>({

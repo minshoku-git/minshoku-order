@@ -365,7 +365,8 @@ export default function MenuCard(props: Props) {
         handleClose={handleClose}
         storeInfo={{
           name: shopData.shop_name,
-          desc: shopData.shop_description
+          desc: shopData.shop_description,
+          legalNotice: shopData.specified_commercial_transaction_act
         }}
       />
     </>

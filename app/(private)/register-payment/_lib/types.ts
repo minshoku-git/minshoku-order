@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 import { PaymentType, SelectType } from '@/app/_types/enum';
-import { CreditCardData } from '@/app/_types/types';
 
 /**
  * ユーザー支払い情報 入力用バリデーションスキーマ
@@ -9,23 +8,22 @@ import { CreditCardData } from '@/app/_types/types';
 export const UserPaymentSchema = z
   .object({
     /** 支払い種別 */
-    paymentType: z.enum(PaymentType),
+    paymentType: z.nativeEnum(PaymentType), // z.enum から z.nativeEnum に修正（列挙型の場合）
     /** クレジットカード番号 */
     creditcard: z.string().optional(),
     /** GMO-PGトークン */
     token: z.string().optional(),
   })
-  .check((ctx) => {
-    if (ctx.value.paymentType === PaymentType.CREDITCARD && !ctx.value.creditcard) {
-      ctx.issues.push({
-        code: 'custom',
-        path: ['paymentType'],
+  // ★ .check ではなく superRefine を使用します
+  .superRefine((data, ctx) => {
+    if (data.paymentType === PaymentType.CREDITCARD && !data.creditcard) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['creditcard'],
         message: '登録済みのクレジットカード番号を選択してください。',
-        input: ctx.value,
       });
     }
-  })
-  .strict();
+  });
 
 /**
  * ユーザー支払い情報 API用バリデーションスキーマ
@@ -59,6 +57,13 @@ export type RegisterPaymentInitData = {
   paypay_flag: SelectType;
 };
 
+export type CreditCardData = {
+  /** id (CardSeq) */
+  creditcardId: string;
+  /** マスク済みカード番号 (例: ************1234) */
+  maskedCardNumber: string;
+};
+
 /**
  * 支払い方法の更新 初期表示情報
  */
@@ -77,3 +82,12 @@ export type UserAndCompaniesEmploymentStatus = {
     paypay_flag?: string;
   };
 };
+/** SaveCard レスポンス */
+export interface SaveCardResponse {
+  CardSeq?: string;
+  CardNo?: string;
+  Forward?: string;
+  Brand?: string;
+  ErrCode?: string;
+  ErrInfo?: string;
+}

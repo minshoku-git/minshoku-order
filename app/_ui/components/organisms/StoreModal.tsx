@@ -1,6 +1,8 @@
-import { Box, IconButton, Modal, SxProps, Theme, Typography } from '@mui/material';
+import { Box, IconButton, Modal, SxProps, Theme, Typography, Collapse } from '@mui/material';
 import Image from 'next/image';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 import closeIcon from '../../assets/images/modal-close.svg';
 
@@ -14,6 +16,7 @@ import closeIcon from '../../assets/images/modal-close.svg';
 interface StoreInfo {
   name: string;
   desc: string;
+  legalNotice?: string;
 }
 
 /**
@@ -47,6 +50,15 @@ const style: SxProps<Theme> = {
 // -----------------------------------------------------------
 
 const StoreModal: React.FC<StoreModalProps> = ({ open, handleClose, storeInfo }) => {
+  const [showLegal, setShowLegal] = useState(false);
+
+  // モーダルが閉じられたらアコーディオンも閉じるようにする
+  useEffect(() => {
+    if (!open) {
+      setShowLegal(false);
+    }
+  }, [open]);
+  
   return (
     <Modal
       open={open}
@@ -75,6 +87,46 @@ const StoreModal: React.FC<StoreModalProps> = ({ open, handleClose, storeInfo })
         <Typography id="modal-modal-description" sx={{ mt: 2, color: '#333', fontSize: 16, whiteSpace: 'pre-wrap' }}>
           {storeInfo.desc}
         </Typography>
+        {/* 特定商取引法に基づく表記（アコーディオン形式） */}
+        {/* 特定商取引法に基づく表記（内側スクロール版） */}
+        {storeInfo.legalNotice && (
+          <Box sx={{ mt: 4, borderTop: '1px solid #eee', pt: 2 }}>
+            <Box
+              onClick={() => setShowLegal(!showLegal)}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#666',
+                mb: 1,
+                '&:hover': { color: '#ea5315' }
+              }}
+            >
+              <Typography sx={{ fontSize: 14, fontWeight: 'bold', textDecoration: 'underline' }}>
+                特定商取引法に基づく表記
+              </Typography>
+              {showLegal ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+            </Box>
+            
+            <Collapse in={showLegal}>
+              {/* ★ここがポイント：maxHeight を設定してエリア内スクロールにする */}
+              <Box sx={{ 
+                mt: 1, 
+                p: 2, 
+                bgcolor: '#f9f9f9', 
+                borderRadius: '8px',
+                maxHeight: '250px', // 好みの高さに調整してください
+                overflowY: 'auto',  // 内容が多いときだけスクロールバーを表示
+                border: '1px solid #ddd'
+              }}>
+                <Typography sx={{ fontSize: 13, color: '#555', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                  {storeInfo.legalNotice}
+                </Typography>
+              </Box>
+            </Collapse>
+          </Box>
+        )}
       </Box>
     </Modal>
   );

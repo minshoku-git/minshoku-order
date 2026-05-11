@@ -77,48 +77,53 @@ export const PaymentComponent = (): JSX.Element => {
   /* functions - send
   ------------------------------------------------------------------ */
   const registerHandler: SubmitHandler<UserPaymentFormValues> = async (formData) => {
-    // 新規クレジットカード登録が必要なケースか判定
-    const isNewCreditCard = formData.paymentType === PaymentType.CREDITCARD && formData.creditcard === 'new';
-    if (isNewCreditCard) {
-      openProcessing();
+  const isNewCreditCard = formData.paymentType === PaymentType.CREDITCARD && formData.creditcard === 'new';
 
-      // 1. ショップIDで初期化（環境変数からの取得を推奨）
-      const shopId = process.env.NEXT_PUBLIC_GMO_SHOP_ID || 'tshop00076633';
-      window.Multipayment.init(shopId);
+  if (isNewCreditCard) {
 
-      // 2. DOMから直接カード情報を取得（前回の PaymentForm で id 指定したフィールド）
-      const cardNo = (document.getElementById('cardNo') as HTMLInputElement)?.value;
-      const expireMonth = (document.getElementById('expireMonth') as HTMLInputElement)?.value;
-      const expireYear = (document.getElementById('expireYear') as HTMLInputElement)?.value;
-      const securityCode = (document.getElementById('securityCode') as HTMLInputElement)?.value;
-
-      // 3. トークン取得の実行
-      window.Multipayment.getToken({
-        cardno: cardNo,
-        expire: expireYear + expireMonth, // YYMM形式
-        securitycode: securityCode,
-        holdername: '',
-      }, (response: any) => {
-        console.log('GMO-PG Response:', response);
-        if (response.resultCode === '000') {
-          // トークン取得成功：API送信用データにトークンをセット
-          const token = response.tokenObject.token[0];
-          registerMutate.mutate({
-            ...formData,
-            token: token, // ここでサーバーに渡す用のトークンを追加
-          });
-        } else {
-          // トークン取得失敗
-          closeProcessing();
-          alert('クレジットカード情報が正しくありません。');
-        }
-      });
-    } else {
-      // 給与天引きや既存カードの場合はそのまま送信
-      registerMutate.mutate(formData);
+    if (typeof window === 'undefined' || !window.Multipayment) {
+      alert('決済システムの準備ができていません。数秒待ってから再度お試しいただくか、ページを再読み込みしてください。');
+      return;
     }
-  };
+    
+    openProcessing();
 
+    // 1. 初期化
+    const shopId = process.env.NEXT_PUBLIC_GMO_SHOP_ID || 'tshop00076633';
+    window.Multipayment.init(shopId);
+
+    // 2. カード情報取得
+    const cardNo = (document.getElementById('cardNo') as HTMLInputElement)?.value;
+    const mm = (document.getElementById('expireMonth') as HTMLInputElement)?.value;
+    const yy = (document.getElementById('expireYear') as HTMLInputElement)?.value;
+    const securityCode = (document.getElementById('securityCode') as HTMLInputElement)?.value;
+
+    // ★ 修正：有効期限を 6桁 (YYYYMM) に整形
+    const formattedExpire = `20${yy}${mm}`;
+
+    // 3. トークン取得
+    window.Multipayment.getToken({
+      cardno: cardNo.replace(/\s|-/g, ''),
+      expire: formattedExpire,
+      securitycode: securityCode,
+      tokennumber: '1', // ★ 明示的に '1' を指定
+    }, (response: any) => {
+      if (response.resultCode === '000') {
+        const token = response.tokenObject.token[0];
+        // サーバーサイドへ送信
+        registerMutate.mutate({
+          ...formData,
+          token: token,
+        });
+      } else {
+        closeProcessing();
+        alert(`カード認証に失敗しました。内容を確認してください。(Error: ${response.resultCode})`);
+      }
+    });
+  } else {
+    registerMutate.mutate(formData);
+  }
+};
   const registerMutate = useApiMutation({
     mutationFn: async (data: UserPaymentFormValues) => {
       openProcessing();
@@ -159,16 +164,35 @@ export const PaymentComponent = (): JSX.Element => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
 
+  useEffect(() => {
+    if (!data) {
+      return;
+    } else {
+      setCreditCardOptions(data.creditCardDatas);
+      reset({
+        paymentType: data.currentPaymentType as PaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
+        // ★ ここを修正：undefined の場合は空文字をセットして「常に controlled」な状態にする
+        creditcard: data.currentCardDataId ?? '', 
+      });
+    }
+  }, [data, reset]);
+
   /* JSX
   ------------------------------------------------------------------ */
-
+// 読み込み状態を管理する state を追加（任意）
+const [isGmoLoaded, setIsGmoLoaded] = useState(false);
   return (
     <>
       {/* GMO-PG トークン取得 JS を読み込む */}
       <Script 
-        src="https://static.mul-pay.jp/ext/js/token.js" 
-        strategy="beforeInteractive" // フォーム表示前に読み込んでおく
-      />
+      src="https://stg.static.mul-pay.jp/ext/js/token.js" 
+      strategy="afterInteractive" 
+      onLoad={() => {
+        console.log('GMO SDK Loaded');
+        setIsGmoLoaded(true);
+      }}
+      onError={() => console.error('GMO SDK Load Error')}
+    />
 
       {/* 上部リンク */}
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
