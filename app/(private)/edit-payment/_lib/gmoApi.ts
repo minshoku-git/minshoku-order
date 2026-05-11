@@ -61,9 +61,6 @@ export const saveGmoCard = async (memberId: string, token: string): Promise<Save
   const siteId = 'tsite00060950';
   const sitePass = '2sk628ed';
 
-
-  console.log(`ここかなああああああああああああああああああああ: ${token} `);
-
   const params = new URLSearchParams();
   params.append('SiteID', siteId);
   params.append('SitePass', sitePass);

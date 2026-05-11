@@ -110,7 +110,7 @@ export const updatePaymentType = async (values: ApiRequest<EditPaymentFormValues
     const email = authData.user?.email;
     if (!email) throw new Error('セッションが切れました');
 
-    // ユーザー情報の取得（credit_member_id を確認）
+    // ユーザー情報の取得（id を取得して MemberID のベースにする）
     const { data: userData, error: fetchError } = await supabase
       .from('t_user')
       .select('id, credit_member_id')
@@ -119,29 +119,25 @@ export const updatePaymentType = async (values: ApiRequest<EditPaymentFormValues
 
     if (fetchError || !userData) throw new Error('ユーザー情報の取得に失敗しました');
 
-    // 現在使用している MemberID (DBから取得、なければ生成)
-    const memberId = userData?.credit_member_id || `USER-${email.replace(/[@.]/g, '')}`;
+    // ★ 常に id を 12桁の0埋めにしたものを MemberID として採用する
+    // これにより、DBに既に古い形式の ID があっても、今回の更新で新しい形式に上書きされます。
+    const memberId = String(userData.id).padStart(12, '0');
 
-    let finalCardSeq = req.creditcard; // 通常はラジオボタンで選んだ ID
+    let finalCardSeq = req.creditcard;
 
     /* 新規カード登録のフロー
     ------------------------------------------------------------------ */
     if (req.paymentType === PaymentType.CREDITCARD && req.creditcard === 'new' && req.token) {
       
-      // 1. GMO会員登録 (既に登録済みでも、内部でエラーを無視する設計にしています)
+      // 1. GMO会員登録（12桁IDで実行）
+      // 既に登録済みであれば saveGmoMember 側で成功扱いになるよう実装済み
       const memberRes = await saveGmoMember(memberId);
       if (!memberRes.success) throw new Error(`GMO会員登録失敗: ${memberRes.errInfo}`);
 
-      // 2. GMOカード登録 (ここでトークンを使用)
+      // 2. GMOカード登録
       const cardRes = await saveGmoCard(memberId, req.token);
-      
-      // ★ エラーが出た場合はここでストップ
-      if (cardRes.ErrCode) {
-         throw new Error(`GMOカード登録失敗: ${cardRes.ErrInfo}`);
-      }
+      if (cardRes.ErrCode) throw new Error(`GMOカード登録失敗: ${cardRes.ErrInfo}`);
 
-      // 3. GMOから返ってきた CardSeq (0, 1, 2...) を取得
-      // これを保存することで「今登録したカード」が選択状態になります。
       finalCardSeq = cardRes.CardSeq || '0';
     }
 
@@ -159,8 +155,8 @@ export const updatePaymentType = async (values: ApiRequest<EditPaymentFormValues
     
     await pgClient.query(updateSql, [
       req.paymentType, 
-      memberId, 
-      finalCardSeq, // 新規登録なら新しいSeq、既存なら選択されたSeq
+      memberId,         // 確定した 12桁の ID
+      finalCardSeq, 
       email
     ]);
 

@@ -28,6 +28,8 @@ import {
   OrderInitResponse,
 } from './types';
 
+import { entryTranGmo, execTranGmo } from './gmoApi';
+
 /**
  * getOrderInit
  * 注文画面の初期情報を取得する。
@@ -407,6 +409,13 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
     ------------------------------------------------------------------ */
     const user = await getLoginUserDetail(client);
 
+    // DBから最新のカード情報を再取得
+    const { data: userData } = await client
+      .from('t_user')
+      .select('credit_member_id, credit_seq_choice')
+      .eq('id', user.id)
+      .single();
+
     /* スケジュール情報取得とテーブルロック
   　------------------------------------------------------------------ */
     const selectSql = `
@@ -491,6 +500,40 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
     // ユーザー負担額
     const userBurdenAmount = amount - companiesBurdenAmount;
 
+    let gmoOrderId = '';
+    let creditAccessId = '';
+    let creditAccessPass = '';
+
+    /* クレジットの場合
+    ------------------------------------------------------------------ */
+    if (user.payment_type === PaymentType.CREDITCARD) {
+      // 決済に使用するOrderIDの生成
+      gmoOrderId = `ORD-${user.id}-${Date.now()}`;
+
+      if (!userData?.credit_member_id || !userData?.credit_seq_choice) {
+        throw new Error('クレジットカード情報が登録されていません。');
+      }
+
+      // 1. 取引登録 (EntryTran)
+      const entryRes = await entryTranGmo(gmoOrderId, userBurdenAmount);
+      if (!entryRes.success) throw new Error(`GMO取引登録失敗: ${entryRes.errInfo}`);
+
+      creditAccessId = entryRes.accessId!;
+      creditAccessPass = entryRes.accessPass!;
+
+      // 2. 決済実行 (ExecTran: 登録済みカードを使用)
+      const execRes = await execTranGmo(
+        creditAccessId,
+        creditAccessPass,
+        gmoOrderId,
+        userData.credit_member_id,
+        userData.credit_seq_choice
+      );
+
+      if (!execRes.success) throw new Error(`GMO決済実行失敗: ${execRes.errInfo}`);
+    }
+    
+
     /* 注文情報の新規登録
     ------------------------------------------------------------------ */
     const insertValues: Omit<t_order, 'id' | 'cancel_datetime' | 'created_at' | 'updated_at'> = {
@@ -513,9 +556,10 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
       // 会社負担額
       companies_burden_amount: companiesBurdenAmount,
       // クレジットカード情報 TASK:置き換え
-      gmo_order_id: PaymentType.CREDITCARD === user.payment_type ? '' : '',
-      credit_access_id: PaymentType.CREDITCARD === user.payment_type ? '' : '',
-      credit_access_password: PaymentType.CREDITCARD === user.payment_type ? '' : '',
+      // クレジットカード決済情報を保存
+      gmo_order_id: gmoOrderId,
+      credit_access_id: creditAccessId,
+      credit_access_password: creditAccessPass,
       // paypay情報 TASK:置き換え
       paypay_access_id: PaymentType.PAYPAY === user.payment_type ? '' : '',
       paypay_access_password: PaymentType.PAYPAY === user.payment_type ? '' : '',
@@ -533,10 +577,6 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
         ErrorCodes.DB_QUERY_FAILED.status
       );
     }
-
-    /* クレジットカード登録
-    　------------------------------------------------------------------ */
-    // TODO:クレジットカード登録
 
     /* --------------------------------------------------------------- */
     // throw new Error('疑似エラー:ロールバックを確認しました。');
