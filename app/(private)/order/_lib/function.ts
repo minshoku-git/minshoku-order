@@ -28,7 +28,7 @@ import {
   OrderInitResponse,
 } from './types';
 
-import { entryTranGmo, execTranGmo } from './gmoApi';
+import { entryTranGmo, execTranGmo, alterTranGmo } from './gmoApi';
 
 /**
  * getOrderInit
@@ -653,6 +653,34 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
         'キャンセル日時を超過しています。キャンセル日時:' + cancelDeadlineUTC + ', 現在日時:' + now,
         ErrorCodes.DB_QUERY_FAILED.status
       );
+    }
+
+    /* キャンセル対象の注文情報（決済情報含む）を取得
+    ------------------------------------------------------------------ */
+    const { data: orderData, error: orderError } = await client
+      .from('t_order')
+      .select('payment_type, credit_access_id, credit_access_password')
+      .eq('t_menu_schedule_id', req.menuScheduleId)
+      .eq('t_user_id', user.id)
+      .eq('order_status_type', OrderStatusType.VALID)
+      .single();
+
+    if (orderError || !orderData) {
+      throw new Error('キャンセル可能な注文が見つかりませんでした。');
+    }
+
+    /* クレジットカード決済の場合はGMO側を取り消す
+    ------------------------------------------------------------------ */
+    if (orderData.payment_type === PaymentType.CREDITCARD) {
+      if (orderData.credit_access_id && orderData.credit_access_password) {
+        const gmoRes = await alterTranGmo(
+          orderData.credit_access_id, 
+          orderData.credit_access_password
+        );
+        if (!gmoRes.success) {
+          throw new Error(`GMO決済のキャンセルに失敗しました: ${gmoRes.errInfo}`);
+        }
+      }
     }
 
     /* 注文キャンセル

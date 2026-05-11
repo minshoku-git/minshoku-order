@@ -75,3 +75,41 @@ export const execTranGmo = async (
     return { success: false, errInfo: 'CONNECTION_ERROR' };
   }
 };
+
+/**
+ * ⑦ 取引状態変更 (AlterTran)
+ * 決済済みの取引を取り消します（キャンセル・返金）。
+ */
+export const alterTranGmo = async (accessId: string, accessPass: string) => {
+  const baseUrl = 'https://pt01.mul-pay.jp';
+  const shopId = 'tshop00076633';
+  const shopPass = 'as5fkaw2';
+
+  const params = new URLSearchParams();
+  params.append('ShopID', shopId);
+  params.append('ShopPass', shopPass);
+  params.append('AccessID', accessId);
+  params.append('AccessPass', accessPass);
+  params.append('JobCd', 'VOID'); // 取消を指定
+
+  try {
+    const response = await fetch(`${baseUrl}/payment/AlterTran.idPass`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+
+    const text = new TextDecoder('shift-jis').decode(await response.arrayBuffer());
+    const resParams = new URLSearchParams(text);
+
+    if (resParams.get('ErrCode')) {
+      console.error('[alterTranGmo] Error:', resParams.get('ErrInfo'));
+      return { success: false, errInfo: resParams.get('ErrInfo') };
+    }
+
+    return { success: true };
+  } catch (e) {
+    console.error('[alterTranGmo] Connection Error:', e);
+    return { success: false, errInfo: 'CONNECTION_ERROR' };
+  }
+};
