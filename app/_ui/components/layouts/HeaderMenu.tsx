@@ -134,7 +134,7 @@ const HeaderMenu = (props: Props): JSX.Element => {
             </Box>
             <Box>
               <Link href={'/terms'} underline="none" sx={{ color: '#fff', fontSize: '1rem', display: 'block', py: 1 }}>
-                {'特定商取引法に基づく表記'}
+                {'利用規約'}
               </Link>
               <Divider sx={translucentWhiteBg} />
             </Box>
