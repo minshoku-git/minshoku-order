@@ -41,7 +41,7 @@ export const LoginForm = (props: Props): JSX.Element => {
     mode: 'onSubmit',
     reValidateMode: 'onSubmit',
     resolver: zodResolver(UserLoginSchema),
-    defaultValues: { email: 's.abe@refact.co.jp', password: 'password1' },
+    defaultValues: { email: '', password: '' },
   });
 
   /* functions - send
