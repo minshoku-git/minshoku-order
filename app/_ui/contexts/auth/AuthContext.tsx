@@ -42,7 +42,7 @@ export function AuthProvider({
         initialRestaurant,
         initialUserName
     }: AuthProviderProps) {
-        
+
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     // サーバー注入データを初期値に使用し、初期化は完了済みとする
     const [userId, setUserId] = useState<string | null>(userEmail ?? null);
@@ -109,9 +109,9 @@ export function AuthProvider({
     const apiData = queryData ?? null;
 
     // 認証情報が確定したユーザー名、レストラン名を取得
-    const finalRestaurantName = apiData?.restaurantName;
-    const finalUserName = apiData?.userName;
-    const finalUserRegistrationStatus = apiData?.userRegistrationStatus;
+    const finalRestaurantName = apiData?.restaurantName ?? initialRestaurant;
+    const finalUserName = apiData?.userName ?? initialUserName;
+    const finalUserRegistrationStatus = apiData?.userRegistrationStatus ?? initialStatus;
 
     // 最終的なローディング状態の決定
     const finalIsLoading = !isFetched && isQueryLoading;
