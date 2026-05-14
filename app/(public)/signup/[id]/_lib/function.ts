@@ -259,7 +259,7 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
       const { error: signUpError } = await supabase.auth.signUp({
         email: req.user_email,
         password: req.signup_password,
-        options: { emailRedirectTo: process.env.APP_URL_DEV + '/pre-registration/' + signUpEncryptReq },
+        options: { emailRedirectTo: 'https://minshoku-order-red.vercel.app/pre-registration/' + signUpEncryptReq },
       });
 
       if (signUpError) {
