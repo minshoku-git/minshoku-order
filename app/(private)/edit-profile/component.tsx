@@ -129,9 +129,9 @@ export const EditProfileComponent = (): JSX.Element => {
         {!isLoading && data &&
           <Box sx={{ mt: 2 }}>
             <form noValidate onSubmit={handleSubmit(updateProfileHandler)}>
-              <InputItem control={control} label={`会社名`} name="cname" disabled={true} isNotFormValue={"株式会社リファクト"} type="text" />
-              <InputItem control={control} label={`支店名`} name="cname" disabled={true} isNotFormValue={"第一システム開発本部"} type="text" />
-              <InputItem control={control} label={`登録メールアドレス`} name="cname" disabled={true} isNotFormValue={"s.abe@refact.co.jp"} type="text" />
+              <InputItem control={control} label={`会社名`} name="cname" disabled={true} isNotFormValue={data.t_companies.company_name} type="text" />
+              <InputItem control={control} label={`支店名`} name="cname" disabled={true} isNotFormValue={data.t_companies.branch_name} type="text" />
+              <InputItem control={control} label={`登録メールアドレス`} name="cname" disabled={true} isNotFormValue={data.user_email} type="text" />
               <InputItem control={control} label={`お名前`} name="user_name" required={true} />
               <InputItem
                 control={control}
