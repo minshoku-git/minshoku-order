@@ -20,7 +20,7 @@ import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
 
 import { getRegisterPaymentTypeInitDataFetcher, registerPaymentTypeFetcher } from './_lib/fetcher';
 import { RegisterPaymentInitData, UserPaymentFormValues, UserPaymentSchema } from './_lib/types';
-
+import { useQueryClient } from '@tanstack/react-query';
 // window オブジェクトの型拡張（TypeScriptエラー回避）
 declare global {
   interface Window {
@@ -37,6 +37,7 @@ export const PaymentComponent = (): JSX.Element => {
   ------------------------------------------------------------------ */
   const router = useRouter();
   const { openProcessing, closeProcessing } = useProcessing();
+  const queryClient = useQueryClient();
 
   /* useState
   ------------------------------------------------------------------ */
@@ -131,6 +132,7 @@ export const PaymentComponent = (): JSX.Element => {
       return registerPaymentTypeFetcher(req) as unknown as ApiResponse<null>;
     },
     onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.AUTH_STATUS] });
       sessionStorage.setItem('snackbar', '支払い方法登録の登録が完了しました。');
       router.replace('/order');
     },
@@ -142,18 +144,19 @@ export const PaymentComponent = (): JSX.Element => {
 
   /* useEffect 初期表示情報取得
   ------------------------------------------------------------------ */
+
   useEffect(() => {
-    if (!data) {
-      return;
-    } else {
-      setCreditCardOptions(data.creditCardDatas);
-      reset({
-        paymentType: data.currentPaymentType as PaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
-        creditcard: data.currentCardDataId,
-      });
-    }
+    if (!data) return;
+
+    setCreditCardOptions(data.creditCardDatas);
+    reset({
+      paymentType: data.currentPaymentType as PaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
+      // undefined を防ぎ、常に controlled な状態を維持する
+      creditcard: data.currentCardDataId ?? '', 
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  }, [data, reset]); // reset も依存配列に含めるのが推奨です
+
 
   useEffect(() => {
     if (isLoading) {
@@ -163,19 +166,6 @@ export const PaymentComponent = (): JSX.Element => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
-
-  useEffect(() => {
-    if (!data) {
-      return;
-    } else {
-      setCreditCardOptions(data.creditCardDatas);
-      reset({
-        paymentType: data.currentPaymentType as PaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
-        // ★ ここを修正：undefined の場合は空文字をセットして「常に controlled」な状態にする
-        creditcard: data.currentCardDataId ?? '', 
-      });
-    }
-  }, [data, reset]);
 
   /* JSX
   ------------------------------------------------------------------ */
