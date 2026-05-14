@@ -340,11 +340,11 @@ ${date}
 
 ■ 承認
 承認される場合は、以下のURLにアクセスしてください。
-http://localhost:3000/decision-result/0?token=${userId}
+https://minshoku-order-red.vercel.app/decision-result/0?token=${userId}
 
 ■ 否認
 否認される場合は、以下のURLにアクセスしてください。
-http://localhost:3000/decision-result/1?token=${userId}
+https://minshoku-order-red.vercel.app/decision-result/1?token=${userId}
 
 ――――――――――――――――
 
