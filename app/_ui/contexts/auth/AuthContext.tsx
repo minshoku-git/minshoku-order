@@ -26,13 +26,23 @@ type AuthContextType = {
 type AuthProviderProps = {
     children: ReactNode;
     userEmail: string | null;
+    initialStatus?: string;
+    initialRestaurant?: string;
+    initialUserName?: string;
 };
 
 // Contextの作成
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Providerコンポーネント
-export function AuthProvider({ children, userEmail }: AuthProviderProps) {
+export function AuthProvider({ 
+        children, 
+        userEmail,
+        initialStatus,
+        initialRestaurant,
+        initialUserName
+    }: AuthProviderProps) {
+        
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     // サーバー注入データを初期値に使用し、初期化は完了済みとする
     const [userId, setUserId] = useState<string | null>(userEmail ?? null);

@@ -25,9 +25,19 @@ type ClientLayoutWrapperProps = {
     children: React.ReactNode;
     // サーバーから取得した初期ユーザーメールアドレス
     initialUserEmail: string | null;
+    initialStatus: string;
+    initialRestaurant: string;
+    initialUserName: string;
 };
 
-export function ClientLayoutWrapper({ children, initialUserEmail }: ClientLayoutWrapperProps) {
+export function ClientLayoutWrapper({ 
+    children, 
+    initialUserEmail,
+    initialStatus,
+    initialRestaurant,
+    initialUserName
+}: ClientLayoutWrapperProps) {
+
     const pathname = usePathname();
     const isLoginPage = pathname?.includes('/login');
 
@@ -41,7 +51,12 @@ export function ClientLayoutWrapper({ children, initialUserEmail }: ClientLayout
                         <ProcessingProvider>
                             <QueryClientProvider client={queryClientInstance}>
                                 {/* 取得した初期メールアドレスをAuthProviderに注入する */}
-                                <AuthProvider userEmail={initialUserEmail}>
+                                <AuthProvider 
+                                    userEmail={initialUserEmail}
+                                    initialStatus={initialStatus}
+                                    initialRestaurant={initialRestaurant}
+                                    initialUserName={initialUserName}
+                                >
                                     <OpenSnackBar />
                                     <OpenProcessing />
                                     <Box
