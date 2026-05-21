@@ -9,7 +9,7 @@ import React from 'react';
 
 import theme from '../../../_config/theme/theme'
 import { queryClientInstance } from '../../../_lib/hooks/query/queryClient';
-import fvImage from '../../assets/images/fv.jpg';
+import fvImage from '../../assets/images/fv.png';
 import { AuthProvider } from '../../contexts/auth/AuthContext';
 import { DirtyProvider } from '../../state/dirty/dirtyContext';
 import { OpenProcessing } from '../../state/processing/processing';
