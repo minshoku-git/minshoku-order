@@ -37,7 +37,8 @@ export const OrderComponent = (): JSX.Element => {
   /* useQuery - 初期取得
   ------------------------------------------------------------------ */
   const { data, refetch, isLoading } = useApiQuery<OrderInitResponse>({
-    queryKey: [QUERY_KEYS.ORDER_INIT_RESULT],
+    // queryKey に condition を追加して、日付ごとにキャッシュを分ける
+    queryKey: [QUERY_KEYS.ORDER_INIT_RESULT, condition], 
     queryFn: () => getOrderInitFetcher(condition),
     refetchOnWindowFocus: false,
   });
