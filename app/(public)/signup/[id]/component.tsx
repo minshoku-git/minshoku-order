@@ -18,6 +18,7 @@ import { useProcessing } from '@/app/_ui/state/processing/processingContext';
 
 import { SignUpFetcher, SignUpInitDataFetcher } from './_lib/fetcher';
 import { TermsComponent } from './_lib/terms';
+import { PrivacyComponent } from './_lib/privacy';
 import {
   SignUpFormValues,
   SignUpInitData,
@@ -161,13 +162,13 @@ export const SignUpComponent = (): JSX.Element => {
       <UserCustomModal open={openTerms} onClose={() => setOpenTerms(false)} title="利用規約">
         <TermsComponent />
       </UserCustomModal>
-      {/* 利用規約 */}
+      {/* プライバシーポリシー */}
       <UserCustomModal
         open={openPrivacypolicy}
         onClose={() => setOpenPrivacypolicy(false)}
         title="プライバシーポリシー"
       >
-        <TermsComponent />
+        <PrivacyComponent />
       </UserCustomModal>
       <Box sx={{ pb: 8 }}>
         {/* 仮登録前 */}
