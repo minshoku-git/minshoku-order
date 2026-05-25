@@ -1,27 +1,18 @@
-// app/_lib/utils/getDateTime.tsx
-
 import { format, startOfMonth, subDays, subMonths } from 'date-fns';
 import { ja } from 'date-fns/locale/ja';
-import { toZonedTime, fromZonedTime } from 'date-fns-tz';
-
-/**
- * getDateTime.tsx
- * 日時に関わる関数を管理します。
- */
+import { toZonedTime } from 'date-fns-tz';
 
 const JST_TIMEZONE = 'Asia/Tokyo';
 
 /**
- * getNow
- * 純粋な現在時刻（UTC）を返します。判定の基準に使用します。
+ * 現在日時の取得 (UTC)
  */
 export function getNow(): Date {
   return new Date();
 }
 
 /**
- * getJstNow
- * 日本時間での現在時刻を取得します。
+ * 日本時間での現在時刻を取得
  */
 export function getJstNow(): Date {
   return toZonedTime(new Date(), JST_TIMEZONE);
@@ -29,29 +20,25 @@ export function getJstNow(): Date {
 
 /**
  * getCancelDeadlineUTC / getOrderDeadlineUTC
- * 納品日の「日付」から日本時間基準の期限（UTC Date）を正確に算出します。
+ * DBの時刻(UTC)をそのまま UTC Date として生成し、期限を算出します。
  */
 export function getCancelDeadlineUTC(
   deliveryDay: Date | string,
   cancelDaysBefore: number,
-  cancelTime: string
+  cancelTime: string // DBの値 "10:00:00" (UTC)
 ): Date {
-  // 1. deliveryDay が timestamp with time zone (UTC) のため、一度日本時間の文字列 "YYYY-MM-DD" に直す
-  // これにより、DBの値が 00:00:00+00 (JST 09:00) であっても、正しい「日付」を取り出せる
+  // 1. 納品日から日付部分のみ取得 ("2026-05-27")
   const dateStr = typeof deliveryDay === 'string' 
     ? deliveryDay.split('T')[0] 
-    : format(toZonedTime(deliveryDay, JST_TIMEZONE), 'yyyy-MM-dd');
+    : format(deliveryDay, 'yyyy-MM-dd');
 
-  // 2. 日本時間での「納品日0時」を起点にする
-  const deliveryDateJst = fromZonedTime(`${dateStr}T00:00:00`, JST_TIMEZONE);
+  // 2. DBの時刻を UTC として解釈した Date を作成
+  const deadlineUTC = new Date(`${dateStr}T${cancelTime.slice(0, 8)}Z`);
 
-  // 3. 日本時間基準で日数を引く
-  const deadlineJst = subDays(deliveryDateJst, cancelDaysBefore);
-  const deadlineDateStr = format(deadlineJst, 'yyyy-MM-dd');
+  // 3. 設定された日数を引く (UTC基準)
+  deadlineUTC.setUTCDate(deadlineUTC.getUTCDate() - cancelDaysBefore);
 
-  // 4. fromZonedTime を使い、日本の指定時刻を正しい UTC に変換する
-  // 例: "2026-05-25T17:00:00" (JST) -> 正しく "08:00:00" (UTC) に変換される
-  return fromZonedTime(`${deadlineDateStr}T${cancelTime.slice(0, 8)}`, JST_TIMEZONE);
+  return deadlineUTC;
 }
 
 export function getOrderDeadlineUTC(
@@ -61,25 +48,30 @@ export function getOrderDeadlineUTC(
 ): Date {
   const dateStr = typeof deliveryDay === 'string' 
     ? deliveryDay.split('T')[0] 
-    : format(toZonedTime(deliveryDay, JST_TIMEZONE), 'yyyy-MM-dd');
+    : format(deliveryDay, 'yyyy-MM-dd');
 
-  const deliveryDateJst = fromZonedTime(`${dateStr}T00:00:00`, JST_TIMEZONE);
-  const deadlineJst = subDays(deliveryDateJst, orderPeriodDaysBefore);
-  const deadlineDateStr = format(deadlineJst, 'yyyy-MM-dd');
+  const deadlineUTC = new Date(`${dateStr}T${orderPeriodTime.slice(0, 8)}Z`);
+  deadlineUTC.setUTCDate(deadlineUTC.getUTCDate() - orderPeriodDaysBefore);
 
-  return fromZonedTime(`${deadlineDateStr}T${orderPeriodTime.slice(0, 8)}`, JST_TIMEZONE);
+  return deadlineUTC;
 }
 
 /**
- * 表示用変換 (UTC -> JST文字列)
+ * 表示用：UTCの時刻文字列('HH:mm:ss')を日本時間の文字列('HH:mm')に変換
+ * 例: "10:00:00" -> "19:00"
  */
 export function formatTimeToJst(timeStr: string | null | undefined): string {
   if (!timeStr) return '';
   const dummyDate = '2000-01-01';
+  // "Z" を付与して UTC として読み込み、JST に変換して表示
   const utcDate = new Date(`${dummyDate}T${timeStr.slice(0, 8)}Z`);
-  return format(toZonedTime(utcDate, JST_TIMEZONE), 'HH:mm');
+  const jstDate = toZonedTime(utcDate, JST_TIMEZONE);
+  return format(jstDate, 'HH:mm');
 }
 
+/**
+ * 表示用：Dateを日本時間の形式に変換
+ */
 export function formatJstDate(utcDate: Date | string): string {
   const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate;
   return format(toZonedTime(date, JST_TIMEZONE), 'yyyy年M月d日(E)', { locale: ja });
@@ -91,9 +83,11 @@ export function formatJstDateTime(utcDate: Date | string): string {
 }
 
 /**
- * getTodayXHour
+ * getTodayXHour (日本時間の今日0時などを取得)
  */
 export function getTodayXHour(H: number = 0): Date {
-  const dateStr = format(getJstNow(), 'yyyy-MM-dd');
-  return fromZonedTime(`${dateStr}T${String(H).padStart(2, '0')}:00:00`, JST_TIMEZONE);
+  const jstNow = getJstNow();
+  const dateStr = format(jstNow, 'yyyy-MM-dd');
+  // 日本時間の指定時刻を生成し、Dateオブジェクトにする
+  return new Date(`${dateStr}T${String(H).padStart(2, '0')}:00:00+09:00`);
 }
