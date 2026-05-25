@@ -29,6 +29,20 @@ export default function MenuCard(props: Props) {
   const shopData = props.data.shopData!
   const companyData = props.data.companyData!
   const orderData = props.data.orderData
+
+// ★ デバッグ用ログを追加
+  React.useEffect(() => {
+    console.log('--- キャンセル期限デバッグ ---');
+    console.log('納品日:', menuScheduleData.delivery_day);
+    console.log('設定：何日前か:', companyData.cancel_period_day, '日前');
+    console.log('設定：何時までか:', companyData.cancel_period_time);
+    console.log('サーバー判定結果 (isCancellable):', orderData?.isCancellable);
+    console.log('現在時刻 (ブラウザ基準):', new Date().toLocaleString());
+    console.log('------------------------------');
+  }, [companyData, menuScheduleData, orderData]);
+
+
+
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const [expanded, setExpanded] = useState(false);
