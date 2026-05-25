@@ -13,6 +13,7 @@ import {
   getOrderDeadlineUTC,
   getTodayXHour,
   formatTimeToJst,
+  formatJstDateTime,
 } from '@/app/_lib/utils/getDateTime';
 import { getPostgreSqlItems } from '@/app/_lib/utils/utils';
 import { convertPaymentTypeName, OrderStatusType, PaymentType } from '@/app/_types/enum';
@@ -196,9 +197,14 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     const orderPeriodTime = user.t_companies.order_period_time;
     const orderDeadlineUTC = getOrderDeadlineUTC(data.delivery_day, orderPeriodDaysBefore, orderPeriodTime);
 
-    console.log('現在日時:', now);
-    console.log('納品日:', data.delivery_day);
-    console.log('注文期限:', orderDeadlineUTC);
+    // ★ ログを詳細化
+console.log('=== [DEBUG] 注文期限判定 ===');
+console.log('現在時刻 (UTC):', now.toISOString());
+console.log('現在時刻 (JST):', formatJstDateTime(now));
+console.log('納品日 (Raw):', data.delivery_day);
+console.log('注文期限 (UTC):', orderDeadlineUTC.toISOString());
+console.log('注文期限 (JST):', formatJstDateTime(orderDeadlineUTC));
+console.log('判定結果 (過ぎているか):', now >= orderDeadlineUTC);
 
     const isOrderDeadlinePassed = now >= orderDeadlineUTC;
 
@@ -208,7 +214,13 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     const cancelTime = user.t_companies.cancel_period_time;
     const cancelDeadlineUTC = getCancelDeadlineUTC(data.delivery_day, cancelDaysBefore, cancelTime);
 
-    console.log('キャンセル日時:', cancelDeadlineUTC);
+    // ★ ログを詳細化
+console.log('=== [DEBUG] キャンセル期限判定 ===');
+console.log('現在時刻 (UTC):', now.toISOString());
+console.log('キャンセル期限 (UTC):', cancelDeadlineUTC.toISOString());
+console.log('キャンセル期限 (JST):', formatJstDateTime(cancelDeadlineUTC));
+console.log('判定結果 (キャンセル可能か):', cancelDeadlineUTC > now);
+console.log('============================');
 
     const isCancellable = cancelDeadlineUTC > now;
 
