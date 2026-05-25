@@ -1,6 +1,6 @@
 import { format, startOfMonth, subDays, subMonths } from 'date-fns';
 import { ja } from 'date-fns/locale/ja';
-import { toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 
 const JST_TIMEZONE = 'Asia/Tokyo';
 
@@ -25,22 +25,20 @@ export function getJstNow(): Date {
 export function getCancelDeadlineUTC(
   deliveryDay: Date | string,
   cancelDaysBefore: number,
-  cancelTime: string
+  cancelTime: string // DBの値 "10:00:00" (UTC)
 ): Date {
-  // ★ 1. 納品日を一度「日本の日付文字列」に変換する (例: "2026-05-27")
+  // 1. 納品日から日付部分のみ取得 ("2026-05-27")
   const dateStr = typeof deliveryDay === 'string' 
     ? deliveryDay.split('T')[0] 
-    : format(toZonedTime(deliveryDay, JST_TIMEZONE), 'yyyy-MM-dd');
+    : format(deliveryDay, 'yyyy-MM-dd');
 
-  // ★ 2. 日本時間の「2026-05-27 00:00:00」を起点として解釈させる
-  const deliveryDateJst = fromZonedTime(`${dateStr}T00:00:00`, JST_TIMEZONE);
+  // 2. DBの時刻を UTC として解釈した Date を作成
+  const deadlineUTC = new Date(`${dateStr}T${cancelTime.slice(0, 8)}Z`);
 
-  // 3. 日本時間基準で「1日前」などを引く
-  const deadlineJst = subDays(deliveryDateJst, cancelDaysBefore);
-  const deadlineDateStr = format(deadlineJst, 'yyyy-MM-dd');
+  // 3. 設定された日数を引く (UTC基準)
+  deadlineUTC.setUTCDate(deadlineUTC.getUTCDate() - cancelDaysBefore);
 
-  // 4. 日本時間の指定時刻を UTC Date に変換して返す
-  return fromZonedTime(`${deadlineDateStr}T${cancelTime.slice(0, 8)}`, JST_TIMEZONE);
+  return deadlineUTC;
 }
 
 export function getOrderDeadlineUTC(
