@@ -11,7 +11,6 @@ export async function PUT(req: NextRequest) {
   if (!validationResult.success) {
     return NextResponse.json(validationResult.error, { status: validationResult.error.status });
   }
-
   // --- 2. データ取得・加工 ---
   const result = await updateProfile(validationResult.data);
 

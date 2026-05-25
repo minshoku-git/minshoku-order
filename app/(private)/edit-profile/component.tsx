@@ -40,8 +40,8 @@ export const EditProfileComponent = (): JSX.Element => {
   /* useForm
   ------------------------------------------------------------------ */
   const { handleSubmit, control, reset, formState: { isDirty } } = useForm<UserProfileFormValues>({
-    mode: 'onSubmit',
-    reValidateMode: 'onSubmit',
+    mode: 'onBlur', 
+    reValidateMode: 'onChange', 
     resolver: zodResolver(UserProfileSchema),
     defaultValues: {
       user_name: '',
@@ -96,24 +96,39 @@ export const EditProfileComponent = (): JSX.Element => {
   /* functions - 会員情報の更新
   ------------------------------------------------------------------ */
   const updateProfileHandler: SubmitHandler<UserProfileFormValues> = async (data) => {
-    insertUserBasicMutate.mutate(data);
+    // console.log('送信データ:', data);
+    updateProfileMutate.mutate(data); 
   };
 
-  const insertUserBasicMutate = useApiMutation({
-    mutationFn: async (data: UserProfileFormValues) => {
-      openProcessing();
-      const req: ApiRequest<UserProfileFormValues> = { request: data };
-      return updateProfileFetcher(req) as unknown as ApiResponse<UserBasicResult>;
-    },
-    onSuccess: async () => {
-      await refetch();
-      await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.AUTH_STATUS] });
-      openSnackbar(AlertType.SUCCESS, '会員情報を更新しました。');
-    },
-    onSettled: () => {
-      closeProcessing();
-    },
-  });
+const updateProfileMutate = useApiMutation({
+  mutationFn: async (data: UserProfileFormValues) => {
+    openProcessing();
+    const req: ApiRequest<UserProfileFormValues> = { request: data };
+    const res = await updateProfileFetcher(req);
+
+    // ★ 重要: サーバー側で success: false の場合、エラーをスローして onError へ飛ばす
+    if (!res.success) {
+      throw res.error; 
+    }
+    return res;
+  },
+  onSuccess: async () => {
+    // 最新情報を再取得して画面を更新
+    await refetch();
+    // 認証情報のキャッシュを無効化（ヘッダーの表示名等に反映させるため）
+    await queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.AUTH_STATUS] });
+    
+    openSnackbar(AlertType.SUCCESS, '会員情報を更新しました。');
+  },
+  // ★ 重要: エラーをキャッチしてユーザーに通知する
+  onError: (error: any) => {
+    console.error('Update Error:', error);
+    openSnackbar(AlertType.ERROR, '更新に失敗しました。入力内容を確認してください。');
+  },
+  onSettled: () => {
+    closeProcessing();
+  },
+});
 
   /* JSX
   ------------------------------------------------------------------ */
@@ -127,46 +142,26 @@ export const EditProfileComponent = (): JSX.Element => {
         </Box>
         {/* <Typography variant='body1'>会員登録に必要な情報をご入力・ご選択ください。</Typography> */}
         {!isLoading && data &&
-          <Box sx={{ mt: 2 }}>
-            <form noValidate onSubmit={handleSubmit(updateProfileHandler)}>
+         <Box sx={{ mt: 2 }}>
+            <form noValidate onSubmit={handleSubmit(updateProfileHandler, (errors) => {
+          // console.error('バリデーションエラーが発生しています:', errors);
+        })}>
+              {/* 各 InputItem には既に control が渡されているため、mode の変更が反映されます */}
               <InputItem control={control} label={`会社名`} name="cname" disabled={true} isNotFormValue={data.t_companies.company_name} type="text" />
               <InputItem control={control} label={`支店名`} name="cname" disabled={true} isNotFormValue={data.t_companies.branch_name} type="text" />
               <InputItem control={control} label={`登録メールアドレス`} name="cname" disabled={true} isNotFormValue={data.user_email} type="text" />
+              
               <InputItem control={control} label={`お名前`} name="user_name" required={true} />
-              <InputItem
-                control={control}
-                label={`お名前（フリガナ）`}
-                name="user_name_kana"
-                required={true}
-              />
-              <SelectItem
-                control={control}
-                label={`部署`}
-                name="t_companies_department_id"
-                required={true}
-                options={departmentOptions}
-              />
-              <SelectItem
-                control={control}
-                label={`雇用形態`}
-                name="t_companies_employment_status_id"
-                required={true}
-                options={employmentStatusOptions}
-              />
-              <InputItem
-                control={control}
-                label={`会社任意の情報1`}
-                name="optional_item_answer_1"
-                note={'※任意情報'}
-              />
-              <InputItem
-                control={control}
-                label={`会社任意の情報2`}
-                name="optional_item_answer_2"
-                note={'※任意情報'}
-              />
-              {/* 変更ボタン */}
+              <InputItem control={control} label={`お名前（フリガナ）`} name="user_name_kana" required={true} />
+              
+              <SelectItem control={control} label={`部署`} name="t_companies_department_id" required={true} options={departmentOptions} />
+              <SelectItem control={control} label={`雇用形態`} name="t_companies_employment_status_id" required={true} options={employmentStatusOptions} />
+              
+              <InputItem control={control} label={`会社任意の情報1`} name="optional_item_answer_1" note={'※任意情報'} />
+              <InputItem control={control} label={`会社任意の情報2`} name="optional_item_answer_2" note={'※任意情報'} />
+
               <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
+                {/* 変更ボタン: isDirty が true かつ バリデーションエラーがない場合に活性化 */}
                 <Btn label={'変更'} isSubmit={true} isDisabled={!isDirty} />
               </Box>
             </form>

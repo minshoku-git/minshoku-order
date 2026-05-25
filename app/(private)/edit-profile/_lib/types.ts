@@ -29,7 +29,7 @@ export const UserProfileSchema = z
     /** 任意項目_回答2 */
     optional_item_answer_2: z.string().optional(),
   })
-  .strict();
+  // .strict();
 
 /**
  * ユーザー情報 API用バリデーションスキーマ
