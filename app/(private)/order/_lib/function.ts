@@ -14,12 +14,14 @@ import {
   getTodayXHour,
   formatTimeToJst,
   formatJstDateTime,
+  getJstNow,
 } from '@/app/_lib/utils/getDateTime';
 import { getPostgreSqlItems } from '@/app/_lib/utils/utils';
 import { convertPaymentTypeName, OrderStatusType, PaymentType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
+import { format } from 'date-fns';
 
 import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
 import {
@@ -43,7 +45,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
   const client = await createClient();
   const menuSchesuleId = values.request.moveMenuScheduleId;
   const now = getNow();
-  const today = formatISO(getTodayXHour());
+  const today = format(getJstNow(), 'yyyy-MM-dd');
 
   try {
     /* ユーザー情報取得
@@ -75,7 +77,7 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
           .select(selectColumns)
           .eq('id', menuSchesuleId)
           .eq('cancel_flag', 0)
-          .gte('delivery_day', today) // 今日以降
+          .gte('delivery_day', today)
           .limit(1)
           .maybeSingle()
       : client
