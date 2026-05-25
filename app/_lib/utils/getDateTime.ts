@@ -12,8 +12,8 @@ import { toZonedTime } from 'date-fns-tz';
  * @returns {date} 現在日時
  */
 export function getNow(): Date {
-  const utfDate = new Date();
-  return toZonedTime(utfDate, 'Asia/Tokyo');
+  // タイムゾーン変換をせず、純粋な現在時刻（UTC）を返す
+  return new Date();
 }
 
 /**
@@ -168,19 +168,18 @@ export function getCancelDeadlineUTC(
 export function getOrderDeadlineUTC(
   deliveryDay: Date | string,
   orderPeriodDaysBefore: number,
-  orderPeriodTime: string // 例: "10:30:00"
+  orderPeriodTime: string
 ): Date {
   const deadlineUTC = new Date(deliveryDay);
 
-  // 日付を「X日前」にずらす（UTC基準で計算）
+  // 納品日(UTC)から日数を引く
   deadlineUTC.setUTCDate(deadlineUTC.getUTCDate() - orderPeriodDaysBefore);
 
-  // 時刻をセット (JST -> UTC 変換)
   const [hourStr, minuteStr] = orderPeriodTime.split(':');
   const jstHour = Number(hourStr);
   const minute = Number(minuteStr);
 
-  // ★ 修正: setUTCHours を使い、JSTから9時間を引いてUTC時刻にする
+  // ★重要：JSTの時間をUTCに変換（9時間引く）
   deadlineUTC.setUTCHours(jstHour - 9, minute, 0, 0);
 
   return deadlineUTC;
