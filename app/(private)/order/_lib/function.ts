@@ -12,6 +12,7 @@ import {
   getNow,
   getOrderDeadlineUTC,
   getTodayXHour,
+  formatTimeToJst,
 } from '@/app/_lib/utils/getDateTime';
 import { getPostgreSqlItems } from '@/app/_lib/utils/utils';
 import { convertPaymentTypeName, OrderStatusType, PaymentType } from '@/app/_types/enum';
@@ -248,12 +249,12 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
       },
       companyData: {
         location: user.t_companies.location,
-        offer_time_from: user.t_companies.offer_time_from!.slice(0, 5),
-        offer_time_to: user.t_companies.offer_time_to!.slice(0, 5),
+        offer_time_from: formatTimeToJst(user.t_companies.offer_time_from),
+        offer_time_to: formatTimeToJst(user.t_companies.offer_time_to),
         order_period_day: user.t_companies.order_period_day,
-        order_period_time: user.t_companies.order_period_time!.slice(0, 5),
+        order_period_time: formatTimeToJst(user.t_companies.order_period_time),
         cancel_period_day: user.t_companies.cancel_period_day,
-        cancel_period_time: user.t_companies.cancel_period_time!.slice(0, 5),
+        cancel_period_time: formatTimeToJst(user.t_companies.cancel_period_time),
       },
       orderData: orderData ? { t_order_id: orderData.id, order_count: orderData.count, isCancellable } : undefined,
       paymentTypeString: convertPaymentTypeName(user.payment_type as PaymentType),

@@ -135,34 +135,26 @@ export function formatJstDateTime(utcDate: Date): string {
 
 /**
  * getCancelDeadlineUTC
- * 納品日からキャンセル日時を取得します
- * @param jstDate - 日付
- * @returns {Date}
+ * 納品日からキャンセル日時を UTC として取得します
  */
 export function getCancelDeadlineUTC(
   deliveryDay: Date | string,
   cancelDaysBefore: number,
-  cancelTime: string // 例: "10:30:00"
+  cancelTime: string
 ): Date {
-  const newDeliveryDay = new Date(deliveryDay);
+  const deadlineUTC = new Date(deliveryDay);
 
-  // 納品日（UTC）から、キャンセル可能日数を引いた日付を計算
-  const cancelDeadlineUTC = new Date(
-    newDeliveryDay.getUTCFullYear(),
-    newDeliveryDay.getUTCMonth(),
-    newDeliveryDay.getUTCDate() - cancelDaysBefore
-  );
+  // 日付を「X日前」にずらす
+  deadlineUTC.setUTCDate(deadlineUTC.getUTCDate() - cancelDaysBefore);
 
-  // 指定されたJSTの時刻情報を取得
   const [hourStr, minuteStr] = cancelTime.split(':');
   const jstHour = Number(hourStr);
   const minute = Number(minuteStr);
 
-  // UTCへのタイムゾーン変換
-  // JSTはUTC+9なので、9時間引いてUTC時刻をセットする
-  cancelDeadlineUTC.setUTCHours(jstHour - 9, minute, 0, 0);
+  // JST(UTC+9) から UTC に変換
+  deadlineUTC.setUTCHours(jstHour - 9, minute, 0, 0);
 
-  return cancelDeadlineUTC;
+  return deadlineUTC;
 }
 
 /**
@@ -176,18 +168,41 @@ export function getCancelDeadlineUTC(
 export function getOrderDeadlineUTC(
   deliveryDay: Date | string,
   orderPeriodDaysBefore: number,
-  orderPeriodTime: string // 例: "10:00"
+  orderPeriodTime: string // 例: "10:30:00"
 ): Date {
-  const deadlineDateJST = new Date(deliveryDay);
+  const deadlineUTC = new Date(deliveryDay);
 
-  deadlineDateJST.setDate(deadlineDateJST.getDate() - orderPeriodDaysBefore);
+  // 日付を「X日前」にずらす（UTC基準で計算）
+  deadlineUTC.setUTCDate(deadlineUTC.getUTCDate() - orderPeriodDaysBefore);
 
+  // 時刻をセット (JST -> UTC 変換)
   const [hourStr, minuteStr] = orderPeriodTime.split(':');
-  const hour = Number(hourStr);
+  const jstHour = Number(hourStr);
   const minute = Number(minuteStr);
 
-  // setHours()はローカルタイムゾーンの値を操作する
-  deadlineDateJST.setHours(hour, minute, 0, 0);
+  // ★ 修正: setUTCHours を使い、JSTから9時間を引いてUTC時刻にする
+  deadlineUTC.setUTCHours(jstHour - 9, minute, 0, 0);
 
-  return deadlineDateJST;
+  return deadlineUTC;
+}
+
+/**
+ * formatTimeToJst
+ * UTCの時刻文字列('HH:mm:ss')を日本時間の文字列('HH:mm')に変換します
+ * @param timeStr - UTC時刻文字列 (例: "10:00:00")
+ * @returns {string} 'HH:mm' (JST)
+ */
+export function formatTimeToJst(timeStr: string | null | undefined): string {
+  if (!timeStr) return '';
+
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  
+  // 今日の日付に、DBから届いたUTC時刻をセットしたDateオブジェクトを作成
+  const date = new Date();
+  date.setUTCHours(hours, minutes, 0, 0);
+
+  // 既存の toZonedTime を使って Asia/Tokyo に変換
+  const jstDate = toZonedTime(date, 'Asia/Tokyo');
+  
+  return format(jstDate, 'HH:mm');
 }
