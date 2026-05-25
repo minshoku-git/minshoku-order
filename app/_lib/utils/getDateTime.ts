@@ -168,18 +168,17 @@ export function getCancelDeadlineUTC(
 export function getOrderDeadlineUTC(
   deliveryDay: Date | string,
   orderPeriodDaysBefore: number,
-  orderPeriodTime: string
+  orderPeriodTime: string 
 ): Date {
   const deadlineUTC = new Date(deliveryDay);
-
-  // 納品日(UTC)から日数を引く
+  // 日付の計算
   deadlineUTC.setUTCDate(deadlineUTC.getUTCDate() - orderPeriodDaysBefore);
 
   const [hourStr, minuteStr] = orderPeriodTime.split(':');
   const jstHour = Number(hourStr);
   const minute = Number(minuteStr);
 
-  // ★重要：JSTの時間をUTCに変換（9時間引く）
+  // ★ 修正: setHours ではなく setUTCHours を使い、JSTから9時間引いてUTCにする
   deadlineUTC.setUTCHours(jstHour - 9, minute, 0, 0);
 
   return deadlineUTC;
