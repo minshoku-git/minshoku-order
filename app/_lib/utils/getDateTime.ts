@@ -1,6 +1,7 @@
 import { format, startOfMonth, subDays, subMonths } from 'date-fns';
 import { ja } from 'date-fns/locale/ja';
-import { toZonedTime } from 'date-fns-tz';
+// ★ zonedTimeToUtc を fromZonedTime に変更
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 
 /**
  * getDateTime.tsx
@@ -11,7 +12,7 @@ const JST_TIMEZONE = 'Asia/Tokyo';
 
 /**
  * getNow
- * 純粋な現在時刻（UTC）を返します。比較用に使用します。
+ * 純粋な現在時刻（UTC）を返します。判定の基準に使用します。
  */
 export function getNow(): Date {
   return new Date();
@@ -27,13 +28,13 @@ export function getJstNow(): Date {
 
 /**
  * getTodayXHour
- * 日本時間での「今日」の指定時刻（H時0分0秒）をUTC Dateとして取得します。
+ * 日本時間での「今日」の指定時刻（H時0分0秒）を基準とした UTC Date を取得します。
  */
 export function getTodayXHour(H: number = 0): Date {
   const jstNow = getJstNow();
   const dateStr = format(jstNow, 'yyyy-MM-dd');
-  // 日本時間の "YYYY-MM-DDTHH:00:00" をUTCとして解釈させる
-  return toZonedTime(`${dateStr}T${String(H).padStart(2, '0')}:00:00`, JST_TIMEZONE);
+  // fromZonedTime を使用して JST 文字列を UTC Date に変換します
+  return fromZonedTime(`${dateStr}T${String(H).padStart(2, '0')}:00:00`, JST_TIMEZONE);
 }
 
 /**
@@ -45,7 +46,7 @@ export function getTomorrow(): Date {
   const tomorrow = new Date(jstNow);
   tomorrow.setDate(jstNow.getDate() + 1);
   const dateStr = format(tomorrow, 'yyyy-MM-dd');
-  return toZonedTime(`${dateStr}T00:00:00`, JST_TIMEZONE);
+  return fromZonedTime(`${dateStr}T00:00:00`, JST_TIMEZONE);
 }
 
 /**
@@ -57,42 +58,40 @@ export function getYesterday(): Date {
   const yesterday = new Date(jstNow);
   yesterday.setDate(jstNow.getDate() - 1);
   const dateStr = format(yesterday, 'yyyy-MM-dd');
-  return toZonedTime(`${dateStr}T00:00:00`, JST_TIMEZONE);
+  return fromZonedTime(`${dateStr}T00:00:00`, JST_TIMEZONE);
 }
 
 /**
  * 今月1日の取得
  */
 export function getThisMonthStartDay(): Date {
-  const jstNow = getJstNow();
-  return startOfMonth(jstNow);
+  return startOfMonth(getJstNow());
 }
 
 /**
  * 先月1日の取得
  */
 export function getLastMonthStartDay(): Date {
-  const startDay = getThisMonthStartDay();
-  return subMonths(startDay, 1);
+  return subMonths(getThisMonthStartDay(), 1);
 }
 
 /**
  * 先月最終日の取得
  */
 export function getLastMonthEndDay(): Date {
-  const startDay = getThisMonthStartDay();
-  return subDays(startDay, 1);
+  return subDays(getThisMonthStartDay(), 1);
 }
 
 /**
  * formatTimeToJst
- * UTCの時刻文字列('HH:mm:ss')を日本時間の文字列('HH:mm')に変換します。
+ * UTCの時刻文字列('HH:mm:ss')を日本時間の表示用文字列('HH:mm')に変換します。
  */
 export function formatTimeToJst(timeStr: string | null | undefined): string {
   if (!timeStr) return '';
-  // 基準日を固定して時刻を結合し、JSTとして解釈してからフォーマットする
   const dummyDate = '2000-01-01';
-  const jstDate = toZonedTime(`${dummyDate}T${timeStr.slice(0, 8)}`, JST_TIMEZONE);
+  // サーバーがUTC環境でも、DBの値(UTC)を正しくJSTに変換して表示します
+  const utcDate = new Date(`${dummyDate}T${timeStr.slice(0, 8)}Z`);
+  const jstDate = toZonedTime(utcDate, JST_TIMEZONE);
   return format(jstDate, 'HH:mm');
 }
 
@@ -118,23 +117,22 @@ export function formatJstDateTime(utcDate: Date | string): string {
 
 /**
  * getCancelDeadlineUTC
- * 納品日から日本時間基準のキャンセル期限（UTC Date）を計算します。
+ * 納品日から日本時間基準のキャンセル期限（UTC Date）を正確に計算します。
+ * fromZonedTime を使うことで判定のズレを解消します。
  */
 export function getCancelDeadlineUTC(
   deliveryDay: Date | string,
   cancelDaysBefore: number,
   cancelTime: string
 ): Date {
-  // 納品日を "YYYY-MM-DD" 形式で取得
   const d = typeof deliveryDay === 'string' ? deliveryDay.split('T')[0] : format(toZonedTime(deliveryDay, JST_TIMEZONE), 'yyyy-MM-dd');
   const deliveryDateJst = toZonedTime(`${d}T00:00:00`, JST_TIMEZONE);
 
-  // 日本時間基準で日数を引く
   const deadlineJst = subDays(deliveryDateJst, cancelDaysBefore);
   const deadlineDateStr = format(deadlineJst, 'yyyy-MM-dd');
 
-  // 日本時間の指定時刻でDateを生成（自動的にUTCに変換される）
-  return toZonedTime(`${deadlineDateStr}T${cancelTime.slice(0, 8)}`, JST_TIMEZONE);
+  // fromZonedTime を使用して日本の指定時刻を正しい UTC に変換します
+  return fromZonedTime(`${deadlineDateStr}T${cancelTime.slice(0, 8)}`, JST_TIMEZONE);
 }
 
 /**
@@ -152,5 +150,5 @@ export function getOrderDeadlineUTC(
   const deadlineJst = subDays(deliveryDateJst, orderPeriodDaysBefore);
   const deadlineDateStr = format(deadlineJst, 'yyyy-MM-dd');
 
-  return toZonedTime(`${deadlineDateStr}T${orderPeriodTime.slice(0, 8)}`, JST_TIMEZONE);
+  return fromZonedTime(`${deadlineDateStr}T${orderPeriodTime.slice(0, 8)}`, JST_TIMEZONE);
 }
