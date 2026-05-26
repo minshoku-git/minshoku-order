@@ -42,6 +42,17 @@ export const OrderComponent = (): JSX.Element => {
     refetchOnWindowFocus: false,
   });
 
+  // ★ データ受信時の生ログを追加
+useEffect(() => {
+  if (data?.menuScheduleData) {
+    console.log('--- API受信データ確認 ---');
+    console.log('メニュー名:', data.menuScheduleData.menu_name);
+    console.log('定価 (list_price):', data.menuScheduleData.list_price);
+    console.log('ユーザー負担単価 (sale_price):', data.menuScheduleData.sale_price);
+    console.log('------------------------');
+  }
+}, [data]);
+
   /* useEffect 会員登録後メッセージ表示
   ------------------------------------------------------------------ */
   useEffect(() => {
