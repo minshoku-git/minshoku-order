@@ -30,16 +30,21 @@ export default function MenuCard(props: Props) {
   const companyData = props.data.companyData!
   const orderData = props.data.orderData
 
-// ★ デバッグ用ログを追加
-  React.useEffect(() => {
-    console.log('--- キャンセル期限デバッグ ---');
-    console.log('納品日:', menuScheduleData.delivery_day);
-    console.log('設定：何日前か:', companyData.cancel_period_day, '日前');
-    console.log('設定：何時までか:', companyData.cancel_period_time);
-    console.log('サーバー判定結果 (isCancellable):', orderData?.isCancellable);
-    console.log('現在時刻 (ブラウザ基準):', new Date().toLocaleString());
-    console.log('------------------------------');
-  }, [companyData, menuScheduleData, orderData]);
+// ★ 計算過程をログに出力
+  console.log('--- 金額計算デバッグ ---');
+  console.log('数量 (count):', props.count);
+  console.log('定価単価 (list_price):', menuScheduleData.list_price);
+  console.log('補助適用後単価 (sale_price):', menuScheduleData.sale_price);
+  console.log('会社補助額 (単価):', menuScheduleData.list_price - menuScheduleData.sale_price);
+  
+  const a1 = (menuScheduleData.sale_price * props.count).toLocaleString()
+  const a2 = (menuScheduleData.list_price * props.count).toLocaleString()
+  const a3 = (a1 !== a2)
+
+  console.log('画面表示用・ユーザー支払合計:', a1);
+  console.log('画面表示用・定価合計:', a2);
+  console.log('補助の有無 (isMealBurden):', a3);
+  console.log('------------------------');
 
 
 
