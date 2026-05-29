@@ -261,7 +261,7 @@ export default function MenuCard(props: Props) {
               {REST_OF_ORDER > 0 ? (
                 <Grid container alignItems="end" justifyContent="space-between" mt={3}>
                   <Grid>
-                    <Typography sx={{ color: '#333', fontWeight: 'bold' }}>残り{REST_OF_ORDER - props.count} 食</Typography>
+                    <Typography sx={{ color: '#333', fontWeight: 'bold' }}>残り{REST_OF_ORDER} 食</Typography>
                     <Box
                       sx={{
                         color: '#333',
