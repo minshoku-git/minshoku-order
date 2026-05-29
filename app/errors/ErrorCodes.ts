@@ -46,7 +46,7 @@ export const ErrorCodes = {
   // --- 401系: 認証が必要 ---
   INVALID_CREDENTIALS: {
     code: 'E401-01', // 採番変更
-    message: 'ログイン情報が正しくありません。メールアドレスとパスワードをご確認ください。',
+    message: 'ログイン情報が正しくありません。',
     status: 401,
   },
   LOGIN_FAILED: {
@@ -80,7 +80,7 @@ export const ErrorCodes = {
   // --- 404系: リソース未検出 ---
   EMAIL_NOT_REGISTERED: {
     code: 'E404-01',
-    message: '入力されたメールアドレスは登録されていません。',
+    message: 'ログイン情報が正しくありません。',
     status: 404,
   },
   FILE_NOT_FOUND: {
