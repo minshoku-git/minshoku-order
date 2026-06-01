@@ -38,6 +38,7 @@ export const createPgClient = async (): Promise<InstanceType<typeof Client>> => 
       rejectUnauthorized: false
     }
   });
+  
   await client.connect();
   await client.query(`SET search_path TO ${process.env.SUPABASE_DB_SCHEMA}`);
   return client;
