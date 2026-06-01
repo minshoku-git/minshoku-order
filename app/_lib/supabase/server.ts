@@ -30,15 +30,28 @@ export async function createClient() {
  * "pg"クライアント初期化
  * @returns {Client} "pg"Client
  */
+
 export const createPgClient = async (): Promise<InstanceType<typeof Client>> => {
+  const connStr = process.env.SUPABASE_DB_CONNECTION_STRING;
+  // パスワードを隠して接続先を表示
+  console.log('[DEBUG] Connecting to DB:', connStr?.replace(/:[^@/]+@/, ':****@'));
+
   const client = new Client({ 
-    connectionString: process.env.SUPABASE_DB_CONNECTION_STRING,
-    // ★ Vercel環境ではこのSSL設定がないと接続が拒否されます
-    ssl: {
-      rejectUnauthorized: false
-    }
+    connectionString: connStr,
+    ssl: { rejectUnauthorized: false } 
   });
-  await client.connect();
-  await client.query(`SET search_path TO ${process.env.SUPABASE_DB_SCHEMA}`);
-  return client;
+
+  try {
+    await client.connect();
+    console.log('[DEBUG] DB Connected successfully.');
+    
+    const schema = process.env.SUPABASE_DB_SCHEMA;
+    console.log('[DEBUG] Setting search_path to:', schema);
+    await client.query(`SET search_path TO ${schema}`);
+    
+    return client;
+  } catch (err) {
+    console.error('[DEBUG] DB Connection/Schema Error:', err); // 生のエラーを出力
+    throw err;
+  }
 };
