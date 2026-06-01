@@ -3,14 +3,13 @@
  * ⑤ 取引登録 (EntryTran)
  * 決済の枠を作成し、AccessIDを取得します。
  */
-export const entryTranGmo = async (orderId: string, amount: number) => {
+export const entryTranGmo = async (orderId: string, amount: number, shopId: string, shopPass: string) => {
   const baseUrl = 'https://pt01.mul-pay.jp';
-  const shopId = 'tshop00076633';
-  const shopPass = 'as5fkaw2'; // ★ご提示いただいたパスワード
+  // ハードコードされていた定数を削除します
 
   const params = new URLSearchParams();
-  params.append('ShopID', shopId);
-  params.append('ShopPass', shopPass);
+  params.append('ShopID', shopId);         // ★ 引数の値をセット
+  params.append('ShopPass', shopPass);     // ★ 引数の値をセット
   params.append('OrderID', orderId);
   params.append('Amount', String(amount));
   params.append('JobCd', 'CAPTURE'); // 即時売上
@@ -80,10 +79,9 @@ export const execTranGmo = async (
  * ⑦ 取引状態変更 (AlterTran)
  * 決済済みの取引を取り消します（キャンセル・返金）。
  */
-export const alterTranGmo = async (accessId: string, accessPass: string) => {
+export const alterTranGmo = async (accessId: string, accessPass: string, shopId: string, shopPass: string) => {
   const baseUrl = 'https://pt01.mul-pay.jp';
-  const shopId = 'tshop00076633';
-  const shopPass = 'as5fkaw2';
+  // ハードコードされていた定数を削除します
 
   const params = new URLSearchParams();
   params.append('ShopID', shopId);

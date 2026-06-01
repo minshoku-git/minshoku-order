@@ -435,15 +435,20 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
   　------------------------------------------------------------------ */
     const selectSql = `
         SELECT 
-          *
+          ms.*,
+          s.shop_name,
+          s.gmo_shop_code,
+          s.gmo_shop_password
         FROM
-          t_menu_schedule
+          t_menu_schedule ms
+        INNER JOIN t_shops s ON ms.t_shops_id = s.id
         WHERE 
-          id = $1
-          AND cancel_flag = $2
+          ms.id = $1
+          AND ms.cancel_flag = $2
         FOR UPDATE`; // MEMO: テーブルロック
 
     const resultMenuSchedule = await pgClient.query<t_menu_schedule>(selectSql, [req.menuScheduleId, 0]);
+
     const stockCount = resultMenuSchedule.rows[0].stock_count ? resultMenuSchedule.rows[0].stock_count : 0;
 
     if (resultMenuSchedule.rows.length === 0 || stockCount === 0) {
@@ -522,15 +527,27 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
     /* クレジットの場合
     ------------------------------------------------------------------ */
     if (user.payment_type === PaymentType.CREDITCARD) {
-      // 決済に使用するOrderIDの生成
       gmoOrderId = `ORD-${user.id}-${Date.now()}`;
 
       if (!userData?.credit_member_id || !userData?.credit_seq_choice) {
         throw new Error('クレジットカード情報が登録されていません。');
       }
 
-      // 1. 取引登録 (EntryTran)
-      const entryRes = await entryTranGmo(gmoOrderId, userBurdenAmount);
+      // ★ バリデーションガード：GMO設定情報が空欄の店舗だった場合の決済クラッシュを防ぎます
+      const gmoShopCode = (menuScheduleData as any).gmo_shop_code;
+      const gmoShopPassword = (menuScheduleData as any).gmo_shop_password;
+      const shopName = (menuScheduleData as any).shop_name;
+
+      if (!gmoShopCode || !gmoShopPassword) {
+        throw new CustomError(
+          ErrorCodes.INTERNAL_SERVER_ERROR.code,
+          `店舗「${shopName}」のGMO IDまたはGMO PASSが設定されていません。マスタ設定を確認してください。`,
+          400
+        );
+      }
+
+      // 1. 取引登録 (EntryTran) - ★ 動的に取得した店舗のコードとパスワードを渡すよう変更
+      const entryRes = await entryTranGmo(gmoOrderId, userBurdenAmount, gmoShopCode, gmoShopPassword);
       if (!entryRes.success) throw new Error(`GMO取引登録失敗: ${entryRes.errInfo}`);
 
       creditAccessId = entryRes.accessId!;
@@ -674,7 +691,16 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
     ------------------------------------------------------------------ */
     const { data: orderData, error: orderError } = await client
       .from('t_order')
-      .select('payment_type, credit_access_id, credit_access_password')
+      .select(`
+        payment_type, 
+        credit_access_id, 
+        credit_access_password,
+        t_shops (
+          shop_name,
+          gmo_shop_code,
+          gmo_shop_password
+        )
+      `)
       .eq('t_menu_schedule_id', req.menuScheduleId)
       .eq('t_user_id', user.id)
       .eq('order_status_type', OrderStatusType.VALID)
@@ -688,9 +714,19 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
     ------------------------------------------------------------------ */
     if (orderData.payment_type === PaymentType.CREDITCARD) {
       if (orderData.credit_access_id && orderData.credit_access_password) {
+        
+        // バリデーションガードと店舗情報の抽出
+        const shops = orderData.t_shops as any;
+        if (!shops?.gmo_shop_code || !shops?.gmo_shop_password) {
+          throw new Error(`店舗「${shops?.shop_name || ''}」のGMO IDまたはGMO PASSが設定されていません。`);
+        }
+
+        // 引数に店舗マスタから取得した動的な値を引き渡す
         const gmoRes = await alterTranGmo(
           orderData.credit_access_id, 
-          orderData.credit_access_password
+          orderData.credit_access_password,
+          shops.gmo_shop_code,
+          shops.gmo_shop_password
         );
         if (!gmoRes.success) {
           throw new Error(`GMO決済のキャンセルに失敗しました: ${gmoRes.errInfo}`);
