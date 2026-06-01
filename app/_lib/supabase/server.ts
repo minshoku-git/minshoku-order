@@ -31,7 +31,13 @@ export async function createClient() {
  * @returns {Client} "pg"Client
  */
 export const createPgClient = async (): Promise<InstanceType<typeof Client>> => {
-  const client = new Client({ connectionString: process.env.SUPABASE_DB_CONNECTION_STRING_DEV });
+  const client = new Client({ 
+    connectionString: process.env.SUPABASE_DB_CONNECTION_STRING,
+    // ★ Vercel環境ではこのSSL設定がないと接続が拒否されます
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
   await client.connect();
   await client.query(`SET search_path TO ${process.env.SUPABASE_DB_SCHEMA}`);
   return client;
