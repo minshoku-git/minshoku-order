@@ -6,7 +6,7 @@ import { JSX } from 'react';
  * 利用規約Component
  * @returns {JSX.Element} JSX
  */
-export const PrivacyComponent = (): JSX.Element => {
+export const TermsComponent = (): JSX.Element => {
   /* sxプロパティ共通設定 */
   const textStyle = {
     whiteSpace: 'pre-wrap',
