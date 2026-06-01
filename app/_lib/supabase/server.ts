@@ -33,7 +33,7 @@ export async function createClient() {
 export const createPgClient = async (): Promise<InstanceType<typeof Client>> => {
   const client = new Client({ 
     connectionString: process.env.SUPABASE_DB_CONNECTION_STRING,
-    // Vercel環境ではこのSSL設定がないと接続が拒否されます
+    // Vercel環境ではこのSSL設定がないと接続が拒否
     ssl: {
       rejectUnauthorized: false
     }
