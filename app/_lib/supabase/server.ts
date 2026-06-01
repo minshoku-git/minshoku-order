@@ -43,15 +43,13 @@ export const createPgClient = async (): Promise<InstanceType<typeof Client>> => 
 
   try {
     await client.connect();
-    console.log('[DEBUG] DB Connected successfully.');
     
     const schema = process.env.SUPABASE_DB_SCHEMA;
-    console.log('[DEBUG] Setting search_path to:', schema);
     await client.query(`SET search_path TO ${schema}`);
     
     return client;
   } catch (err) {
-    console.error('[DEBUG] DB Connection/Schema Error:', err); // 生のエラーを出力
+    console.error('[DEBUG] DB Connection/Schema Error:', err);
     throw err;
   }
 };

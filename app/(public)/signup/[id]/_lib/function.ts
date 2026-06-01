@@ -233,8 +233,6 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
       usage_status: UsageStatus.DEACTIVATION,
     };
     const { columns, placeholders, values } = getPostgreSqlItems(insertValues);
-    console.log('[DEBUG] INSERT SQL:', columns.join(','));
-    console.log('[DEBUG] INSERT Values:', values);
     const insertUserText = `INSERT INTO t_user (${columns.join(',')}) VALUES (${placeholders}) RETURNING id;`;
 
     // Insert

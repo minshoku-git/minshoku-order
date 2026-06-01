@@ -5,22 +5,19 @@ import { preregister } from '@/app/(public)/pre-registration/[token]/_lib/functi
 import { NextPageInitApiSchema } from '@/app/(public)/pre-registration/[token]/_lib/types';
 
 export async function PUT(req: NextRequest) {
-  console.log('[DEBUG] API Route /api/pre-registration started');
-  
+  // --- 1. リクエスト検証 ---
   const validationResult = await validateRequest(req, NextPageInitApiSchema);
+
   if (!validationResult.success) {
-    console.error('[DEBUG] Validation Failed:', validationResult.error);
     return NextResponse.json(validationResult.error, { status: validationResult.error.status });
   }
 
-  console.log('[DEBUG] Validation Success. Calling preregister...');
+  // --- 2. データ取得・加工 ---
   const result = await preregister(validationResult.data);
 
-  if (!result.success) {
-    console.error('[DEBUG] preregister function failed:', result.error);
-    return NextResponse.json(result.error, { status: result.error.status });
+  // --- 3. レスポンス返却 ---
+  if (result.success) {
+    return NextResponse.json(result);
   }
-
-  console.log('[DEBUG] API Route finished successfully');
-  return NextResponse.json(result);
+  return NextResponse.json(result.error, { status: result.error.status });
 }

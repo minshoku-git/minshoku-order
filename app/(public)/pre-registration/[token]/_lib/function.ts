@@ -21,7 +21,6 @@ import { NextPageDecrypt, NextPageInitRequest } from './types';
  * @returns {Promise<ApiResponse<null>>}
  */
 export const preregister = async (values: ApiRequest<NextPageInitRequest>): Promise<ApiResponse<null>> => {
-  console.log('[DEBUG] Executing Query...１');
   const req = values.request;
   const timestamp = getNow();
   const supabase = await createClient();
@@ -30,7 +29,6 @@ export const preregister = async (values: ApiRequest<NextPageInitRequest>): Prom
   const pgClient = await createPgClient();
 
   try {
-    console.log('[DEBUG] Executing Query...２');
     // Transaction Start
     await pgClient.query('BEGIN');
 
