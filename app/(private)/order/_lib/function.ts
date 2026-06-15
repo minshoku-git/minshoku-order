@@ -469,7 +469,7 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
         FROM
           t_order
         WHERE 
-          id = $1
+          t_menu_schedule_id = $1
           AND t_user_id = $2
           AND order_status_type = $3`;
 
@@ -495,7 +495,7 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
         FROM
           t_order
         WHERE 
-          id = $1
+          t_menu_schedule_id = $1
           AND order_status_type = $2`;
 
     // Insert
