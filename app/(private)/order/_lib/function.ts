@@ -381,7 +381,7 @@ export const preOrder = async (values: ApiRequest<OrderFormValues>): Promise<Api
     if (totalOrders + req.orderCount > menuSchedule.stock_count) {
       throw new CustomError(
         ErrorCodes.DB_QUERY_FAILED.code,
-        'ご希望の数量は、残り注文可能数を上回っています。' + ErrorCodes.DB_QUERY_FAILED.message,
+        'ご希望の数量は、残り注文可能数を上回っています。',
         ErrorCodes.DB_QUERY_FAILED.status
       );
     }
@@ -447,18 +447,16 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
           AND ms.cancel_flag = $2
         FOR UPDATE`; // MEMO: テーブルロック
 
-        console.log(
-  `[${user.id}] LOCK ACQUIRED ${new Date().toISOString()}`
-);
-
     const resultMenuSchedule = await pgClient.query<t_menu_schedule>(selectSql, [req.menuScheduleId, 0]);
 
-    const stockCount = resultMenuSchedule.rows[0].stock_count ? resultMenuSchedule.rows[0].stock_count : 0;
+    const stockCount = Number(
+      resultMenuSchedule.rows[0].stock_count ?? 0
+    );
 
     if (resultMenuSchedule.rows.length === 0 || stockCount === 0) {
       throw new CustomError(
         ErrorCodes.DB_QUERY_FAILED.code,
-        '在庫切れ' + ErrorCodes.DB_QUERY_FAILED.message,
+        '在庫切れ',
         ErrorCodes.DB_QUERY_FAILED.status
       );
     }
@@ -486,7 +484,7 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
     if (existingOrderResult.rows.length > 0) {
       throw new CustomError(
         ErrorCodes.DB_QUERY_FAILED.code,
-        '既に注文済みです。' + ErrorCodes.DB_QUERY_FAILED.message,
+        '既に注文済みです。',
         ErrorCodes.DB_QUERY_FAILED.status
       );
     }
@@ -504,66 +502,15 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
 
     // Insert
     const resultOrder = await pgClient.query(selectOrderSql, [req.menuScheduleId, OrderStatusType.VALID]);
-    const totalCount = resultOrder.rows[0].total_count ? resultOrder.rows[0].total_count : 0;
-    console.log(
-  `[${user.id}] totalCount=${totalCount} req=${req.orderCount} stock=${menuScheduleData.stock_count}`
-);
+    const totalCount = Number(resultOrder.rows[0].total_count ?? 0);
 
-console.log(
-  '[CHECK]',
-  totalCount,
-  typeof totalCount,
-  req.orderCount,
-  typeof req.orderCount,
-  menuScheduleData.stock_count,
-  typeof menuScheduleData.stock_count
-);
-
-console.log(
-  '[CHECK RESULT]',
-  totalCount + req.orderCount,
-  '>',
-  menuScheduleData.stock_count,
-  '=',
-  totalCount + req.orderCount > menuScheduleData.stock_count!
-);
-
-console.log(
-  `[CHECK] totalCount=${totalCount} (${typeof totalCount})`
-);
-
-console.log(
-  `[CHECK] reqOrderCount=${req.orderCount} (${typeof req.orderCount})`
-);
-
-console.log(
-  `[CHECK] stock=${menuScheduleData.stock_count} (${typeof menuScheduleData.stock_count})`
-);
-
-console.log(
-  `[CHECK] result=${
-    totalCount + req.orderCount >
-    menuScheduleData.stock_count!
-  }`
-);
-
-    if (totalCount + req.orderCount > menuScheduleData.stock_count!) {
+    if (totalCount + Number(req.orderCount) > Number(menuScheduleData.stock_count ?? 0)) {
       throw new CustomError(
         ErrorCodes.DB_QUERY_FAILED.code,
         '注文上限数を超過しました。',
         ErrorCodes.DB_QUERY_FAILED.status
       );
     }
-
-    // if (1 == 1) {
-    //   throw new CustomError(
-    //           ErrorCodes.DB_QUERY_FAILED.code,
-    //           '注文上限数を超過しました。totalCount:' + totalCount  + '   req.orderCount:' + req.orderCount + '   menuScheduleData.stock_count:' + menuScheduleData.stock_count,
-    //           ErrorCodes.DB_QUERY_FAILED.status
-    //         );
-    // }
-
-    
 
     /* 会社負担額
     ------------------------------------------------------------------ */
@@ -667,10 +614,6 @@ console.log(
 
     /* --------------------------------------------------------------- */
     // throw new Error('疑似エラー:ロールバックを確認しました。');
-
-    console.log(
-  `[${user.id}] COMMIT ${new Date().toISOString()}`
-);
 
     // Commit
     await pgClient.query('COMMIT');
