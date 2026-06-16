@@ -487,7 +487,7 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
       );
     }
 
-    /* 現在の注文数取得
+    /* 現在の注文数取得 
   　------------------------------------------------------------------ */
     const selectOrderSql = `
         SELECT 
