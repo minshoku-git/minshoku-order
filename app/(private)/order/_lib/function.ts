@@ -502,13 +502,23 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
     const resultOrder = await pgClient.query(selectOrderSql, [req.menuScheduleId, OrderStatusType.VALID]);
     const totalCount = resultOrder.rows[0].total_count ? resultOrder.rows[0].total_count : 0;
 
-    if (totalCount + req.orderCount > menuScheduleData.stock_count!) {
+    // if (totalCount + req.orderCount > menuScheduleData.stock_count!) {
+    //   throw new CustomError(
+    //     ErrorCodes.DB_QUERY_FAILED.code,
+    //     '注文上限数を超過しました。' + ErrorCodes.DB_QUERY_FAILED.message,
+    //     ErrorCodes.DB_QUERY_FAILED.status
+    //   );
+    // }
+
+    if (1 == 1) {
       throw new CustomError(
-        ErrorCodes.DB_QUERY_FAILED.code,
-        '注文上限数を超過しました。' + ErrorCodes.DB_QUERY_FAILED.message,
-        ErrorCodes.DB_QUERY_FAILED.status
-      );
+              ErrorCodes.DB_QUERY_FAILED.code,
+              '注文上限数を超過しました。totalCount:' + totalCount  + '   req.orderCount:' + req.orderCount + '   menuScheduleData.stock_count:' + menuScheduleData.stock_count,
+              ErrorCodes.DB_QUERY_FAILED.status
+            );
     }
+
+    
 
     /* 会社負担額
     ------------------------------------------------------------------ */
