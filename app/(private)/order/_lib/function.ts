@@ -447,6 +447,10 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
           AND ms.cancel_flag = $2
         FOR UPDATE`; // MEMO: テーブルロック
 
+        console.log(
+  `[${user.id}] LOCK ACQUIRED ${new Date().toISOString()}`
+);
+
     const resultMenuSchedule = await pgClient.query<t_menu_schedule>(selectSql, [req.menuScheduleId, 0]);
 
     const stockCount = resultMenuSchedule.rows[0].stock_count ? resultMenuSchedule.rows[0].stock_count : 0;
@@ -501,22 +505,25 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
     // Insert
     const resultOrder = await pgClient.query(selectOrderSql, [req.menuScheduleId, OrderStatusType.VALID]);
     const totalCount = resultOrder.rows[0].total_count ? resultOrder.rows[0].total_count : 0;
+    console.log(
+  `[${user.id}] totalCount=${totalCount} req=${req.orderCount} stock=${menuScheduleData.stock_count}`
+);
 
-    // if (totalCount + req.orderCount > menuScheduleData.stock_count!) {
-    //   throw new CustomError(
-    //     ErrorCodes.DB_QUERY_FAILED.code,
-    //     '注文上限数を超過しました。' + ErrorCodes.DB_QUERY_FAILED.message,
-    //     ErrorCodes.DB_QUERY_FAILED.status
-    //   );
-    // }
-
-    if (1 == 1) {
+    if (totalCount + req.orderCount > menuScheduleData.stock_count!) {
       throw new CustomError(
-              ErrorCodes.DB_QUERY_FAILED.code,
-              '注文上限数を超過しました。totalCount:' + totalCount  + '   req.orderCount:' + req.orderCount + '   menuScheduleData.stock_count:' + menuScheduleData.stock_count,
-              ErrorCodes.DB_QUERY_FAILED.status
-            );
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '注文上限数を超過しました。',
+        ErrorCodes.DB_QUERY_FAILED.status
+      );
     }
+
+    // if (1 == 1) {
+    //   throw new CustomError(
+    //           ErrorCodes.DB_QUERY_FAILED.code,
+    //           '注文上限数を超過しました。totalCount:' + totalCount  + '   req.orderCount:' + req.orderCount + '   menuScheduleData.stock_count:' + menuScheduleData.stock_count,
+    //           ErrorCodes.DB_QUERY_FAILED.status
+    //         );
+    // }
 
     
 
@@ -622,6 +629,10 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
 
     /* --------------------------------------------------------------- */
     // throw new Error('疑似エラー:ロールバックを確認しました。');
+
+    console.log(
+  `[${user.id}] COMMIT ${new Date().toISOString()}`
+);
 
     // Commit
     await pgClient.query('COMMIT');
