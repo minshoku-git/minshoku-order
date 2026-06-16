@@ -509,6 +509,44 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
   `[${user.id}] totalCount=${totalCount} req=${req.orderCount} stock=${menuScheduleData.stock_count}`
 );
 
+console.log(
+  '[CHECK]',
+  totalCount,
+  typeof totalCount,
+  req.orderCount,
+  typeof req.orderCount,
+  menuScheduleData.stock_count,
+  typeof menuScheduleData.stock_count
+);
+
+console.log(
+  '[CHECK RESULT]',
+  totalCount + req.orderCount,
+  '>',
+  menuScheduleData.stock_count,
+  '=',
+  totalCount + req.orderCount > menuScheduleData.stock_count!
+);
+
+console.log(
+  `[CHECK] totalCount=${totalCount} (${typeof totalCount})`
+);
+
+console.log(
+  `[CHECK] reqOrderCount=${req.orderCount} (${typeof req.orderCount})`
+);
+
+console.log(
+  `[CHECK] stock=${menuScheduleData.stock_count} (${typeof menuScheduleData.stock_count})`
+);
+
+console.log(
+  `[CHECK] result=${
+    totalCount + req.orderCount >
+    menuScheduleData.stock_count!
+  }`
+);
+
     if (totalCount + req.orderCount > menuScheduleData.stock_count!) {
       throw new CustomError(
         ErrorCodes.DB_QUERY_FAILED.code,
