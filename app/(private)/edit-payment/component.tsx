@@ -183,7 +183,7 @@ export const EditPaymentComponent = (): JSX.Element => {
       />
       */}
       <Script 
-        src="https://static.mul-pay.jp/ext/js/token.js" 
+        src="https://static.mul-pay.jp/payment/js/mp-token.js" 
         strategy="beforeInteractive" 
       />
 
