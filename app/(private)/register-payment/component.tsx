@@ -187,7 +187,7 @@ const [isGmoLoaded, setIsGmoLoaded] = useState(false);
       />
       */}
       <Script 
-        src="https://static.mul-pay.jp/payment/js/mp-token.js" 
+        src="https://static.mul-pay.jp/ext/js/token.js" 
         strategy="afterInteractive" 
         onLoad={() => {
           console.log('GMO SDK Loaded');
