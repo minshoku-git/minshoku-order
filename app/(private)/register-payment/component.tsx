@@ -173,16 +173,28 @@ export const PaymentComponent = (): JSX.Element => {
 const [isGmoLoaded, setIsGmoLoaded] = useState(false);
   return (
     <>
-      {/* GMO-PG トークン取得 JS を読み込む */}
+      {/* GMO-PG トークン取得 JS を読み込む 
+
+      // STG用
       <Script 
-      src="https://stg.static.mul-pay.jp/ext/js/token.js" 
-      strategy="afterInteractive" 
-      onLoad={() => {
-        console.log('GMO SDK Loaded');
-        setIsGmoLoaded(true);
-      }}
-      onError={() => console.error('GMO SDK Load Error')}
-    />
+        src="https://stg.static.mul-pay.jp/ext/js/token.js" 
+        strategy="afterInteractive" 
+        onLoad={() => {
+          console.log('GMO SDK Loaded');
+          setIsGmoLoaded(true);
+        }}
+        onError={() => console.error('GMO SDK Load Error')}
+      />
+      */}
+      <Script 
+        src="https://static.mul-pay.jp/ext/js/token.js" 
+        strategy="afterInteractive" 
+        onLoad={() => {
+          console.log('GMO SDK Loaded');
+          setIsGmoLoaded(true);
+        }}
+        onError={() => console.error('GMO SDK Load Error')}
+      />
 
       {/* 上部リンク */}
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>

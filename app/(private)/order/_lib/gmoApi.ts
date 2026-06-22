@@ -4,7 +4,12 @@
  * 決済の枠を作成し、AccessIDを取得します。
  */
 export const entryTranGmo = async (orderId: string, amount: number, shopId: string, shopPass: string) => {
-  const baseUrl = 'https://pt01.mul-pay.jp';
+
+  // stg環境
+  // const baseUrl = 'https://pt01.mul-pay.jp';
+
+  const baseUrl = 'https://p01.mul-pay.jp';
+
   // ハードコードされていた定数を削除します
 
   const params = new URLSearchParams();
@@ -44,9 +49,15 @@ export const execTranGmo = async (
   memberId: string,
   cardSeq: string
 ) => {
-  const baseUrl = 'https://pt01.mul-pay.jp';
-  const siteId = 'tsite00060950';
-  const sitePass = '2sk628ed';
+
+  // stg環境
+  // const baseUrl = 'https://pt01.mul-pay.jp';
+  // const siteId = 'tsite00060950';
+  // const sitePass = '2sk628ed';
+
+  const baseUrl = 'https://p01.mul-pay.jp';
+  const siteId = 'mst2000042968';
+  const sitePass = '6f565k4e';
 
   const params = new URLSearchParams();
   params.append('AccessID', accessId);
@@ -80,8 +91,10 @@ export const execTranGmo = async (
  * 決済済みの取引を取り消します（キャンセル・返金）。
  */
 export const alterTranGmo = async (accessId: string, accessPass: string, shopId: string, shopPass: string) => {
-  const baseUrl = 'https://pt01.mul-pay.jp';
-  // ハードコードされていた定数を削除します
+  // stg環境
+  // const baseUrl = 'https://pt01.mul-pay.jp';
+
+  const baseUrl = 'https://p01.mul-pay.jp';
 
   const params = new URLSearchParams();
   params.append('ShopID', shopId);

@@ -22,16 +22,22 @@ const logGmoErrorReason = (context: string, errCode: string | null, errInfo: str
  * ① GMO会員登録 (SaveMember)
  */
 export const saveGmoMember = async (memberId: string) => {
-  const baseUrl = 'https://pt01.mul-pay.jp'; // ★pt01に統一
-  const siteId = 'tsite00060950';
-  const sitePass = '2sk628ed';
+
+  // stg環境
+  // const baseUrl = 'https://pt01.mul-pay.jp';
+  // const siteId = 'tsite00060950';
+  // const sitePass = '2sk628ed';
+
+  const baseUrl = 'https://p01.mul-pay.jp';
+  const siteId = 'mst2000042968';
+  const sitePass = '6f565k4e';
 
   const mid = memberId.replace(/[\r\n\t]/g, '').trim();
   const params = new URLSearchParams();
   params.append('SiteID', siteId);
   params.append('SitePass', sitePass);
   params.append('MemberID', mid); // ★引数を使うように修正
-  console.log(`MemberIDZZZZZZZZZZZZZZZZZZZZZZZZZZZZ: ${mid} `);
+  console.log(`MemberID: ${mid} `);
 
   try {
     const response = await fetch(`${baseUrl}/payment/SaveMember.idPass`, {
@@ -57,9 +63,15 @@ export const saveGmoMember = async (memberId: string) => {
  * ② カード登録/更新 (SaveCard)
  */
 export const saveGmoCard = async (memberId: string, token: string): Promise<SaveCardResponse> => {
-  const baseUrl = 'https://pt01.mul-pay.jp'; // ★pt01に統一
-  const siteId = 'tsite00060950';
-  const sitePass = '2sk628ed';
+
+  // stg環境
+  // const baseUrl = 'https://pt01.mul-pay.jp';
+  // const siteId = 'tsite00060950';
+  // const sitePass = '2sk628ed';
+
+  const baseUrl = 'https://p01.mul-pay.jp';
+  const siteId = 'mst2000042968';
+  const sitePass = '6f565k4e';
 
   const params = new URLSearchParams();
   params.append('SiteID', siteId);
@@ -93,9 +105,15 @@ export const saveGmoCard = async (memberId: string, token: string): Promise<Save
  * ③ 登録済みカードの検索 (SearchCard)
  */
 export const searchGmoCards = async (memberId: string): Promise<CreditCardData[]> => {
-  const baseUrl = 'https://pt01.mul-pay.jp'; // ★pt01に統一
-  const siteId = 'tsite00060950';
-  const sitePass = '2sk628ed';
+
+  // stg環境
+  // const baseUrl = 'https://pt01.mul-pay.jp';
+  // const siteId = 'tsite00060950';
+  // const sitePass = '2sk628ed';
+
+  const baseUrl = 'https://p01.mul-pay.jp';
+  const siteId = 'mst2000042968';
+  const sitePass = '6f565k4e';
 
   const params = new URLSearchParams();
   params.append('SiteID', siteId);

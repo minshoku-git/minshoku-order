@@ -176,9 +176,14 @@ export const EditPaymentComponent = (): JSX.Element => {
   ------------------------------------------------------------------ */
   return (
     <>
-      {/* GMO-PG トークン取得 SDK (テスト環境用) */}
+      {/* GMO-PG トークン取得 SDK (テスト環境用) 
       <Script 
         src="https://stg.static.mul-pay.jp/ext/js/token.js" 
+        strategy="beforeInteractive" 
+      />
+      */}
+      <Script 
+        src="https://static.mul-pay.jp/ext/js/token.js" 
         strategy="beforeInteractive" 
       />
 
