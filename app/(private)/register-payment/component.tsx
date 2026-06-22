@@ -90,8 +90,8 @@ export const PaymentComponent = (): JSX.Element => {
     openProcessing();
 
     // 1. 初期化
-    const siteId = 'mst2000042968';
-    window.Multipayment.init(siteId);
+    const shopId = process.env.NEXT_PUBLIC_GMO_SHOP_ID;
+    window.Multipayment.init(shopId);
 
     // 2. カード情報取得
     const cardNo = (document.getElementById('cardNo') as HTMLInputElement)?.value;

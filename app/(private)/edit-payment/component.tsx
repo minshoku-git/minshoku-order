@@ -106,8 +106,7 @@ export const EditPaymentComponent = (): JSX.Element => {
       if (isNewCreditCard) {
         openProcessing();
 
-        const siteId = 'mst2000042968';
-        window.Multipayment.init(siteId);
+        window.Multipayment.init(process.env.NEXT_PUBLIC_GMO_SHOP_ID);
 
         const cardNo = (document.getElementById('cardNo') as HTMLInputElement)?.value;
         const mm = (document.getElementById('expireMonth') as HTMLInputElement)?.value;
