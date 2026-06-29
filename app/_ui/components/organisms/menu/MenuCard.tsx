@@ -364,20 +364,43 @@ export default function MenuCard(props: Props) {
           )}
         </CardContent>
       </Card>
-      <Typography variant="h6" fontWeight="bold" display="block" align="center" mt={3}>
-        提供時間：
-        {companyData.offer_time_from}から{companyData.offer_time_to}まで
-      </Typography>
-      <Typography variant="h6" fontWeight="bold" display="block" align="center" >
-        注文期限：
-        {companyData.order_period_day === 0 ? "当日" : companyData.order_period_day + '日前'}
-        {companyData.order_period_time}まで
-      </Typography>
-      <Typography variant="h6" fontWeight="bold" display="block" align="center">
-        キャンセル期限：
-        {companyData.cancel_period_day === 0 ? "当日" : companyData.cancel_period_day + '日前'}
-        {companyData.cancel_period_time}まで
-      </Typography>
+      <Box 
+        display="flex" 
+        flexDirection="column" 
+        alignItems="center" 
+        sx={{ mt: 2.5, px: 2 }}
+      >
+        <Box sx={{ width: 'fit-content' }}>
+          {/* 1行目：提供時間 */}
+          <Box display="flex" sx={{ fontSize: 13, color: 'text.secondary', mb: 0.5 }}>
+            <Typography sx={{ width: 95, fontSize: 'inherit', color: 'inherit' }}>提供時間</Typography>
+            <Typography sx={{ mr: 1, fontSize: 'inherit', color: 'inherit' }}>：</Typography>
+            <Typography sx={{ fontSize: 'inherit', color: 'inherit' }}>
+              {companyData.offer_time_from}から{companyData.offer_time_to}まで
+            </Typography>
+          </Box>
+
+          {/* 2行目：注文期限 */}
+          <Box display="flex" sx={{ fontSize: 13, color: 'text.secondary', mb: 0.5 }}>
+            <Typography sx={{ width: 95, fontSize: 'inherit', color: 'inherit' }}>注文期限</Typography>
+            <Typography sx={{ mr: 1, fontSize: 'inherit', color: 'inherit' }}>：</Typography>
+            <Typography sx={{ fontSize: 'inherit', color: 'inherit' }}>
+              {companyData.order_period_day === 0 ? "当日" : companyData.order_period_day + '日前'}
+              {companyData.order_period_time}まで
+            </Typography>
+          </Box>
+
+          {/* 3行目：キャンセル期限 */}
+          <Box display="flex" sx={{ fontSize: 13, color: 'text.secondary' }}>
+            <Typography sx={{ width: 95, fontSize: 'inherit', color: 'inherit' }}>キャンセル期限</Typography>
+            <Typography sx={{ mr: 1, fontSize: 'inherit', color: 'inherit' }}>：</Typography>
+            <Typography sx={{ fontSize: 'inherit', color: 'inherit' }}>
+              {companyData.cancel_period_day === 0 ? "当日" : companyData.cancel_period_day + '日前'}
+              {companyData.cancel_period_time}まで
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
 
       <StoreModal
         open={open}
