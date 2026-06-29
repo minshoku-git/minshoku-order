@@ -259,7 +259,7 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
       const { error: signUpError } = await supabase.auth.signUp({
         email: req.user_email,
         password: req.signup_password,
-        options: { emailRedirectTo: 'https://minshoku-order-red.vercel.app/pre-registration/' + signUpEncryptReq },
+        options: { emailRedirectTo: 'https://order.minshoku.jp/pre-registration/' + signUpEncryptReq },
       });
 
       if (signUpError) {
@@ -340,11 +340,11 @@ ${date}
 
 ■ 承認
 承認される場合は、以下のURLにアクセスしてください。
-https://minshoku-order-red.vercel.app/decision-result/0?token=${userId}
+https://order.minshoku.jp/decision-result/0?token=${userId}
 
 ■ 否認
 否認される場合は、以下のURLにアクセスしてください。
-https://minshoku-order-red.vercel.app/decision-result/1?token=${userId}
+https://order.minshoku.jp/decision-result/1?token=${userId}
 
 ――――――――――――――――
 
