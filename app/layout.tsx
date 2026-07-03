@@ -24,6 +24,12 @@ export const metadata: Metadata = {
     title: 'みんしょく',
   },
   manifest: '/site.webmanifest',
+
+  // 検索エンジンにインデックスさせない設定（noindex, nofollow）
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({
