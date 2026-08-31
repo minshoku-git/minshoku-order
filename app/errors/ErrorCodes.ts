@@ -42,6 +42,16 @@ export const ErrorCodes = {
     message: '注文期限を超過しています。再度確認してください。',
     status: 400,
   },
+  PAYPAY_PAYMENT_FAILED: {
+    code: 'E400-08',
+    message: 'PayPayでのお支払いが完了しませんでした。もう一度お試しください。',
+    status: 400,
+  },
+  PAYPAY_SESSION_EXPIRED: {
+    code: 'E400-09',
+    message: 'お支払いのセッションが有効期限切れです。もう一度注文をやり直してください。',
+    status: 400,
+  },
 
   // --- 401系: 認証が必要 ---
   INVALID_CREDENTIALS: {
@@ -130,6 +140,11 @@ export const ErrorCodes = {
   VALIDATION_ERROR_YOURS: {
     code: 'E500-05',
     message: '不正なリクエスト形式です。',
+    status: 500,
+  },
+  PAYPAY_INQUIRY_FAILED: {
+    code: 'E500-06',
+    message: 'PayPay決済状況の確認に失敗しました。時間をおいて再度お試しください。',
     status: 500,
   },
 } as const;

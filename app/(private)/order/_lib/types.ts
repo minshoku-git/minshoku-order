@@ -46,6 +46,25 @@ export const OrderApiSchema = z
  */
 export type OrderFormValues = z.infer<typeof OrderSchema>;
 
+/** PayPay決済開始のためのリダイレクト情報 */
+export type PaypayRedirectInfo = {
+  /** PayPayログイン画面へ遷移させるためのPOST送信先URL(ExecTranPaypayのStartURL) */
+  startUrl: string;
+  /** フォーム送信用のAccessID */
+  accessId: string;
+  /** フォーム送信用のToken */
+  token: string;
+};
+
+/**
+ * PayPay決済結果コールバック(RetURL) 入力用バリデーションスキーマ
+ * GMOから実際に届くパラメータ名は非公開ドキュメントのため未確定。
+ * 未知のフィールドを含んでいても弾かないよう .passthrough() で緩く受ける。
+ */
+export const PaypayReturnSchema = z.object({}).passthrough();
+/** PayPay決済結果コールバック Request */
+export type PaypayReturnRequest = z.infer<typeof PaypayReturnSchema>;
+
 /**
  * 注文情報キャンセル 入力用バリデーションスキーマ
  */

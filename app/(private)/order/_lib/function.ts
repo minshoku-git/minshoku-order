@@ -1,38 +1,46 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 import { formatISO } from 'date-fns';
+import { format } from 'date-fns';
 
-import { BUCKET_SHOP_IMAGES } from '@/app/_config/constants';
+import { BUCKET_SHOP_IMAGES, PAYPAY_PENDING_TTL_MINUTES } from '@/app/_config/constants';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import { t_menu_schedule, t_order } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
 import { getImageSignedUrl } from '@/app/_lib/supabaseStorage/getImageUrl';
 import {
   formatJstDate,
+  formatJstDateTime,
+  formatTimeToJst,
   getCancelDeadlineUTC,
+  getJstNow,
   getNow,
   getOrderDeadlineUTC,
   getTodayXHour,
-  formatTimeToJst,
-  formatJstDateTime,
-  getJstNow,
 } from '@/app/_lib/utils/getDateTime';
 import { getPostgreSqlItems } from '@/app/_lib/utils/utils';
 import { convertPaymentTypeName, OrderStatusType, PaymentType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
-import { format } from 'date-fns';
 
 import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
+import { alterTranGmo,entryTranGmo, execTranGmo } from './gmoApi';
+import { entryTranPaypay, execTranPaypay, paypayCancelReturn, searchTradePaypay } from './paypayApi';
 import {
   CancelOrderRequest,
   OmitMenuScheduleAndShop,
   OrderFormValues,
   OrderInitRequest,
   OrderInitResponse,
+  PaypayRedirectInfo,
 } from './types';
 
-import { entryTranGmo, execTranGmo, alterTranGmo } from './gmoApi';
+/**
+ * PayPay決済待ち(PENDING_PAYMENT)行のTTLカットオフ時刻を取得する。
+ * これより前に作成された PENDING_PAYMENT 行は、ユーザーが離脱したものとみなし
+ * 在庫消費・重複注文チェックの対象から除外する。
+ */
+const getPaypayPendingCutoff = (now: Date): Date => new Date(now.getTime() - PAYPAY_PENDING_TTL_MINUTES * 60_000);
 
 /**
  * getOrderInit
@@ -200,13 +208,13 @@ export const getOrderInit = async (values: ApiRequest<OrderInitRequest>): Promis
     const orderDeadlineUTC = getOrderDeadlineUTC(data.delivery_day, orderPeriodDaysBefore, orderPeriodTime);
 
     // ★ ログを詳細化
-console.log('=== [DEBUG] 注文期限判定 ===');
-console.log('現在時刻 (UTC):', now.toISOString());
-console.log('現在時刻 (JST):', formatJstDateTime(now));
-console.log('納品日 (Raw):', data.delivery_day);
-console.log('注文期限 (UTC):', orderDeadlineUTC.toISOString());
-console.log('注文期限 (JST):', formatJstDateTime(orderDeadlineUTC));
-console.log('判定結果 (過ぎているか):', now >= orderDeadlineUTC);
+    console.log('=== [DEBUG] 注文期限判定 ===');
+    console.log('現在時刻 (UTC):', now.toISOString());
+    console.log('現在時刻 (JST):', formatJstDateTime(now));
+    console.log('納品日 (Raw):', data.delivery_day);
+    console.log('注文期限 (UTC):', orderDeadlineUTC.toISOString());
+    console.log('注文期限 (JST):', formatJstDateTime(orderDeadlineUTC));
+    console.log('判定結果 (過ぎているか):', now >= orderDeadlineUTC);
 
     const isOrderDeadlinePassed = now >= orderDeadlineUTC;
 
@@ -217,12 +225,12 @@ console.log('判定結果 (過ぎているか):', now >= orderDeadlineUTC);
     const cancelDeadlineUTC = getCancelDeadlineUTC(data.delivery_day, cancelDaysBefore, cancelTime);
 
     // ★ ログを詳細化
-console.log('=== [DEBUG] キャンセル期限判定 ===');
-console.log('現在時刻 (UTC):', now.toISOString());
-console.log('キャンセル期限 (UTC):', cancelDeadlineUTC.toISOString());
-console.log('キャンセル期限 (JST):', formatJstDateTime(cancelDeadlineUTC));
-console.log('判定結果 (キャンセル可能か):', cancelDeadlineUTC > now);
-console.log('============================');
+    console.log('=== [DEBUG] キャンセル期限判定 ===');
+    console.log('現在時刻 (UTC):', now.toISOString());
+    console.log('キャンセル期限 (UTC):', cancelDeadlineUTC.toISOString());
+    console.log('キャンセル期限 (JST):', formatJstDateTime(cancelDeadlineUTC));
+    console.log('判定結果 (キャンセル可能か):', cancelDeadlineUTC > now);
+    console.log('============================');
 
     const isCancellable = cancelDeadlineUTC > now;
 
@@ -341,15 +349,16 @@ export const preOrder = async (values: ApiRequest<OrderFormValues>): Promise<Api
       throw new CustomError(ErrorCodes.ORDER_EXPIRED);
     }
 
-    /* 自身の注文状況
+    /* 自身の注文状況(有効注文 + 期限内のPayPay決済待ちも対象)
   　------------------------------------------------------------------ */
-    const { data: orderCheck, error: orderCheckError } = await client
+    const pendingCutoff = getPaypayPendingCutoff(now);
+
+    const { data: orderCheckRows, error: orderCheckError } = await client
       .from('t_order')
-      .select('id')
+      .select('id, order_status_type, order_datetime')
       .eq('t_menu_schedule_id', req.menuScheduleId)
       .eq('t_user_id', user.id)
-      .eq('order_status_type', OrderStatusType.VALID)
-      .maybeSingle();
+      .in('order_status_type', [OrderStatusType.VALID, OrderStatusType.PENDING_PAYMENT]);
 
     if (orderCheckError) {
       throw new CustomError(
@@ -358,24 +367,37 @@ export const preOrder = async (values: ApiRequest<OrderFormValues>): Promise<Api
         ErrorCodes.DB_QUERY_FAILED.status
       );
     }
-    if (orderCheck && orderCheck.id) {
+    const hasActiveOrder = (orderCheckRows ?? []).some(
+      (o) =>
+        o.order_status_type === OrderStatusType.VALID ||
+        (o.order_status_type === OrderStatusType.PENDING_PAYMENT && new Date(o.order_datetime!) > pendingCutoff)
+    );
+    if (hasActiveOrder) {
       throw new CustomError(ErrorCodes.ORDER_ALREADY_PLACED);
     }
 
-    /* 現在の在庫数の確認
+    /* 現在の在庫数の確認(有効注文 + 期限内のPayPay決済待ちも消費数に含める)
   　------------------------------------------------------------------ */
     const { data: orders, error: ordersError } = await client
       .from('t_order')
-      .select('count')
+      .select('count, order_status_type, order_datetime')
       .eq('t_menu_schedule_id', req.menuScheduleId)
-      .eq('order_status_type', OrderStatusType.VALID);
+      .in('order_status_type', [OrderStatusType.VALID, OrderStatusType.PENDING_PAYMENT]);
 
     if (ordersError) {
       throw ordersError;
     }
 
-    // 現在の注文数を合計
-    const totalOrders = orders.reduce((sum, order) => sum + order.count, 0);
+    // 現在の注文数を合計(期限切れのPENDING_PAYMENTは除外)
+    const totalOrders = orders.reduce((sum, order) => {
+      if (
+        order.order_status_type === OrderStatusType.PENDING_PAYMENT &&
+        new Date(order.order_datetime!) <= pendingCutoff
+      ) {
+        return sum;
+      }
+      return sum + order.count;
+    }, 0);
 
     // 納品数を超過しているか
     if (totalOrders + req.orderCount > menuSchedule.stock_count) {
@@ -402,13 +424,17 @@ export const preOrder = async (values: ApiRequest<OrderFormValues>): Promise<Api
 };
 
 /**
- * getOrderInit
+ * insertOrder
  * 注文情報を新規登録します。
+ * PayPayの場合、決済はまだ完了しておらず、返却された `startUrl` にユーザーを
+ * 遷移させて決済を続行させる必要がある(呼び出し元は `data` の有無で判定する)。
  *
- * @param {ApiRequest<OrderRequest>} values
- * @returns {Promise<ApiResponse<null>>}
+ * @param {ApiRequest<OrderFormValues>} values
+ * @returns {Promise<ApiResponse<PaypayRedirectInfo | null>>}
  */
-export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<ApiResponse<null>> => {
+export const insertOrder = async (
+  values: ApiRequest<OrderFormValues>
+): Promise<ApiResponse<PaypayRedirectInfo | null>> => {
   const req = values.request;
   const now = getNow();
   const client = await createClient();
@@ -449,59 +475,58 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
 
     const resultMenuSchedule = await pgClient.query<t_menu_schedule>(selectSql, [req.menuScheduleId, 0]);
 
-    const stockCount = Number(
-      resultMenuSchedule.rows[0].stock_count ?? 0
-    );
+    const stockCount = Number(resultMenuSchedule.rows[0].stock_count ?? 0);
 
     if (resultMenuSchedule.rows.length === 0 || stockCount === 0) {
-      throw new CustomError(
-        ErrorCodes.DB_QUERY_FAILED.code,
-        '在庫切れ',
-        ErrorCodes.DB_QUERY_FAILED.status
-      );
+      throw new CustomError(ErrorCodes.DB_QUERY_FAILED.code, '在庫切れ', ErrorCodes.DB_QUERY_FAILED.status);
     }
 
     const menuScheduleData: t_menu_schedule = resultMenuSchedule.rows[0];
 
-    /* ユーザーの注文状況確認
+    /* ユーザーの注文状況確認(有効注文 + 期限内のPayPay決済待ちも対象)
   　------------------------------------------------------------------ */
+    const pendingCutoff = getPaypayPendingCutoff(now);
+
     const selectUserSql = `
-        SELECT 
+        SELECT
           id
         FROM
           t_order
-        WHERE 
+        WHERE
           t_menu_schedule_id = $1
           AND t_user_id = $2
-          AND order_status_type = $3`;
+          AND (order_status_type = $3 OR (order_status_type = $4 AND order_datetime > $5))`;
 
     const existingOrderResult = await pgClient.query(selectUserSql, [
       req.menuScheduleId,
       user.id,
       OrderStatusType.VALID,
+      OrderStatusType.PENDING_PAYMENT,
+      pendingCutoff,
     ]);
 
     if (existingOrderResult.rows.length > 0) {
-      throw new CustomError(
-        ErrorCodes.DB_QUERY_FAILED.code,
-        '既に注文済みです。',
-        ErrorCodes.DB_QUERY_FAILED.status
-      );
+      throw new CustomError(ErrorCodes.DB_QUERY_FAILED.code, '既に注文済みです。', ErrorCodes.DB_QUERY_FAILED.status);
     }
 
-    /* 現在の注文数取得 
+    /* 現在の注文数取得(有効注文 + 期限内のPayPay決済待ちも消費数に含める)
   　------------------------------------------------------------------ */
     const selectOrderSql = `
-        SELECT 
+        SELECT
           SUM(count) as total_count
         FROM
           t_order
-        WHERE 
+        WHERE
           t_menu_schedule_id = $1
-          AND order_status_type = $2`;
+          AND (order_status_type = $2 OR (order_status_type = $3 AND order_datetime > $4))`;
 
     // Insert
-    const resultOrder = await pgClient.query(selectOrderSql, [req.menuScheduleId, OrderStatusType.VALID]);
+    const resultOrder = await pgClient.query(selectOrderSql, [
+      req.menuScheduleId,
+      OrderStatusType.VALID,
+      OrderStatusType.PENDING_PAYMENT,
+      pendingCutoff,
+    ]);
     const totalCount = Number(resultOrder.rows[0].total_count ?? 0);
 
     if (totalCount + Number(req.orderCount) > Number(menuScheduleData.stock_count ?? 0)) {
@@ -525,6 +550,18 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
     let gmoOrderId = '';
     let creditAccessId = '';
     let creditAccessPass = '';
+    let paypayOrderId = '';
+    let paypayAccessId = '';
+    let paypayAccessPass = '';
+
+    // ★ バリデーションガード：GMO設定情報が空欄の店舗だった場合の決済クラッシュを防ぎます
+    // (クレジットカード・PayPayどちらも同じGMO加盟店契約のShopID/ShopPassを使う)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const gmoShopCode = (menuScheduleData as any).gmo_shop_code;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const gmoShopPassword = (menuScheduleData as any).gmo_shop_password;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const shopName = (menuScheduleData as any).shop_name;
 
     /* クレジットの場合
     ------------------------------------------------------------------ */
@@ -534,11 +571,6 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
       if (!userData?.credit_member_id || !userData?.credit_seq_choice) {
         throw new Error('クレジットカード情報が登録されていません。');
       }
-
-      // ★ バリデーションガード：GMO設定情報が空欄の店舗だった場合の決済クラッシュを防ぎます
-      const gmoShopCode = (menuScheduleData as any).gmo_shop_code;
-      const gmoShopPassword = (menuScheduleData as any).gmo_shop_password;
-      const shopName = (menuScheduleData as any).shop_name;
 
       if (!gmoShopCode || !gmoShopPassword) {
         throw new CustomError(
@@ -566,7 +598,31 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
 
       if (!execRes.success) throw new Error(`GMO決済実行失敗: ${execRes.errInfo}`);
     }
-    
+
+    /* PayPayの場合
+    ------------------------------------------------------------------ */
+    if (user.payment_type === PaymentType.PAYPAY) {
+      paypayOrderId = `PPORD-${user.id}-${Date.now()}`;
+
+      if (!gmoShopCode || !gmoShopPassword) {
+        throw new CustomError(
+          ErrorCodes.INTERNAL_SERVER_ERROR.code,
+          `店舗「${shopName}」のGMO IDまたはGMO PASSが設定されていません。マスタ設定を確認してください。`,
+          400
+        );
+      }
+
+      // 取引登録 (EntryTranPaypay) のみロック内で行う。
+      // 決済実行(ExecTranPaypay)はユーザーをPayPay画面へ送り出す準備のため、
+      // 在庫を確定コミットした後(ロック解放後)に行う。
+      const entryRes = await entryTranPaypay(paypayOrderId, userBurdenAmount, gmoShopCode, gmoShopPassword);
+      if (!entryRes.success) throw new Error(`PayPay取引登録失敗: ${entryRes.errInfo}`);
+
+      paypayAccessId = entryRes.accessId!;
+      paypayAccessPass = entryRes.accessPass!;
+    }
+
+    const isPaypay = user.payment_type === PaymentType.PAYPAY;
 
     /* 注文情報の新規登録
     ------------------------------------------------------------------ */
@@ -579,7 +635,8 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
       t_companies_employment_status_id: user.t_companies_employment_status_id,
       delivery_day: menuScheduleData.delivery_day,
       order_datetime: now,
-      order_status_type: OrderStatusType.VALID,
+      // PayPayはユーザーがPayPay画面で承認するまで確定しないため、決済待ちで登録する
+      order_status_type: isPaypay ? OrderStatusType.PENDING_PAYMENT : OrderStatusType.VALID,
       // 支払金額類
       count: req.orderCount,
       list_price: menuScheduleData.list_price,
@@ -589,14 +646,14 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
       user_burden_amount: userBurdenAmount,
       // 会社負担額
       companies_burden_amount: companiesBurdenAmount,
-      // クレジットカード情報 TASK:置き換え
-      // クレジットカード決済情報を保存
-      gmo_order_id: gmoOrderId,
+      // クレジットカード決済情報
+      // PayPayの場合、gmo_order_idにはpaypayOrderIdを格納する(RetURLコールバック時の照合キーとして使う)
+      gmo_order_id: isPaypay ? paypayOrderId : gmoOrderId,
       credit_access_id: creditAccessId,
       credit_access_password: creditAccessPass,
-      // paypay情報 TASK:置き換え
-      paypay_access_id: PaymentType.PAYPAY === user.payment_type ? '' : '',
-      paypay_access_password: PaymentType.PAYPAY === user.payment_type ? '' : '',
+      // PayPay決済情報
+      paypay_access_id: paypayAccessId,
+      paypay_access_password: paypayAccessPass,
     };
     console.log(insertValues);
     const { columns, placeholders, values } = getPostgreSqlItems(insertValues);
@@ -615,10 +672,35 @@ export const insertOrder = async (values: ApiRequest<OrderFormValues>): Promise<
     /* --------------------------------------------------------------- */
     // throw new Error('疑似エラー:ロールバックを確認しました。');
 
-    // Commit
+    // Commit (PayPayの場合はここで在庫が確定する。決済自体はまだ未完了)
     await pgClient.query('COMMIT');
 
-    return { success: true, data: null };
+    if (!isPaypay) {
+      return { success: true, data: null };
+    }
+
+    /* PayPay: コミット後に決済実行(ExecTranPaypay)を呼び、リダイレクト情報を返す
+    ------------------------------------------------------------------ */
+    const retUrl = `${process.env.APP_URL_DEV}/api/order/paypay-return`;
+    const execRes = await execTranPaypay(paypayAccessId, paypayAccessPass, paypayOrderId, retUrl);
+
+    if (!execRes.success || !execRes.startUrl || !execRes.token) {
+      // ベストエフォートで直前にコミットした行を取消状態へ更新する。
+      // (このUPDATE自体が失敗しても、TTL経過後は在庫集計から自動的に除外される)
+      await client
+        .from('t_order')
+        .update<t_order>({ order_status_type: OrderStatusType.SYSTEM_CANCEL })
+        .eq('t_menu_schedule_id', req.menuScheduleId)
+        .eq('t_user_id', user.id)
+        .eq('order_status_type', OrderStatusType.PENDING_PAYMENT);
+
+      return { success: false, error: ErrorCodes.PAYPAY_PAYMENT_FAILED };
+    }
+
+    return {
+      success: true,
+      data: { startUrl: execRes.startUrl, accessId: paypayAccessId, token: execRes.token },
+    };
   } catch (e: unknown) {
     console.error('Transaction failed:', e);
     await rollbackWithLog(pgClient);
@@ -693,16 +775,20 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
     ------------------------------------------------------------------ */
     const { data: orderData, error: orderError } = await client
       .from('t_order')
-      .select(`
-        payment_type, 
-        credit_access_id, 
+      .select(
+        `
+        payment_type,
+        credit_access_id,
         credit_access_password,
+        paypay_access_id,
+        paypay_access_password,
         t_shops (
           shop_name,
           gmo_shop_code,
           gmo_shop_password
         )
-      `)
+      `
+      )
       .eq('t_menu_schedule_id', req.menuScheduleId)
       .eq('t_user_id', user.id)
       .eq('order_status_type', OrderStatusType.VALID)
@@ -716,8 +802,8 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
     ------------------------------------------------------------------ */
     if (orderData.payment_type === PaymentType.CREDITCARD) {
       if (orderData.credit_access_id && orderData.credit_access_password) {
-        
         // バリデーションガードと店舗情報の抽出
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const shops = orderData.t_shops as any;
         if (!shops?.gmo_shop_code || !shops?.gmo_shop_password) {
           throw new Error(`店舗「${shops?.shop_name || ''}」のGMO IDまたはGMO PASSが設定されていません。`);
@@ -725,13 +811,35 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
 
         // 引数に店舗マスタから取得した動的な値を引き渡す
         const gmoRes = await alterTranGmo(
-          orderData.credit_access_id, 
+          orderData.credit_access_id,
           orderData.credit_access_password,
           shops.gmo_shop_code,
           shops.gmo_shop_password
         );
         if (!gmoRes.success) {
           throw new Error(`GMO決済のキャンセルに失敗しました: ${gmoRes.errInfo}`);
+        }
+      }
+    }
+
+    /* PayPay決済の場合はGMO側を取り消す
+    ------------------------------------------------------------------ */
+    if (orderData.payment_type === PaymentType.PAYPAY) {
+      if (orderData.paypay_access_id && orderData.paypay_access_password) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const shops = orderData.t_shops as any;
+        if (!shops?.gmo_shop_code || !shops?.gmo_shop_password) {
+          throw new Error(`店舗「${shops?.shop_name || ''}」のGMO IDまたはGMO PASSが設定されていません。`);
+        }
+
+        const paypayRes = await paypayCancelReturn(
+          orderData.paypay_access_id,
+          orderData.paypay_access_password,
+          shops.gmo_shop_code,
+          shops.gmo_shop_password
+        );
+        if (!paypayRes.success) {
+          throw new Error(`PayPay決済のキャンセルに失敗しました: ${paypayRes.errInfo}`);
         }
       }
     }
@@ -756,6 +864,110 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
 
     return { success: true, data: null };
   } catch (e: unknown) {
+    if (e instanceof CustomError) {
+      return {
+        success: false,
+        error: e,
+      };
+    }
+    return {
+      success: false,
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
+    };
+  }
+};
+
+/**
+ * completePaypayOrder
+ * PayPayからのリダイレクト帰還(RetURLコールバック)を処理する。
+ * コールバックのパラメータ自体は信用せず、SearchTradeMultiでサーバー間の
+ * 真の決済結果を確認してから、対象注文行をVALID/取消のいずれかへ確定させる。
+ * 通知は複数回届く可能性があるため、対象行がPENDING_PAYMENTのままの場合のみ更新する
+ * (楽観的排他)。
+ *
+ * @param {string} orderId - PayPay取引のOrderID(insertOrderで発行したpaypayOrderId)
+ * @returns {Promise<ApiResponse<{ succeeded: boolean }>>}
+ */
+export const completePaypayOrder = async (orderId: string): Promise<ApiResponse<{ succeeded: boolean }>> => {
+  const client = await createClient();
+
+  try {
+    if (!orderId) {
+      throw new CustomError(ErrorCodes.PAYPAY_SESSION_EXPIRED);
+    }
+
+    /* 対象の決済待ち注文行を取得
+    ------------------------------------------------------------------ */
+    const { data: orderRow, error: orderRowError } = await client
+      .from('t_order')
+      .select(
+        `
+        id,
+        paypay_access_id,
+        paypay_access_password,
+        t_shops (
+          gmo_shop_code,
+          gmo_shop_password
+        )
+      `
+      )
+      .eq('gmo_order_id', orderId)
+      .eq('order_status_type', OrderStatusType.PENDING_PAYMENT)
+      .maybeSingle();
+
+    if (orderRowError) {
+      throw new CustomError(
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '決済結果の確認' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
+      );
+    }
+
+    if (!orderRow) {
+      // 既に確定済み(2重通知)、またはTTL経過で失効済み。どちらも処理不要のため成功扱いとする。
+      return { success: true, data: { succeeded: false } };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const shops = orderRow.t_shops as any;
+    if (!shops?.gmo_shop_code || !shops?.gmo_shop_password || !orderRow.paypay_access_id) {
+      throw new CustomError(ErrorCodes.INTERNAL_SERVER_ERROR);
+    }
+
+    /* サーバー間で真の決済結果を確認(コールバックのパラメータ自体は信用しない)
+    ------------------------------------------------------------------ */
+    const searchRes = await searchTradePaypay(shops.gmo_shop_code, shops.gmo_shop_password, orderId);
+
+    if (!searchRes.success) {
+      throw new CustomError(ErrorCodes.PAYPAY_INQUIRY_FAILED);
+    }
+
+    // TODO(GMO doc要確認): 実売上完了を示す正しいStatus値・フィールド名で判定する。
+    const isPaymentSucceeded = searchRes.status === 'CAPTURE' || searchRes.status === 'SALES';
+
+    /* 決済待ち行をVALID/取消へ確定(PENDING_PAYMENTのままの行のみ更新=楽観的排他)
+    ------------------------------------------------------------------ */
+    const { error: updateError } = await client
+      .from('t_order')
+      .update<t_order>(
+        isPaymentSucceeded
+          ? { order_status_type: OrderStatusType.VALID }
+          : { order_status_type: OrderStatusType.SYSTEM_CANCEL }
+      )
+      .eq('id', orderRow.id)
+      .eq('order_status_type', OrderStatusType.PENDING_PAYMENT);
+
+    if (updateError) {
+      throw new CustomError(
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '注文確定' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
+      );
+    }
+
+    return { success: true, data: { succeeded: isPaymentSucceeded } };
+  } catch (e: unknown) {
+    console.error(e);
     if (e instanceof CustomError) {
       return {
         success: false,

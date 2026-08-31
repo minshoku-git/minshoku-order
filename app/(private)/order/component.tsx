@@ -15,7 +15,40 @@ import { useProcessing } from '@/app/_ui/state/processing/processingContext';
 import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
 
 import { cancelOrderFetcher, getOrderInitFetcher, orderFetcher, preOrderFetcher } from './_lib/fetcher';
-import { CancelOrderRequest, OrderFormValues, OrderInitRequest, OrderInitResponse } from './_lib/types';
+import {
+  CancelOrderRequest,
+  OrderFormValues,
+  OrderInitRequest,
+  OrderInitResponse,
+  PaypayRedirectInfo,
+} from './_lib/types';
+
+/**
+ * submitPaypayForm
+ * ExecTranPaypayで取得したStartURLへ、AccessID/Tokenを隠しフィールドとしてPOST送信し、
+ * ユーザーをPayPayログイン画面へ遷移させる(単純なリダイレクトではなくフォーム送信が必要)。
+ * @param {PaypayRedirectInfo} redirect - リダイレクト情報
+ */
+const submitPaypayForm = (redirect: PaypayRedirectInfo): void => {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = redirect.startUrl;
+
+  const accessIdInput = document.createElement('input');
+  accessIdInput.type = 'hidden';
+  accessIdInput.name = 'AccessID';
+  accessIdInput.value = redirect.accessId;
+  form.appendChild(accessIdInput);
+
+  const tokenInput = document.createElement('input');
+  tokenInput.type = 'hidden';
+  tokenInput.name = 'Token';
+  tokenInput.value = redirect.token;
+  form.appendChild(tokenInput);
+
+  document.body.appendChild(form);
+  form.submit();
+};
 
 /**
  * 注文Component
@@ -32,7 +65,9 @@ export const OrderComponent = (): JSX.Element => {
   const [openPreOrder, setOpenPreOrder] = useState<boolean>(false);
   const [scheduleID, setScheduleID] = useState<number | undefined>(undefined);
   const [count, setCount] = useState(1);
-  const [condition, setCondition] = useState<ApiRequest<OrderInitRequest>>({ request: { moveMenuScheduleId: undefined } });
+  const [condition, setCondition] = useState<ApiRequest<OrderInitRequest>>({
+    request: { moveMenuScheduleId: undefined },
+  });
 
   /* useQuery - 初期取得
   ------------------------------------------------------------------ */
@@ -43,15 +78,15 @@ export const OrderComponent = (): JSX.Element => {
   });
 
   // ★ データ受信時の生ログを追加
-useEffect(() => {
-  if (data?.menuScheduleData) {
-    console.log('--- API受信データ確認 ---');
-    console.log('メニュー名:', data.menuScheduleData.menu_name);
-    console.log('定価 (list_price):', data.menuScheduleData.list_price);
-    console.log('ユーザー負担単価 (sale_price):', data.menuScheduleData.sale_price);
-    console.log('------------------------');
-  }
-}, [data]);
+  useEffect(() => {
+    if (data?.menuScheduleData) {
+      console.log('--- API受信データ確認 ---');
+      console.log('メニュー名:', data.menuScheduleData.menu_name);
+      console.log('定価 (list_price):', data.menuScheduleData.list_price);
+      console.log('ユーザー負担単価 (sale_price):', data.menuScheduleData.sale_price);
+      console.log('------------------------');
+    }
+  }, [data]);
 
   /* useEffect 会員登録後メッセージ表示
   ------------------------------------------------------------------ */
@@ -76,26 +111,25 @@ useEffect(() => {
   ------------------------------------------------------------------ */
   useEffect(() => {
     if (!data) {
-      return
+      return;
     } else {
-      setScheduleID(data.menuScheduleData?.id ?? undefined)
+      setScheduleID(data.menuScheduleData?.id ?? undefined);
     }
   }, [data]);
-
 
   /* functions - ページ送り
   ------------------------------------------------------------------ */
   const moveMenu = (id: number) => {
     const req: ApiRequest<OrderInitRequest> = {
-      request: { moveMenuScheduleId: id }
-    }
+      request: { moveMenuScheduleId: id },
+    };
     setCondition(req);
-  }
+  };
 
   /* functions - 注文確認
   ------------------------------------------------------------------ */
   const preOrderHandler = async () => {
-    if (!scheduleID) return
+    if (!scheduleID) return;
     preOrderMutate.mutate(scheduleID);
   };
 
@@ -116,7 +150,7 @@ useEffect(() => {
   /* functions - 注文確定
   ------------------------------------------------------------------ */
   const orderHandler = async () => {
-    if (!scheduleID) return
+    if (!scheduleID) return;
     orderMutate.mutate(scheduleID);
   };
 
@@ -124,10 +158,15 @@ useEffect(() => {
     mutationFn: async (id: number) => {
       openProcessing();
       const req: ApiRequest<OrderFormValues> = { request: { orderCount: count, menuScheduleId: id } };
-      return orderFetcher(req) as unknown as ApiResponse<null>;
+      return orderFetcher(req);
     },
-    onSuccess: async () => {
-      await refetch()
+    onSuccess: async (res) => {
+      if (res.data?.startUrl) {
+        // PayPay: 決済継続のためPayPay画面へ遷移する(ページ遷移するのでrefetch等は不要)
+        submitPaypayForm(res.data);
+        return;
+      }
+      await refetch();
       openSnackbar(AlertType.INFO, '注文が完了しました。');
       setOpenPreOrder(false);
     },
@@ -139,7 +178,7 @@ useEffect(() => {
   /* functions - 注文キャンセル
  ------------------------------------------------------------------ */
   const cancelOrderHandler = async () => {
-    if (!scheduleID) return
+    if (!scheduleID) return;
     cancelOrderMutate.mutate(scheduleID);
   };
 
@@ -150,7 +189,7 @@ useEffect(() => {
       return cancelOrderFetcher(req) as unknown as ApiResponse<null>;
     },
     onSuccess: async () => {
-      await refetch()
+      await refetch();
       openSnackbar(AlertType.INFO, '注文をキャンセルしました。');
     },
     onSettled: () => {
@@ -162,7 +201,7 @@ useEffect(() => {
   ------------------------------------------------------------------ */
   const backHandler = async () => {
     setOpenPreOrder(false);
-    await refetch()
+    await refetch();
   };
 
   /* JSX
@@ -197,12 +236,7 @@ useEffect(() => {
               />
             </>
           ) : (
-            <MenuCardConfirm
-              data={data}
-              count={count}
-              backHandler={backHandler}
-              orderHandler={orderHandler}
-            />
+            <MenuCardConfirm data={data} count={count} backHandler={backHandler} orderHandler={orderHandler} />
           )}
         </>
       ) : (

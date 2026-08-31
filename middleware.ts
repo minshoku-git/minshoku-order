@@ -9,6 +9,7 @@ export const config = {
   // 認証時、閲覧可能なページ
   matcher: [
     '/order',
+    '/order/paypay-result',
     '/order-history',
     '/edit-payment',
     '/edit-profile',

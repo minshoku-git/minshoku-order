@@ -60,6 +60,15 @@ export const PublicPaths = ['/', '/login', '/error', '/register-payment'];
  */
 export const BUCKET_SHOP_IMAGES: string = 'shop-images';
 
+/* PayPay決済
+------------------------------------------------------------------ */
+/**
+ * PayPay決済保留(PENDING_PAYMENT)のTTL(分)
+ * この時間を超えたPENDING_PAYMENT行は期限切れとして在庫集計から除外する。
+ * @returns {number} - 10
+ */
+export const PAYPAY_PENDING_TTL_MINUTES: number = 10;
+
 /* バリデーションメッセージ
 ------------------------------------------------------------------ */
 export const MSG_REQUIRED = '{0}は必須入力です。';
