@@ -30,10 +30,10 @@ npm run fix                # prettier --write . → eslint --fix
 
 `vercel.json` で Git 連携デプロイを無効化し（`"git": { "deploymentEnabled": false }`）、GitHub Actions から Vercel CLI で明示デプロイする構成。
 
-| トリガー | ワークフロー | 環境 |
-|---|---|---|
-| `main` への push | `.github/workflows/vercel-production.yaml` | production |
-| `v{n}.{n}.{n}` ブランチへの push | `.github/workflows/vercel-preview.yaml` | preview |
+| トリガー                         | ワークフロー                               | 環境       |
+| -------------------------------- | ------------------------------------------ | ---------- |
+| `main` への push                 | `.github/workflows/vercel-production.yaml` | production |
+| `v{n}.{n}.{n}` ブランチへの push | `.github/workflows/vercel-preview.yaml`    | preview    |
 
 本番デプロイ時、実際の環境変数はVercelプロジェクトの環境変数から取得される（ローカルの `.env.local` とは値が異なりうる。下記参照）。
 
@@ -91,10 +91,10 @@ component.tsx
 
 ### DB アクセスは読み書きで別クライアント
 
-| | 使うもの | 場所 |
-|---|---|---|
-| **参照** | `@supabase/ssr` の `createClient()` | `app/_lib/supabase/server.ts` |
-| **更新** | `pg` の `createPgClient()` で生 SQL + トランザクション | 同上 |
+|          | 使うもの                                               | 場所                          |
+| -------- | ------------------------------------------------------ | ----------------------------- |
+| **参照** | `@supabase/ssr` の `createClient()`                    | `app/_lib/supabase/server.ts` |
+| **更新** | `pg` の `createPgClient()` で生 SQL + トランザクション | 同上                          |
 
 更新系は `BEGIN` → 複数テーブル操作 → `COMMIT`、失敗時は `rollbackWithLog(client)`（`app/_lib/supabase/transaction.ts`）。INSERT/UPDATE 文は手書きせず `getPostgreSqlItems()`（`app/_lib/utils/utils.ts`）で `{ columns, placeholders, values }` を組み立てる。
 
@@ -128,8 +128,26 @@ Zod スキーマは `_lib/types.ts` に置き、フォーム用とAPI境界用�
 
 ### 外部連携
 
-- **GMO Payment**（`app/(private)/order/_lib/gmoApi.ts`）: クレジットカード決済。**本番エンドポイント `https://p01.mul-pay.jp` を直接使用**（ステージング用 `pt01.mul-pay.jp` はコメントアウトで残っている）。
+- **GMO Payment**（プロトコルタイプ idPass）: クレジットカードは `app/(private)/order/_lib/gmoApi.ts`（`register-payment`/`edit-payment`にも同名ファイルあり）、PayPayは `app/(private)/order/_lib/paypayApi.ts`。エンドポイント・SiteID/SitePassは`GMO_BASE_URL`/`GMO_SITE_ID`/`GMO_SITE_PASS`環境変数（上記参照）。ShopID/ShopPassは`t_shops.gmo_shop_code`/`gmo_shop_password`（DB管理）。
 - **Nodemailer**（`app/_lib/mailer/`）: 通知メール送信。
+
+#### PayPay決済（`app/(private)/order/_lib/paypayApi.ts`）
+
+GMO Payment Gatewayの「PayPay（都度決済）」を、既存のクレジットカードと同じGMO加盟店契約（ShopID/ShopPass）で利用する。クレジットカードと違い、ユーザーがPayPay画面へ**リダイレクトして承認するまで決済が確定しない非同期フロー**になるため、新設した `OrderStatusType.PENDING_PAYMENT`（決済待ち）ステータスと `PAYPAY_PENDING_TTL_MINUTES`（`app/_config/constants.ts`、10分）による在庫の仮確保・自動失効を組み合わせて実装している（`insertOrder`/`preOrder`/`completePaypayOrder`、`app/(private)/order/_lib/function.ts`）。
+
+**フロー**: `entryTranPaypay`(取引登録) → `execTranPaypay`(決済実行、`StartURL`/`Token`取得) → クライアント側で`StartURL`へ`AccessID`+`Token`を**隠しフォームでPOST**送信しPayPay画面へ遷移 → 決済完了後GMOが`RetURL`へ通知 → `app/api/order/paypay-return/route.ts`が`searchTradePaypay`でサーバー間の真の結果を確認 → 注文確定(`VALID`)/失効(`SYSTEM_CANCEL`)。
+
+**GMOの公開ドキュメント（docs.gmo-pg.com/mulpay）に記載が無く、GMOテスト環境での実疎通で判明した仕様**（本番でも同じ挙動である保証はないため、本番投入前に要再確認）:
+
+| 項目                        | 内容                                                                                                                                                                                                                                                                                               |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ExecTranPaypay.idPass`     | クレジットの`ExecTran`と異なり`ShopID`/`ShopPass`が必須（未指定だと`M01002001`/`M01003001`）                                                                                                                                                                                                       |
+| `RetURL`                    | 固定の環境変数ではなく、注文APIへの実際のリクエストのオリジン(`req.nextUrl.origin`)から組み立てる必要がある（`insertOrder`の第2引数として`route.ts`から渡している）                                                                                                                                |
+| コールバック                | POSTではなく**GET**で届き、かつ**クエリパラメータは一切付与されない**。そのため`insertOrder`が`RetURL`自体に自前で`?orderId=...`を埋め込み、`paypay-return`側でそれを頼りに注文を特定している（GMO側のOrderID等のパラメータは信用できない）                                                        |
+| `SearchTradeMulti.idPass`   | `PayType=45`を指定しないと`M01051001`（決済方法未指定）。成功時`Status=CAPTURE`（即時売上）                                                                                                                                                                                                        |
+| `PaypayCancelReturn.idPass` | クレジットの`AlterTran`(`JobCd=VOID`)と異なり、`JobCd`ではなく`OrderID`+`CancelAmount`/`CancelTax`（取消/返金額を明示指定）で行う。`CancelAmount`は`t_order.amount`（会社負担込みの合計金額）ではなく、実際にPayPayへ請求された`user_burden_amount`と一致させる必要がある（不一致だと`M01085011`） |
+
+GMOテスト環境の加盟店設定（ショップ管理コンソール）で、PayPay都度決済の売上区分を「仮売上/実売上」から「即時売上」に切り替えている前提のコード（`JobCd=CAPTURE`）になっている。切り替えていない場合は`E61546010`（処理区分エラー）になる。
 
 ## コーディング規約
 
