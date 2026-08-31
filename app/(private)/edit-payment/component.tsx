@@ -1,9 +1,6 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Box,
-  Typography,
-} from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { JSX, useEffect, useState } from 'react';
@@ -82,7 +79,7 @@ export const EditPaymentComponent = (): JSX.Element => {
     setCreditCardOptions(data.creditCardDatas);
     reset({
       paymentType: data.currentPaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
-      creditcard: data.currentCardDataId ?? '', 
+      creditcard: data.currentCardDataId ?? '',
     });
     // reset は stable なので依存配列に入れてもループしませんが、data の安定化が鍵です
   }, [data, reset]);
@@ -99,56 +96,57 @@ export const EditPaymentComponent = (): JSX.Element => {
   ------------------------------------------------------------------ */
   const updateHandler: SubmitHandler<EditPaymentFormValues> = async (formData) => {
     // 新規カード入力（'new'）が選択されているか判定
-    const isNewCreditCard = 
-      formData.paymentType === PaymentType.CREDITCARD && 
-      formData.creditcard === 'new';
+    const isNewCreditCard = formData.paymentType === PaymentType.CREDITCARD && formData.creditcard === 'new';
 
-      if (isNewCreditCard) {
-        openProcessing();
+    if (isNewCreditCard) {
+      openProcessing();
 
-        window.Multipayment.init(process.env.NEXT_PUBLIC_GMO_SHOP_ID);
+      window.Multipayment.init(process.env.NEXT_PUBLIC_GMO_SHOP_ID);
 
-        const cardNo = (document.getElementById('cardNo') as HTMLInputElement)?.value;
-        const mm = (document.getElementById('expireMonth') as HTMLInputElement)?.value;
-        const yy = (document.getElementById('expireYear') as HTMLInputElement)?.value;
-        const securityCode = (document.getElementById('securityCode') as HTMLInputElement)?.value;
+      const cardNo = (document.getElementById('cardNo') as HTMLInputElement)?.value;
+      const mm = (document.getElementById('expireMonth') as HTMLInputElement)?.value;
+      const yy = (document.getElementById('expireYear') as HTMLInputElement)?.value;
+      const securityCode = (document.getElementById('securityCode') as HTMLInputElement)?.value;
 
-        // ★ 修正1: 有効期限を YYYYMM (6桁) に整形する
-        const formattedExpire = `20${yy}${mm}`;
+      // ★ 修正1: 有効期限を YYYYMM (6桁) に整形する
+      const formattedExpire = `20${yy}${mm}`;
 
-        window.Multipayment.getToken({
+      window.Multipayment.getToken(
+        {
           cardno: cardNo.replace(/\s|-/g, ''),
           expire: formattedExpire, // 4桁ではなく6桁
           securitycode: securityCode,
-          tokennumber: '1',         // ★ 修正2: 発行数を明示的に指定
-      }, (response: any) => {
-        // ブラウザのコンソールで結果を必ず確認
-        console.log('GMO SDK Response:', response);
+          tokennumber: '1', // ★ 修正2: 発行数を明示的に指定
+        },
+        (response: any) => {
+          // ブラウザのコンソールで結果を必ず確認
+          console.log('GMO SDK Response:', response);
 
-        // resultCode が '000' でない限り、絶対にサーバーに送らない
-        if (response.resultCode === '000') {
-          const token = response.tokenObject.token[0];
-          
-          // ここで token が '1' などの異常値でないか最終チェック
-          if (token === '1') {
+          // resultCode が '000' でない限り、絶対にサーバーに送らない
+          if (response.resultCode === '000') {
+            const token = response.tokenObject.token[0];
+
+            // ここで token が '1' などの異常値でないか最終チェック
+            if (token === '1') {
+              closeProcessing();
+              alert('トークンの生成に失敗しました。カード情報を確認してください。');
+              return;
+            }
+
+            updateMutate.mutate({
+              ...formData,
+              token: token,
+            });
+          } else {
             closeProcessing();
-            alert("トークンの生成に失敗しました。カード情報を確認してください。");
-            return;
+            // エラーコードを表示（E01240002 など）
+            alert(`カード認証エラー (Code: ${response.resultCode})`);
           }
-
-          updateMutate.mutate({
-            ...formData,
-            token: token,
-          });
-        } else {
-          closeProcessing();
-          // エラーコードを表示（E01240002 など）
-          alert(`カード認証エラー (Code: ${response.resultCode})`);
         }
-      });
+      );
     } else {
       updateMutate.mutate(formData);
-  }
+    }
   };
 
   /* Mutation - サーバーサイド更新API呼び出し
@@ -176,16 +174,8 @@ export const EditPaymentComponent = (): JSX.Element => {
   ------------------------------------------------------------------ */
   return (
     <>
-      {/* GMO-PG トークン取得 SDK (テスト環境用)  
-      <Script 
-        src="https://stg.static.mul-pay.jp/ext/js/token.js" 
-        strategy="beforeInteractive" 
-      />
-      */}
-      <Script 
-        src="https://static.mul-pay.jp/ext/js/token.js"  
-        strategy="beforeInteractive" 
-      />
+      {/* GMO-PG トークン取得 SDK（本番/テスト環境の出し分けは NEXT_PUBLIC_GMO_TOKEN_JS_URL で行う） */}
+      <Script src={process.env.NEXT_PUBLIC_GMO_TOKEN_JS_URL} strategy="beforeInteractive" />
 
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', fontSize: 20 }}>

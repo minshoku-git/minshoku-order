@@ -1,6 +1,6 @@
 'use server';
 
-import { SaveCardResponse, CreditCardData } from './types';
+import { CreditCardData,SaveCardResponse } from './types';
 
 /**
  * GMOのエラーコードを解析して日本語メッセージを返すヘルパー
@@ -22,15 +22,9 @@ const logGmoErrorReason = (context: string, errCode: string | null, errInfo: str
  * ① GMO会員登録 (SaveMember)
  */
 export const saveGmoMember = async (memberId: string) => {
-
-  // stg環境
-  // const baseUrl = 'https://pt01.mul-pay.jp';
-  // const siteId = 'tsite00060950';
-  // const sitePass = '2sk628ed';
-
-  const baseUrl = 'https://p01.mul-pay.jp';
-  const siteId = 'mst2000042968';
-  const sitePass = '6f565k4e';
+  const baseUrl = process.env.GMO_BASE_URL!;
+  const siteId = process.env.GMO_SITE_ID!;
+  const sitePass = process.env.GMO_SITE_PASS!;
 
   const mid = memberId.replace(/[\r\n\t]/g, '').trim();
   const params = new URLSearchParams();
@@ -47,10 +41,11 @@ export const saveGmoMember = async (memberId: string) => {
     });
     const responseText = new TextDecoder('shift-jis').decode(await response.arrayBuffer());
     const resParams = new URLSearchParams(responseText);
-    
+
     if (resParams.get('ErrCode')) {
       const errInfo = resParams.get('ErrInfo');
-      if (errInfo === 'E01040001' || errInfo === 'E01390010') return { success: true, alreadyExists: true, memberId: mid };
+      if (errInfo === 'E01040001' || errInfo === 'E01390010')
+        return { success: true, alreadyExists: true, memberId: mid };
       return { success: false, errCode: resParams.get('ErrCode'), errInfo };
     }
     return { success: true, memberId: mid, alreadyExists: false };
@@ -63,15 +58,9 @@ export const saveGmoMember = async (memberId: string) => {
  * ② カード登録/更新 (SaveCard)
  */
 export const saveGmoCard = async (memberId: string, token: string): Promise<SaveCardResponse> => {
-
-  // stg環境
-  // const baseUrl = 'https://pt01.mul-pay.jp';
-  // const siteId = 'tsite00060950';
-  // const sitePass = '2sk628ed';
-
-  const baseUrl = 'https://p01.mul-pay.jp';
-  const siteId = 'mst2000042968';
-  const sitePass = '6f565k4e';
+  const baseUrl = process.env.GMO_BASE_URL!;
+  const siteId = process.env.GMO_SITE_ID!;
+  const sitePass = process.env.GMO_SITE_PASS!;
 
   const params = new URLSearchParams();
   params.append('SiteID', siteId);
@@ -105,15 +94,9 @@ export const saveGmoCard = async (memberId: string, token: string): Promise<Save
  * ③ 登録済みカードの検索 (SearchCard)
  */
 export const searchGmoCards = async (memberId: string): Promise<CreditCardData[]> => {
-
-  // stg環境
-  // const baseUrl = 'https://pt01.mul-pay.jp';
-  // const siteId = 'tsite00060950';
-  // const sitePass = '2sk628ed';
-
-  const baseUrl = 'https://p01.mul-pay.jp';
-  const siteId = 'mst2000042968';
-  const sitePass = '6f565k4e';
+  const baseUrl = process.env.GMO_BASE_URL!;
+  const siteId = process.env.GMO_SITE_ID!;
+  const sitePass = process.env.GMO_SITE_PASS!;
 
   const params = new URLSearchParams();
   params.append('SiteID', siteId);
@@ -137,7 +120,7 @@ export const searchGmoCards = async (memberId: string): Promise<CreditCardData[]
 
     return seqs.map((seq, i) => ({
       creditcardId: seq,
-      maskedCardNumber: numbers[i]
+      maskedCardNumber: numbers[i],
     }));
   } catch (error) {
     return [];

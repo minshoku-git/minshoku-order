@@ -45,6 +45,8 @@ npm run fix                # prettier --write . → eslint --fix
 
 **ローカルの `.env.local` の値と本番Vercel環境変数は食い違うことがある**（実例: `SUPABASE_STORAGE` がローカルでは `shop-images` だが本番は `public`）。本番の値を確認する必要がある場合は推測せず `vercel link` → `vercel env pull --environment=production <file>` で取得すること。
 
+**GMO Payment Gateway**（`GMO_BASE_URL` / `GMO_SITE_ID` / `GMO_SITE_PASS` / `NEXT_PUBLIC_GMO_TOKEN_JS_URL`）は、Vercelの Production/Preview で値を出し分けている（`SUPABASE_URL_DEV`/`SUPABASE_STORAGE` と同じ「同じ変数名でVercel環境ごとに値を変える」パターン）。Production=GMO本番（`p01.mul-pay.jp`）、Preview=GMOテスト環境（`pt01.mul-pay.jp`、`v{n}.{n}.{n}`ブランチのデプロイに対応）。ローカルの`.env.local`もPreview/dev Supabaseと対でテスト環境の値にしてある。`app/(private)/order/_lib/gmoApi.ts`・`app/(private)/register-payment/_lib/gmoApi.ts`・`app/(private)/edit-payment/_lib/gmoApi.ts`の3ファイルがこれらを参照する（以前はファイル内にハードコード＋コメントアウトでの手動切り替えだったが環境変数化した）。`ShopID`/`ShopPass`（`t_shops.gmo_shop_code`/`gmo_shop_password`）は元々DB管理なのでこの対象外。
+
 ## アーキテクチャ
 
 ### 機能単位の垂直スライス

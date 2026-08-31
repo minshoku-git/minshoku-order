@@ -1,9 +1,7 @@
 'use client';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Box,
-  Typography,
-} from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { JSX, useEffect, useState } from 'react';
@@ -20,7 +18,6 @@ import { useSnackBar } from '@/app/_ui/state/snackBar/snackbarContext';
 
 import { getRegisterPaymentTypeInitDataFetcher, registerPaymentTypeFetcher } from './_lib/fetcher';
 import { RegisterPaymentInitData, UserPaymentFormValues, UserPaymentSchema } from './_lib/types';
-import { useQueryClient } from '@tanstack/react-query';
 // window オブジェクトの型拡張（TypeScriptエラー回避）
 declare global {
   interface Window {
@@ -78,53 +75,57 @@ export const PaymentComponent = (): JSX.Element => {
   /* functions - send
   ------------------------------------------------------------------ */
   const registerHandler: SubmitHandler<UserPaymentFormValues> = async (formData) => {
-  const isNewCreditCard = formData.paymentType === PaymentType.CREDITCARD && formData.creditcard === 'new';
+    const isNewCreditCard = formData.paymentType === PaymentType.CREDITCARD && formData.creditcard === 'new';
 
-  if (isNewCreditCard) {
-
-    if (typeof window === 'undefined' || !window.Multipayment) {
-      alert('決済システムの準備ができていません。数秒待ってから再度お試しいただくか、ページを再読み込みしてください。');
-      return;
-    }
-    
-    openProcessing();
-
-    // 1. 初期化
-    const shopId = process.env.NEXT_PUBLIC_GMO_SHOP_ID;
-    window.Multipayment.init(shopId);
-
-    // 2. カード情報取得
-    const cardNo = (document.getElementById('cardNo') as HTMLInputElement)?.value;
-    const mm = (document.getElementById('expireMonth') as HTMLInputElement)?.value;
-    const yy = (document.getElementById('expireYear') as HTMLInputElement)?.value;
-    const securityCode = (document.getElementById('securityCode') as HTMLInputElement)?.value;
-
-    // ★ 修正：有効期限を 6桁 (YYYYMM) に整形
-    const formattedExpire = `20${yy}${mm}`;
-
-    // 3. トークン取得
-    window.Multipayment.getToken({
-      cardno: cardNo.replace(/\s|-/g, ''),
-      expire: formattedExpire,
-      securitycode: securityCode,
-      tokennumber: '1', // ★ 明示的に '1' を指定
-    }, (response: any) => {
-      if (response.resultCode === '000') {
-        const token = response.tokenObject.token[0];
-        // サーバーサイドへ送信
-        registerMutate.mutate({
-          ...formData,
-          token: token,
-        });
-      } else {
-        closeProcessing();
-        alert(`カード認証に失敗しました。内容を確認してください。(Error: ${response.resultCode})`);
+    if (isNewCreditCard) {
+      if (typeof window === 'undefined' || !window.Multipayment) {
+        alert(
+          '決済システムの準備ができていません。数秒待ってから再度お試しいただくか、ページを再読み込みしてください。'
+        );
+        return;
       }
-    });
-  } else {
-    registerMutate.mutate(formData);
-  }
-};
+
+      openProcessing();
+
+      // 1. 初期化
+      const shopId = process.env.NEXT_PUBLIC_GMO_SHOP_ID;
+      window.Multipayment.init(shopId);
+
+      // 2. カード情報取得
+      const cardNo = (document.getElementById('cardNo') as HTMLInputElement)?.value;
+      const mm = (document.getElementById('expireMonth') as HTMLInputElement)?.value;
+      const yy = (document.getElementById('expireYear') as HTMLInputElement)?.value;
+      const securityCode = (document.getElementById('securityCode') as HTMLInputElement)?.value;
+
+      // ★ 修正：有効期限を 6桁 (YYYYMM) に整形
+      const formattedExpire = `20${yy}${mm}`;
+
+      // 3. トークン取得
+      window.Multipayment.getToken(
+        {
+          cardno: cardNo.replace(/\s|-/g, ''),
+          expire: formattedExpire,
+          securitycode: securityCode,
+          tokennumber: '1', // ★ 明示的に '1' を指定
+        },
+        (response: any) => {
+          if (response.resultCode === '000') {
+            const token = response.tokenObject.token[0];
+            // サーバーサイドへ送信
+            registerMutate.mutate({
+              ...formData,
+              token: token,
+            });
+          } else {
+            closeProcessing();
+            alert(`カード認証に失敗しました。内容を確認してください。(Error: ${response.resultCode})`);
+          }
+        }
+      );
+    } else {
+      registerMutate.mutate(formData);
+    }
+  };
   const registerMutate = useApiMutation({
     mutationFn: async (data: UserPaymentFormValues) => {
       openProcessing();
@@ -141,7 +142,6 @@ export const PaymentComponent = (): JSX.Element => {
     },
   });
 
-
   /* useEffect 初期表示情報取得
   ------------------------------------------------------------------ */
 
@@ -150,13 +150,12 @@ export const PaymentComponent = (): JSX.Element => {
 
     setCreditCardOptions(data.creditCardDatas);
     reset({
-      paymentType: data.currentPaymentType as PaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
+      paymentType: (data.currentPaymentType as PaymentType) ?? PaymentType.SALAEY_DEDUCTIONS,
       // undefined を防ぎ、常に controlled な状態を維持する
-      creditcard: data.currentCardDataId ?? '', 
+      creditcard: data.currentCardDataId ?? '',
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [data, reset]); // reset も依存配列に含めるのが推奨です
-
 
   useEffect(() => {
     if (isLoading) {
@@ -169,26 +168,14 @@ export const PaymentComponent = (): JSX.Element => {
 
   /* JSX
   ------------------------------------------------------------------ */
-// 読み込み状態を管理する state を追加（任意）
-const [isGmoLoaded, setIsGmoLoaded] = useState(false);
+  // 読み込み状態を管理する state を追加（任意）
+  const [isGmoLoaded, setIsGmoLoaded] = useState(false);
   return (
     <>
-      {/* GMO-PG トークン取得 JS を読み込む 
-
-      // STG用
-      <Script 
-        src="https://stg.static.mul-pay.jp/ext/js/token.js" 
-        strategy="afterInteractive" 
-        onLoad={() => {
-          console.log('GMO SDK Loaded');
-          setIsGmoLoaded(true);
-        }}
-        onError={() => console.error('GMO SDK Load Error')}
-      />
-      */}
-      <Script 
-        src="https://static.mul-pay.jp/ext/js/token.js" 
-        strategy="afterInteractive" 
+      {/* GMO-PG トークン取得 JS を読み込む（本番/テスト環境の出し分けは NEXT_PUBLIC_GMO_TOKEN_JS_URL で行う） */}
+      <Script
+        src={process.env.NEXT_PUBLIC_GMO_TOKEN_JS_URL}
+        strategy="afterInteractive"
         onLoad={() => {
           console.log('GMO SDK Loaded');
           setIsGmoLoaded(true);
@@ -203,21 +190,23 @@ const [isGmoLoaded, setIsGmoLoaded] = useState(false);
         </Typography>
       </Box>
       <Typography variant="body1">支払い方法をご選択ください。</Typography>
-      {!isLoading && data && <>
-        <PaymentForm
-          handleSubmit={handleSubmit}
-          submitHandler={registerHandler}
-          onError={(errors) => console.log('Validation Errors:', errors)} 
-          control={control}
-          paymentMethod={paymentMethod}
-          cards={creditCardOptions}
-          isRegister={true}
-          deduction_flag={data.deduction_flag}
-          credit_flag={data.credit_flag}
-          paypay_flag={data.paypay_flag}
-          error={errors.paymentType}
-        />
-      </>}
+      {!isLoading && data && (
+        <>
+          <PaymentForm
+            handleSubmit={handleSubmit}
+            submitHandler={registerHandler}
+            onError={(errors) => console.log('Validation Errors:', errors)}
+            control={control}
+            paymentMethod={paymentMethod}
+            cards={creditCardOptions}
+            isRegister={true}
+            deduction_flag={data.deduction_flag}
+            credit_flag={data.credit_flag}
+            paypay_flag={data.paypay_flag}
+            error={errors.paymentType}
+          />
+        </>
+      )}
     </>
   );
 };
