@@ -24,7 +24,7 @@ import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
-import { alterTranGmo,entryTranGmo, execTranGmo } from './gmoApi';
+import { alterTranGmo, entryTranGmo, execTranGmo } from './gmoApi';
 import { entryTranPaypay, execTranPaypay, paypayCancelReturn, searchTradePaypay } from './paypayApi';
 import {
   CancelOrderRequest,
@@ -682,9 +682,17 @@ export const insertOrder = async (
     /* PayPay: コミット後に決済実行(ExecTranPaypay)を呼び、リダイレクト情報を返す
     ------------------------------------------------------------------ */
     const retUrl = `${process.env.APP_URL_DEV}/api/order/paypay-return`;
-    const execRes = await execTranPaypay(paypayAccessId, paypayAccessPass, paypayOrderId, retUrl);
+    const execRes = await execTranPaypay(
+      paypayAccessId,
+      paypayAccessPass,
+      paypayOrderId,
+      retUrl,
+      gmoShopCode,
+      gmoShopPassword
+    );
 
     if (!execRes.success || !execRes.startUrl || !execRes.token) {
+      console.error('[insertOrder] PayPay ExecTranPaypay failed:', execRes.errInfo);
       // ベストエフォートで直前にコミットした行を取消状態へ更新する。
       // (このUPDATE自体が失敗しても、TTL経過後は在庫集計から自動的に除外される)
       await client

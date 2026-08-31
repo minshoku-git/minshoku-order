@@ -54,12 +54,23 @@ export const entryTranPaypay = async (orderId: string, amount: number, shopId: s
 /**
  * ② 決済実行 (ExecTranPaypay)
  * ユーザーをPayPayログイン画面へ遷移させるための StartURL/Token を取得します。
+ * クレジットカードのExecTranと異なり、ShopID/ShopPassの再指定が必須(GMOテスト環境で実疎通確認済み。
+ * 未指定だとM01002001/M01003001エラーになる)。
  * @param {string} retUrl - 決済結果をGMOがPOSTで返してくる戻りURL(RetURL)
  */
-export const execTranPaypay = async (accessId: string, accessPass: string, orderId: string, retUrl: string) => {
+export const execTranPaypay = async (
+  accessId: string,
+  accessPass: string,
+  orderId: string,
+  retUrl: string,
+  shopId: string,
+  shopPass: string
+) => {
   const baseUrl = process.env.GMO_BASE_URL!;
 
   const params = new URLSearchParams();
+  params.append('ShopID', shopId);
+  params.append('ShopPass', shopPass);
   params.append('AccessID', accessId);
   params.append('AccessPass', accessPass);
   params.append('OrderID', orderId);
@@ -75,8 +86,7 @@ export const execTranPaypay = async (accessId: string, accessPass: string, order
 
     return {
       success: !resParams.get('ErrCode'),
-      // TODO(GMO doc要確認): レスポンスの実フィールド名はStartURL/Tokenで間違いないか、
-      // 大文字小文字表記も含めてGMOテスト環境での実疎通で確認する。
+      // GMOテスト環境での実疎通で確認済み(StartURL/Token)。StartLimitDate(StartURLの有効期限)も返るが未使用。
       startUrl: resParams.get('StartURL'),
       token: resParams.get('Token'),
       errInfo: resParams.get('ErrInfo'),
