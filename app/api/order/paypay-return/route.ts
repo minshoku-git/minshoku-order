@@ -10,29 +10,14 @@ import { completePaypayOrder } from '@/app/(private)/order/_lib/function';
  * 通知してくる(fetcher()経由の呼び出しではない)ため、ここではJSONを返さず
  * 結果画面(/order/paypay-result)へリダイレクトする。
  *
- * GMOテスト環境での実疎通確認の結果、POSTではなくGETでコールバックされることを確認したため、
- * GET/POST両方に対応する(仕様変更の可能性もあるため両対応のままにしておく)。
- *
- * TODO(GMO doc要確認): OrderIDに相当するキーの候補をいくつか試している。
+ * GMOテスト環境での実疎通確認の結果:
+ * - POSTではなくGETでコールバックされる
+ * - コールバックにクエリパラメータは一切付与されない(OrderID等も無い)
+ * ため、`insertOrder` で RetURL を組み立てる際に自前で `orderId` クエリパラメータを
+ * 埋め込んでおき、それを頼りに注文を特定する(GMO側のパラメータには依存しない)。
  */
 async function handlePaypayReturn(req: NextRequest): Promise<NextResponse> {
-  let orderId = '';
-
-  try {
-    if (req.method === 'GET') {
-      const params = req.nextUrl.searchParams;
-      // TODO(調査用ログ): 実際に届くパラメータ名を特定でき次第、このconsole.logは削除する
-      console.log('[paypay-return] GET query:', req.nextUrl.search);
-      orderId = params.get('OrderID') ?? params.get('OrderId') ?? params.get('orderId') ?? '';
-    } else {
-      const formData = await req.formData();
-      // TODO(調査用ログ): 実際に届くパラメータ名を特定でき次第、このconsole.logは削除する
-      console.log('[paypay-return] POST form:', JSON.stringify(Object.fromEntries(formData.entries())));
-      orderId = String(formData.get('OrderID') ?? formData.get('OrderId') ?? formData.get('orderId') ?? '');
-    }
-  } catch (e) {
-    console.error('[paypay-return] パラメータの解析に失敗しました:', e);
-  }
+  const orderId = req.nextUrl.searchParams.get('orderId') ?? '';
 
   const result = await completePaypayOrder(orderId);
   const status = result.success && result.data.succeeded ? 'success' : 'failed';

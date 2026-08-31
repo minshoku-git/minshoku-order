@@ -685,7 +685,9 @@ export const insertOrder = async (
 
     /* PayPay: コミット後に決済実行(ExecTranPaypay)を呼び、リダイレクト情報を返す
     ------------------------------------------------------------------ */
-    const retUrl = `${origin}/api/order/paypay-return`;
+    // GMOテスト環境での実疎通確認の結果、RetURLへの戻りにクエリパラメータが一切付与されないことを確認した。
+    // そのためOrderIDを自前でRetURLに埋め込んでおき、コールバック時にそれを頼りに注文を特定する。
+    const retUrl = `${origin}/api/order/paypay-return?orderId=${encodeURIComponent(paypayOrderId)}`;
     const execRes = await execTranPaypay(
       paypayAccessId,
       paypayAccessPass,
