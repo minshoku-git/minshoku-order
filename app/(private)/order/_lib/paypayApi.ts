@@ -139,16 +139,18 @@ export const paypayCancelReturn = async (accessId: string, accessPass: string, s
 /**
  * ④ 取引状態参照 (SearchTradeMulti)
  * コールバック(RetURL)を信用せず、サーバー間で決済結果の真偽を確認するための照会API。
- * TODO(GMO doc要確認): PayPayを示すPayType値、および正常時のレスポンス項目
- * (取引状態を示すフィールド名・値の一覧)が非公開ページのため未確定。
+ * PayType=45(PayPay)であることをGMOテスト環境での実疎通で確認済み。
+ * 成功時は Status=CAPTURE が返る(仮売上/実売上運用の場合は AUTH → CAPTURE のように遷移する想定。未検証)。
  */
 export const searchTradePaypay = async (shopId: string, shopPass: string, orderId: string) => {
   const baseUrl = process.env.GMO_BASE_URL!;
+  const PAYPAY_PAY_TYPE = '45';
 
   const params = new URLSearchParams();
   params.append('ShopID', shopId);
   params.append('ShopPass', shopPass);
   params.append('OrderID', orderId);
+  params.append('PayType', PAYPAY_PAY_TYPE);
 
   try {
     const response = await fetch(`${baseUrl}/payment/SearchTradeMulti.idPass`, {
@@ -166,7 +168,7 @@ export const searchTradePaypay = async (shopId: string, shopPass: string, orderI
 
     return {
       success: true,
-      // TODO(GMO doc要確認): 実際の取引状態フィールド名・値。CAPTURE成功を示す値で判定する。
+      // GMOテスト環境での実疎通で確認済み: 即時売上完了時は Status=CAPTURE。
       status: resParams.get('Status'),
     };
   } catch (e) {

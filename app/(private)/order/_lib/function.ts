@@ -956,7 +956,8 @@ export const completePaypayOrder = async (orderId: string): Promise<ApiResponse<
       throw new CustomError(ErrorCodes.PAYPAY_INQUIRY_FAILED);
     }
 
-    // TODO(GMO doc要確認): 実売上完了を示す正しいStatus値・フィールド名で判定する。
+    // GMOテスト環境での実疎通で確認済み: 即時売上完了時は Status=CAPTURE。
+    // (仮売上/実売上運用の場合にSALESが返るかは未検証だが、念のため許容しておく)
     const isPaymentSucceeded = searchRes.status === 'CAPTURE' || searchRes.status === 'SALES';
 
     /* 決済待ち行をVALID/取消へ確定(PENDING_PAYMENTのままの行のみ更新=楽観的排他)
