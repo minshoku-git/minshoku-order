@@ -792,10 +792,12 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
       .select(
         `
         payment_type,
+        amount,
         credit_access_id,
         credit_access_password,
         paypay_access_id,
         paypay_access_password,
+        gmo_order_id,
         t_shops (
           shop_name,
           gmo_shop_code,
@@ -850,7 +852,9 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
           orderData.paypay_access_id,
           orderData.paypay_access_password,
           shops.gmo_shop_code,
-          shops.gmo_shop_password
+          shops.gmo_shop_password,
+          orderData.gmo_order_id!,
+          orderData.amount!
         );
         if (!paypayRes.success) {
           throw new Error(`PayPay決済のキャンセルに失敗しました: ${paypayRes.errInfo}`);

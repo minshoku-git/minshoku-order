@@ -99,20 +99,28 @@ export const execTranPaypay = async (
 /**
  * ③ キャンセル・返金 (PaypayCancelReturn)
  * 仮売上のキャンセル、実売上の返金の両方をこのAPIで行う。
- * TODO(GMO doc要確認): 当該APIの詳細パラメータページ
- * (docs.gmo-pg.com/mulpay/apis/protocol-type/idpass/paypay-cancel-return)
- * がテスト環境アカウント専用で非公開のため、既存のAlterTran(JobCd=VOID)と
- * 同じ構成をベースラインとしている。GMOテスト環境での実疎通で確認・調整すること。
+ * クレジットカードのAlterTran(JobCd=VOID)とは異なり、JobCdは使わず、
+ * OrderIDと取消/返金する金額(CancelAmount)を指定する方式であることを
+ * GMOテスト環境での実疎通で確認済み(全額指定で実売上の全額返金に成功、Status=RETURNが返る)。
  */
-export const paypayCancelReturn = async (accessId: string, accessPass: string, shopId: string, shopPass: string) => {
+export const paypayCancelReturn = async (
+  accessId: string,
+  accessPass: string,
+  shopId: string,
+  shopPass: string,
+  orderId: string,
+  amount: number
+) => {
   const baseUrl = process.env.GMO_BASE_URL!;
 
   const params = new URLSearchParams();
   params.append('ShopID', shopId);
   params.append('ShopPass', shopPass);
+  params.append('OrderID', orderId);
   params.append('AccessID', accessId);
   params.append('AccessPass', accessPass);
-  params.append('JobCd', 'VOID'); // TODO(GMO doc要確認): PayPayでのキャンセル/返金時のJobCd値
+  params.append('CancelAmount', String(amount));
+  params.append('CancelTax', '0');
 
   try {
     const response = await fetch(`${baseUrl}/payment/PaypayCancelReturn.idPass`, {
