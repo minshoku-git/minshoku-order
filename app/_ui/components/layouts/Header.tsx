@@ -40,21 +40,40 @@ export default function Header() {
 
     // 1. 認証情報が確定し、レストラン名がある場合 -> FadeInでレストラン名を表示
     if (showRestaurantName) {
+      const name = restaurantName ?? '';
+      // 表示幅を全角換算で算出する。実測値は全角=1.00em、半角=0.46〜0.58em(大文字中心のとき最大)のため、
+      // 半角は安全側に倒して0.6文字分として扱う
+      const emWidth = Math.max(
+        Array.from(name).reduce((width, char) => width + (/[ -~｡-ﾟ]/.test(char) ? 0.6 : 1), 0),
+        1
+      );
+      // 「28px」と「ヘッダーの利用可能幅 ÷ 全角換算文字数」の小さい方を採用し、端末幅によらず溢れさせない。
+      // 88px = Toolbarの左右padding(16px * 2) + メニューアイコンの実効幅(40px) + 余白(16px)
+      const fontSize = `clamp(11px, calc((min(100vw, 640px) - 88px) / ${emWidth}), 28px)`;
+
       return (
-        // Logoと同じサイズを確保するコンテナ
-        <Box sx={{ width: 200, height: 52, position: 'relative' }}>
+        // Logoと同じ高さを確保しつつ、幅は残り領域いっぱいまで使うコンテナ
+        <Box sx={{ width: '100%', minWidth: 0, height: 52, position: 'relative' }}>
           <Fade in={showRestaurantName} timeout={500} unmountOnExit>
-            <Button onClick={moveToOrder} sx={{ height: 52, p: 0 }}>
+            <Button
+              onClick={moveToOrder}
+              sx={{ height: 52, p: 0, minWidth: 0, maxWidth: '100%', justifyContent: 'flex-start' }}
+            >
               <Typography
                 variant="h6"
                 component="div"
                 sx={{
                   color: '#ea5315',
                   fontWeight: 'bold',
-                  fontSize: 28,
+                  fontSize,
+                  lineHeight: 1.2,
+                  minWidth: 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               >
-                {restaurantName}
+                {name}
               </Typography>
             </Button>
           </Fade>
@@ -97,7 +116,8 @@ export default function Header() {
             justifyContent: 'space-between',
           }}
         >
-          <Box sx={{ width: 200, height: 52, display: 'flex', alignItems: 'center' }}>
+          {/* 食堂名が長い場合に備え、幅は固定せず残り領域いっぱいまで使う(minWidth:0がないと縮まず横スクロールが出る) */}
+          <Box sx={{ flex: 1, minWidth: 0, height: 52, display: 'flex', alignItems: 'center' }}>
             {/* renderLeftContentの戻り値はロゴまたはFadeでラップされたレストラン名になる */}
             {renderLeftContent()}
           </Box>
