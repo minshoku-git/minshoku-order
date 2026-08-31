@@ -7,20 +7,27 @@ import { completePaypayOrder } from '@/app/(private)/order/_lib/function';
  * ExecTranPaypay実行時に RetURL として指定したURL。
  *
  * 通常のAPIルート(validateRequest → JSON)とは異なる。GMOがユーザーのブラウザ経由で
- * POST通知してくる(fetcher()経由の呼び出しではない)ため、ここではJSONを返さず
+ * 通知してくる(fetcher()経由の呼び出しではない)ため、ここではJSONを返さず
  * 結果画面(/order/paypay-result)へリダイレクトする。
  *
- * TODO(GMO doc要確認): 実際に届くパラメータ名は非公開ドキュメントのため未確定。
- * OrderIDに相当するキーの候補をいくつか試している。GMOテスト環境での実疎通で確定させること。
+ * GMOテスト環境での実疎通確認の結果、POSTではなくGETでコールバックされることを確認したため、
+ * GET/POST両方に対応する(仕様変更の可能性もあるため両対応のままにしておく)。
+ *
+ * TODO(GMO doc要確認): OrderIDに相当するキーの候補をいくつか試している。
  */
-export async function POST(req: NextRequest) {
+async function handlePaypayReturn(req: NextRequest): Promise<NextResponse> {
   let orderId = '';
 
   try {
-    const formData = await req.formData();
-    orderId = String(formData.get('OrderID') ?? formData.get('OrderId') ?? formData.get('orderId') ?? '');
+    if (req.method === 'GET') {
+      const params = req.nextUrl.searchParams;
+      orderId = params.get('OrderID') ?? params.get('OrderId') ?? params.get('orderId') ?? '';
+    } else {
+      const formData = await req.formData();
+      orderId = String(formData.get('OrderID') ?? formData.get('OrderId') ?? formData.get('orderId') ?? '');
+    }
   } catch (e) {
-    console.error('[paypay-return] フォームデータの解析に失敗しました:', e);
+    console.error('[paypay-return] パラメータの解析に失敗しました:', e);
   }
 
   const result = await completePaypayOrder(orderId);
@@ -31,4 +38,12 @@ export async function POST(req: NextRequest) {
 
   // POST→GETへの遷移のため303 See Otherでリダイレクトする
   return NextResponse.redirect(url, { status: 303 });
+}
+
+export async function GET(req: NextRequest) {
+  return handlePaypayReturn(req);
+}
+
+export async function POST(req: NextRequest) {
+  return handlePaypayReturn(req);
 }
