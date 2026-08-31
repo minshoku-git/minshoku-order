@@ -792,7 +792,7 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
       .select(
         `
         payment_type,
-        amount,
+        user_burden_amount,
         credit_access_id,
         credit_access_password,
         paypay_access_id,
@@ -848,13 +848,16 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
           throw new Error(`店舗「${shops?.shop_name || ''}」のGMO IDまたはGMO PASSが設定されていません。`);
         }
 
+        // CancelAmountは注文の合計金額(amount)ではなく、実際にPayPayへ請求した金額
+        // (会社負担分を差し引いたuser_burden_amount)と一致させる必要がある
+        // (GMOテスト環境での実疎通で確認済み。不一致だとM01085011エラーになる)。
         const paypayRes = await paypayCancelReturn(
           orderData.paypay_access_id,
           orderData.paypay_access_password,
           shops.gmo_shop_code,
           shops.gmo_shop_password,
           orderData.gmo_order_id!,
-          orderData.amount!
+          orderData.user_burden_amount!
         );
         if (!paypayRes.success) {
           throw new Error(`PayPay決済のキャンセルに失敗しました: ${paypayRes.errInfo}`);
