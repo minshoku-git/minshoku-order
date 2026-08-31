@@ -430,10 +430,14 @@ export const preOrder = async (values: ApiRequest<OrderFormValues>): Promise<Api
  * 遷移させて決済を続行させる必要がある(呼び出し元は `data` の有無で判定する)。
  *
  * @param {ApiRequest<OrderFormValues>} values
+ * @param {string} origin - PayPayのRetURL組み立てに使う現在のオリジン(例: https://order.minshoku.jp)。
+ *   環境固定のURLではなく `req.nextUrl.origin` を渡すことで、本番/Preview/ローカルいずれでも
+ *   決済完了後に呼び出し元自身へ戻ってくるようにする。
  * @returns {Promise<ApiResponse<PaypayRedirectInfo | null>>}
  */
 export const insertOrder = async (
-  values: ApiRequest<OrderFormValues>
+  values: ApiRequest<OrderFormValues>,
+  origin: string
 ): Promise<ApiResponse<PaypayRedirectInfo | null>> => {
   const req = values.request;
   const now = getNow();
@@ -681,7 +685,7 @@ export const insertOrder = async (
 
     /* PayPay: コミット後に決済実行(ExecTranPaypay)を呼び、リダイレクト情報を返す
     ------------------------------------------------------------------ */
-    const retUrl = `${process.env.APP_URL_DEV}/api/order/paypay-return`;
+    const retUrl = `${origin}/api/order/paypay-return`;
     const execRes = await execTranPaypay(
       paypayAccessId,
       paypayAccessPass,

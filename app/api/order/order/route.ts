@@ -13,7 +13,9 @@ export async function POST(req: NextRequest) {
   }
 
   // --- 2. データ取得・加工 ---
-  const result = await insertOrder(validationResult.data);
+  // PayPayのRetURL(決済結果コールバック)を、環境固定のURLではなく現在アクセス中のオリジンから組み立てるため渡す
+  // (本番/Preview/ローカルいずれでも自分自身に戻ってくるようにする)
+  const result = await insertOrder(validationResult.data, req.nextUrl.origin);
 
   // --- 3. レスポンス返却 ---
   if (result.success) {

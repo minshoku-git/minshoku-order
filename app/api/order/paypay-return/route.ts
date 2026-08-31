@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const result = await completePaypayOrder(orderId);
   const status = result.success && result.data.succeeded ? 'success' : 'failed';
 
-  const url = new URL('/order/paypay-result', process.env.APP_URL_DEV);
+  const url = new URL('/order/paypay-result', req.nextUrl.origin);
   url.searchParams.set('status', status);
 
   // POST→GETへの遷移のため303 See Otherでリダイレクトする
