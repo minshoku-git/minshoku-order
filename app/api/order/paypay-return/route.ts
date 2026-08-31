@@ -21,9 +21,13 @@ async function handlePaypayReturn(req: NextRequest): Promise<NextResponse> {
   try {
     if (req.method === 'GET') {
       const params = req.nextUrl.searchParams;
+      // TODO(調査用ログ): 実際に届くパラメータ名を特定でき次第、このconsole.logは削除する
+      console.log('[paypay-return] GET query:', req.nextUrl.search);
       orderId = params.get('OrderID') ?? params.get('OrderId') ?? params.get('orderId') ?? '';
     } else {
       const formData = await req.formData();
+      // TODO(調査用ログ): 実際に届くパラメータ名を特定でき次第、このconsole.logは削除する
+      console.log('[paypay-return] POST form:', JSON.stringify(Object.fromEntries(formData.entries())));
       orderId = String(formData.get('OrderID') ?? formData.get('OrderId') ?? formData.get('orderId') ?? '');
     }
   } catch (e) {
