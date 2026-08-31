@@ -43,7 +43,6 @@ export const sendContactMail = async (values: ApiRequest<ContactFormValues>): Pr
       t_companies_employment_status_id: user.t_companies_employment_status_id,
       t_user_id: user.id,
       contact_message: req.contactMessage,
-      inquiry_datetime: now,
     };
     const { columns, placeholders, values } = getPostgreSqlItems(insertValues);
     const insertUserText = `INSERT INTO t_contact (${columns.join(',')}) VALUES (${placeholders}) RETURNING id;`;
