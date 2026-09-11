@@ -37,6 +37,8 @@ npm run fix                # prettier --write . → eslint --fix
 
 本番デプロイ時、実際の環境変数はVercelプロジェクトの環境変数から取得される（ローカルの `.env.local` とは値が異なりうる。下記参照）。
 
+**Preview環境のVercel Deployment Protection（Vercel Authentication）は無効化済み**（Productionは有効のまま）。GMO/PayPayなど外部サービスからのコールバックや、CLIからの直接アクセスによる動作確認がVercelのSSOでブロックされていたため。Preview URLを知っていれば誰でもアクセスできる状態になっている点に注意（テスト用DBのみ接続されているため実データの露出リスクは低い）。
+
 ## 環境変数（`.env.local`）
 
 **本番でも `_DEV` サフィックス付きの変数名を参照している**（`SUPABASE_URL_DEV` / `SUPABASE_ANON_DEV` / `SUPABASE_NAME_DEV`）。サフィックスなしの `SUPABASE_URL` / `SUPABASE_ANON` 等も `.env.local` に定義されているが、コード側（`app/_lib/supabase/server.ts`, `app/_lib/supabase/middleware.ts`, `next.config.ts`）は参照していない。新しい変数を足すときはこの既存の命名に合わせる。
@@ -139,15 +141,23 @@ GMO Payment Gatewayの「PayPay（都度決済）」を、既存のクレジッ�
 
 **GMOの公開ドキュメント（docs.gmo-pg.com/mulpay）に記載が無く、GMOテスト環境での実疎通で判明した仕様**（本番でも同じ挙動である保証はないため、本番投入前に要再確認）:
 
-| 項目                        | 内容                                                                                                                                                                                                                                                                                               |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ExecTranPaypay.idPass`     | クレジットの`ExecTran`と異なり`ShopID`/`ShopPass`が必須（未指定だと`M01002001`/`M01003001`）                                                                                                                                                                                                       |
-| `RetURL`                    | 固定の環境変数ではなく、注文APIへの実際のリクエストのオリジン(`req.nextUrl.origin`)から組み立てる必要がある（`insertOrder`の第2引数として`route.ts`から渡している）                                                                                                                                |
-| コールバック                | POSTではなく**GET**で届き、かつ**クエリパラメータは一切付与されない**。そのため`insertOrder`が`RetURL`自体に自前で`?orderId=...`を埋め込み、`paypay-return`側でそれを頼りに注文を特定している（GMO側のOrderID等のパラメータは信用できない）                                                        |
-| `SearchTradeMulti.idPass`   | `PayType=45`を指定しないと`M01051001`（決済方法未指定）。成功時`Status=CAPTURE`（即時売上）                                                                                                                                                                                                        |
-| `PaypayCancelReturn.idPass` | クレジットの`AlterTran`(`JobCd=VOID`)と異なり、`JobCd`ではなく`OrderID`+`CancelAmount`/`CancelTax`（取消/返金額を明示指定）で行う。`CancelAmount`は`t_order.amount`（会社負担込みの合計金額）ではなく、実際にPayPayへ請求された`user_burden_amount`と一致させる必要がある（不一致だと`M01085011`） |
+| 項目                        | 内容                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ExecTranPaypay.idPass`     | クレジットの`ExecTran`と異なり`ShopID`/`ShopPass`が必須（未指定だと`M01002001`/`M01003001`）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `RetURL`                    | 固定の環境変数ではなく、注文APIへの実際のリクエストのオリジン(`req.nextUrl.origin`)から組み立てる必要がある（`insertOrder`の第2引数として`route.ts`から渡している）                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| コールバック                | GMOテスト環境のスタブ（`PaypayDirectStartStub.idPass` → `PaypayDirectPaymentStub.idPass` → `PaypayDirectRsltRcv.idPass`）を直接叩いて追跡した結果、実際は**ユーザーのブラウザがJSで自動生成する隠しフォームがRetURLへPOST**し、`ShopID`/`OrderID`/`Status`(`PAYCOMP`/`PAYFAIL`等)/`ErrCode`/`ErrInfo`等の項目を含めて送ってくる。ただし本実装はGMO側のこれらのパラメータを一切信用せず、`RetURL`自体に自前で埋め込んだ`?orderId=...`だけで注文を特定し、`SearchTradeMulti`で真の結果を確認する設計にしているため、GET/POSTいずれで届いても、パラメータの有無に関わらず正しく動作する |
+| `SearchTradeMulti.idPass`   | `PayType=45`を指定しないと`M01051001`（決済方法未指定）。成功時`Status=CAPTURE`（即時売上）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `PaypayCancelReturn.idPass` | クレジットの`AlterTran`(`JobCd=VOID`)と異なり、`JobCd`ではなく`OrderID`+`CancelAmount`/`CancelTax`（取消/返金額を明示指定）で行う。`CancelAmount`は`t_order.amount`（会社負担込みの合計金額）ではなく、実際にPayPayへ請求された`user_burden_amount`と一致させる必要がある（不一致だと`M01085011`）                                                                                                                                                                                                                                                                                   |
 
 GMOテスト環境の加盟店設定（ショップ管理コンソール）で、PayPay都度決済の売上区分を「仮売上/実売上」から「即時売上」に切り替えている前提のコード（`JobCd=CAPTURE`）になっている。切り替えていない場合は`E61546010`（処理区分エラー）になる。
+
+**検証済みの範囲**（2026-09時点、stg環境）:
+
+- 正常系: 注文 → PayPay画面遷移 → 決済完了 → 注文確定(`VALID`) → キャンセル → 返金(`USER_CANCEL`) を実際のUI操作で確認済み
+- 異常系: GMOテスト環境のスタブAPIを直接操作して「エラーにする」（決済拒否）を再現し、`SearchTradeMulti`が失敗を検知して注文が`SYSTEM_CANCEL`になり`/order/paypay-result?status=failed`へ遷移することを確認済み
+- 離脱・TTL失効: `PENDING_PAYMENT`行が`PAYPAY_PENDING_TTL_MINUTES`(10分)を超えた場合に、在庫集計・重複注文チェックの両方から正しく除外されることをDBレベルで確認済み
+- 同時注文の競合: 在庫1のメニューに対する同時注文で、`FOR UPDATE`ロックにより後発の注文が正しくブロックされ、過剰販売が起きないことを実際の並行トランザクションで確認済み
+- **未検証**: 本番のGMO契約設定（PayPay都度決済の売上区分が「即時売上」になっているか）。本番投入前に、本番用GMO管理コンソールで確認すること
 
 ## コーディング規約
 
