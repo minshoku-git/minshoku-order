@@ -60,14 +60,22 @@ export const PublicPaths = ['/', '/login', '/error', '/register-payment'];
  */
 export const BUCKET_SHOP_IMAGES: string = 'shop-images';
 
-/* PayPay決済
+/* コード決済(PayPay/メルペイ等)
 ------------------------------------------------------------------ */
 /**
- * PayPay決済保留(PENDING_PAYMENT)のTTL(分)
+ * 決済保留(PENDING_PAYMENT)のTTL(分)
  * この時間を超えたPENDING_PAYMENT行は期限切れとして在庫集計から除外する。
  * @returns {number} - 10
  */
-export const PAYPAY_PENDING_TTL_MINUTES: number = 10;
+export const PAYMENT_PENDING_TTL_MINUTES: number = 10;
+
+/**
+ * メルペイ ExecTranMerpayの商品カテゴリID(ItemCategoryId、4桁数字)
+ * TODO: GMOの商品カテゴリ一覧(faq.gmo-pg.com)で食品/飲食系の正式なコードに要確認。
+ * 現状は暫定値。
+ * @returns {string} - '1010'
+ */
+export const MERPAY_ITEM_CATEGORY_ID: string = '1010';
 
 /* バリデーションメッセージ
 ------------------------------------------------------------------ */

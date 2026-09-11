@@ -46,9 +46,9 @@ export const OrderApiSchema = z
  */
 export type OrderFormValues = z.infer<typeof OrderSchema>;
 
-/** PayPay決済開始のためのリダイレクト情報 */
-export type PaypayRedirectInfo = {
-  /** PayPayログイン画面へ遷移させるためのPOST送信先URL(ExecTranPaypayのStartURL) */
+/** コード決済(PayPay/メルペイ)開始のためのリダイレクト情報 */
+export type RedirectPaymentInfo = {
+  /** 決済画面へ遷移させるためのPOST送信先URL(ExecTranPaypay/ExecTranMerpayのStartURL) */
   startUrl: string;
   /** フォーム送信用のAccessID */
   accessId: string;
@@ -64,6 +64,14 @@ export type PaypayRedirectInfo = {
 export const PaypayReturnSchema = z.object({}).passthrough();
 /** PayPay決済結果コールバック Request */
 export type PaypayReturnRequest = z.infer<typeof PaypayReturnSchema>;
+
+/**
+ * メルペイ決済結果コールバック(RetURL) 入力用バリデーションスキーマ
+ * GMOから実際に届くパラメータ名は未検証のため、PayPayと同様 .passthrough() で緩く受ける。
+ */
+export const MerpayReturnSchema = z.object({}).passthrough();
+/** メルペイ決済結果コールバック Request */
+export type MerpayReturnRequest = z.infer<typeof MerpayReturnSchema>;
 
 /**
  * 注文情報キャンセル 入力用バリデーションスキーマ

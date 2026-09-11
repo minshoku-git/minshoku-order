@@ -10,6 +10,7 @@ export const config = {
   matcher: [
     '/order',
     '/order/paypay-result',
+    '/order/merpay-result',
     '/order-history',
     '/edit-payment',
     '/edit-profile',

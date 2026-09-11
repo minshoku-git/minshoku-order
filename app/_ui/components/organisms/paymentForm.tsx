@@ -34,6 +34,8 @@ type Props = {
     deduction_flag: SelectType
     /** PaypayFlag ※0:非/1:可 */
     paypay_flag: SelectType
+    /** MerpayFlag ※0:非/1:可 */
+    merpay_flag: SelectType
     /** クレジットカードFlag ※0:非/1:可 */
     credit_flag: SelectType
     onError?: (errors: any) => void
@@ -76,6 +78,15 @@ export const PaymentForm = (props: Props): JSX.Element => {
                                         value={PaymentType.PAYPAY}
                                         control={<Radio />}
                                         label={<Typography fontWeight="bold">PayPayオンライン決済</Typography>}
+                                    />
+                                    <Divider sx={{ my: 2 }} />
+                                </>}
+                                {/* MERPAY */}
+                                {props.merpay_flag === SelectType.SELECTED && <>
+                                    <FormControlLabel
+                                        value={PaymentType.MERPAY}
+                                        control={<Radio />}
+                                        label={<Typography fontWeight="bold">メルペイ決済</Typography>}
                                     />
                                     <Divider sx={{ my: 2 }} />
                                 </>}

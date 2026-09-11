@@ -36,7 +36,8 @@ export const getEditPaymentTypeInitData = async (): Promise<ApiResponse<Register
         t_companies_employment_status!inner(
         deduction_flag,
         credit_flag,
-        paypay_flag
+        paypay_flag,
+        merpay_flag
       )`
       )
       .eq('user_email', userEmail)
@@ -64,6 +65,7 @@ export const getEditPaymentTypeInitData = async (): Promise<ApiResponse<Register
         credit_flag: data.t_companies_employment_status.credit_flag as SelectType,
         deduction_flag: data.t_companies_employment_status.deduction_flag as SelectType,
         paypay_flag: data.t_companies_employment_status.paypay_flag as SelectType,
+        merpay_flag: data.t_companies_employment_status.merpay_flag as SelectType,
       },
     };
   } catch (e: unknown) {

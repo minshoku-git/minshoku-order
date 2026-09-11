@@ -20,16 +20,16 @@ import {
   OrderFormValues,
   OrderInitRequest,
   OrderInitResponse,
-  PaypayRedirectInfo,
+  RedirectPaymentInfo,
 } from './_lib/types';
 
 /**
- * submitPaypayForm
- * ExecTranPaypayで取得したStartURLへ、AccessID/Tokenを隠しフィールドとしてPOST送信し、
- * ユーザーをPayPayログイン画面へ遷移させる(単純なリダイレクトではなくフォーム送信が必要)。
- * @param {PaypayRedirectInfo} redirect - リダイレクト情報
+ * submitRedirectPaymentForm
+ * ExecTranPaypay/ExecTranMerpayで取得したStartURLへ、AccessID/Tokenを隠しフィールドとしてPOST送信し、
+ * ユーザーを決済画面へ遷移させる(単純なリダイレクトではなくフォーム送信が必要)。
+ * @param {RedirectPaymentInfo} redirect - リダイレクト情報
  */
-const submitPaypayForm = (redirect: PaypayRedirectInfo): void => {
+const submitRedirectPaymentForm = (redirect: RedirectPaymentInfo): void => {
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = redirect.startUrl;
@@ -162,8 +162,8 @@ export const OrderComponent = (): JSX.Element => {
     },
     onSuccess: async (res) => {
       if (res.data?.startUrl) {
-        // PayPay: 決済継続のためPayPay画面へ遷移する(ページ遷移するのでrefetch等は不要)
-        submitPaypayForm(res.data);
+        // PayPay/メルペイ: 決済継続のため決済画面へ遷移する(ページ遷移するのでrefetch等は不要)
+        submitRedirectPaymentForm(res.data);
         return;
       }
       await refetch();

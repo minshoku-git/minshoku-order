@@ -2,7 +2,7 @@ import { PostgrestSingleResponse } from '@supabase/supabase-js';
 import { formatISO } from 'date-fns';
 import { format } from 'date-fns';
 
-import { BUCKET_SHOP_IMAGES, PAYPAY_PENDING_TTL_MINUTES } from '@/app/_config/constants';
+import { BUCKET_SHOP_IMAGES, MERPAY_ITEM_CATEGORY_ID, PAYMENT_PENDING_TTL_MINUTES } from '@/app/_config/constants';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import { t_menu_schedule, t_order } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
@@ -25,6 +25,7 @@ import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
 import { alterTranGmo, entryTranGmo, execTranGmo } from './gmoApi';
+import { entryTranMerpay, execTranMerpay, merpayCancelReturn, searchTradeMerpay } from './merpayApi';
 import { entryTranPaypay, execTranPaypay, paypayCancelReturn, searchTradePaypay } from './paypayApi';
 import {
   CancelOrderRequest,
@@ -32,15 +33,15 @@ import {
   OrderFormValues,
   OrderInitRequest,
   OrderInitResponse,
-  PaypayRedirectInfo,
+  RedirectPaymentInfo,
 } from './types';
 
 /**
- * PayPay決済待ち(PENDING_PAYMENT)行のTTLカットオフ時刻を取得する。
+ * 決済待ち(PENDING_PAYMENT)行のTTLカットオフ時刻を取得する。
  * これより前に作成された PENDING_PAYMENT 行は、ユーザーが離脱したものとみなし
- * 在庫消費・重複注文チェックの対象から除外する。
+ * 在庫消費・重複注文チェックの対象から除外する(PayPay/メルペイ共通)。
  */
-const getPaypayPendingCutoff = (now: Date): Date => new Date(now.getTime() - PAYPAY_PENDING_TTL_MINUTES * 60_000);
+const getPendingPaymentCutoff = (now: Date): Date => new Date(now.getTime() - PAYMENT_PENDING_TTL_MINUTES * 60_000);
 
 /**
  * getOrderInit
@@ -351,7 +352,7 @@ export const preOrder = async (values: ApiRequest<OrderFormValues>): Promise<Api
 
     /* 自身の注文状況(有効注文 + 期限内のPayPay決済待ちも対象)
   　------------------------------------------------------------------ */
-    const pendingCutoff = getPaypayPendingCutoff(now);
+    const pendingCutoff = getPendingPaymentCutoff(now);
 
     const { data: orderCheckRows, error: orderCheckError } = await client
       .from('t_order')
@@ -433,12 +434,12 @@ export const preOrder = async (values: ApiRequest<OrderFormValues>): Promise<Api
  * @param {string} origin - PayPayのRetURL組み立てに使う現在のオリジン(例: https://order.minshoku.jp)。
  *   環境固定のURLではなく `req.nextUrl.origin` を渡すことで、本番/Preview/ローカルいずれでも
  *   決済完了後に呼び出し元自身へ戻ってくるようにする。
- * @returns {Promise<ApiResponse<PaypayRedirectInfo | null>>}
+ * @returns {Promise<ApiResponse<RedirectPaymentInfo | null>>}
  */
 export const insertOrder = async (
   values: ApiRequest<OrderFormValues>,
   origin: string
-): Promise<ApiResponse<PaypayRedirectInfo | null>> => {
+): Promise<ApiResponse<RedirectPaymentInfo | null>> => {
   const req = values.request;
   const now = getNow();
   const client = await createClient();
@@ -489,7 +490,7 @@ export const insertOrder = async (
 
     /* ユーザーの注文状況確認(有効注文 + 期限内のPayPay決済待ちも対象)
   　------------------------------------------------------------------ */
-    const pendingCutoff = getPaypayPendingCutoff(now);
+    const pendingCutoff = getPendingPaymentCutoff(now);
 
     const selectUserSql = `
         SELECT
@@ -557,9 +558,12 @@ export const insertOrder = async (
     let paypayOrderId = '';
     let paypayAccessId = '';
     let paypayAccessPass = '';
+    let merpayOrderId = '';
+    let merpayAccessId = '';
+    let merpayAccessPass = '';
 
     // ★ バリデーションガード：GMO設定情報が空欄の店舗だった場合の決済クラッシュを防ぎます
-    // (クレジットカード・PayPayどちらも同じGMO加盟店契約のShopID/ShopPassを使う)
+    // (クレジットカード・PayPay・メルペイいずれも同じGMO加盟店契約のShopID/ShopPassを使う)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const gmoShopCode = (menuScheduleData as any).gmo_shop_code;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -626,7 +630,30 @@ export const insertOrder = async (
       paypayAccessPass = entryRes.accessPass!;
     }
 
+    /* メルペイの場合
+    ------------------------------------------------------------------ */
+    if (user.payment_type === PaymentType.MERPAY) {
+      merpayOrderId = `MPORD-${user.id}-${Date.now()}`;
+
+      if (!gmoShopCode || !gmoShopPassword) {
+        throw new CustomError(
+          ErrorCodes.INTERNAL_SERVER_ERROR.code,
+          `店舗「${shopName}」のGMO IDまたはGMO PASSが設定されていません。マスタ設定を確認してください。`,
+          400
+        );
+      }
+
+      // 取引登録 (EntryTranMerpay) のみロック内で行う。PayPayと同様、決済実行はロック解放後に行う。
+      const entryRes = await entryTranMerpay(merpayOrderId, userBurdenAmount, gmoShopCode, gmoShopPassword);
+      if (!entryRes.success) throw new Error(`メルペイ取引登録失敗: ${entryRes.errInfo}`);
+
+      merpayAccessId = entryRes.accessId!;
+      merpayAccessPass = entryRes.accessPass!;
+    }
+
     const isPaypay = user.payment_type === PaymentType.PAYPAY;
+    const isMerpay = user.payment_type === PaymentType.MERPAY;
+    const isRedirectPayment = isPaypay || isMerpay;
 
     /* 注文情報の新規登録
     ------------------------------------------------------------------ */
@@ -639,8 +666,8 @@ export const insertOrder = async (
       t_companies_employment_status_id: user.t_companies_employment_status_id,
       delivery_day: menuScheduleData.delivery_day,
       order_datetime: now,
-      // PayPayはユーザーがPayPay画面で承認するまで確定しないため、決済待ちで登録する
-      order_status_type: isPaypay ? OrderStatusType.PENDING_PAYMENT : OrderStatusType.VALID,
+      // PayPay/メルペイはユーザーが決済画面で承認するまで確定しないため、決済待ちで登録する
+      order_status_type: isRedirectPayment ? OrderStatusType.PENDING_PAYMENT : OrderStatusType.VALID,
       // 支払金額類
       count: req.orderCount,
       list_price: menuScheduleData.list_price,
@@ -651,13 +678,16 @@ export const insertOrder = async (
       // 会社負担額
       companies_burden_amount: companiesBurdenAmount,
       // クレジットカード決済情報
-      // PayPayの場合、gmo_order_idにはpaypayOrderIdを格納する(RetURLコールバック時の照合キーとして使う)
-      gmo_order_id: isPaypay ? paypayOrderId : gmoOrderId,
+      // PayPay/メルペイの場合、gmo_order_idにはそれぞれのOrderIDを格納する(RetURLコールバック時の照合キーとして使う)
+      gmo_order_id: isMerpay ? merpayOrderId : isPaypay ? paypayOrderId : gmoOrderId,
       credit_access_id: creditAccessId,
       credit_access_password: creditAccessPass,
       // PayPay決済情報
       paypay_access_id: paypayAccessId,
       paypay_access_password: paypayAccessPass,
+      // メルペイ決済情報
+      merpay_access_id: merpayAccessId,
+      merpay_access_password: merpayAccessPass,
     };
     console.log(insertValues);
     const { columns, placeholders, values } = getPostgreSqlItems(insertValues);
@@ -676,15 +706,48 @@ export const insertOrder = async (
     /* --------------------------------------------------------------- */
     // throw new Error('疑似エラー:ロールバックを確認しました。');
 
-    // Commit (PayPayの場合はここで在庫が確定する。決済自体はまだ未完了)
+    // Commit (PayPay/メルペイの場合はここで在庫が確定する。決済自体はまだ未完了)
     await pgClient.query('COMMIT');
 
-    if (!isPaypay) {
+    if (!isRedirectPayment) {
       return { success: true, data: null };
     }
 
-    /* PayPay: コミット後に決済実行(ExecTranPaypay)を呼び、リダイレクト情報を返す
+    /* PayPay/メルペイ: コミット後に決済実行(ExecTranPaypay/ExecTranMerpay)を呼び、リダイレクト情報を返す
     ------------------------------------------------------------------ */
+    if (isMerpay) {
+      // メルペイ: GMOテスト環境での実疎通確認の結果、StoreID/StoreNameは付与せず
+      // ItemCategoryIdのみで成功することを確認済み(merpayApi.ts参照)
+      const retUrl = `${origin}/api/order/merpay-return?orderId=${encodeURIComponent(merpayOrderId)}`;
+      const execRes = await execTranMerpay(
+        merpayAccessId,
+        merpayAccessPass,
+        merpayOrderId,
+        retUrl,
+        gmoShopCode,
+        gmoShopPassword
+      );
+
+      if (!execRes.success || !execRes.startUrl || !execRes.token) {
+        console.error('[insertOrder] メルペイ ExecTranMerpay failed:', execRes.errInfo);
+        // ベストエフォートで直前にコミットした行を取消状態へ更新する。
+        // (このUPDATE自体が失敗しても、TTL経過後は在庫集計から自動的に除外される)
+        await client
+          .from('t_order')
+          .update<t_order>({ order_status_type: OrderStatusType.SYSTEM_CANCEL })
+          .eq('t_menu_schedule_id', req.menuScheduleId)
+          .eq('t_user_id', user.id)
+          .eq('order_status_type', OrderStatusType.PENDING_PAYMENT);
+
+        return { success: false, error: ErrorCodes.MERPAY_PAYMENT_FAILED };
+      }
+
+      return {
+        success: true,
+        data: { startUrl: execRes.startUrl, accessId: merpayAccessId, token: execRes.token },
+      };
+    }
+
     // GMOテスト環境での実疎通確認の結果、RetURLへの戻りにクエリパラメータが一切付与されないことを確認した。
     // そのためOrderIDを自前でRetURLに埋め込んでおき、コールバック時にそれを頼りに注文を特定する。
     const retUrl = `${origin}/api/order/paypay-return?orderId=${encodeURIComponent(paypayOrderId)}`;
@@ -797,6 +860,8 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
         credit_access_password,
         paypay_access_id,
         paypay_access_password,
+        merpay_access_id,
+        merpay_access_password,
         gmo_order_id,
         t_shops (
           shop_name,
@@ -861,6 +926,41 @@ export const cancelOrder = async (values: ApiRequest<CancelOrderRequest>): Promi
         );
         if (!paypayRes.success) {
           throw new Error(`PayPay決済のキャンセルに失敗しました: ${paypayRes.errInfo}`);
+        }
+      }
+    }
+
+    /* メルペイ決済の場合はGMO側を取り消す
+    ------------------------------------------------------------------ */
+    if (orderData.payment_type === PaymentType.MERPAY) {
+      if (orderData.merpay_access_id && orderData.merpay_access_password) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const shops = orderData.t_shops as any;
+        if (!shops?.gmo_shop_code || !shops?.gmo_shop_password) {
+          throw new Error(`店舗「${shops?.shop_name || ''}」のGMO IDまたはGMO PASSが設定されていません。`);
+        }
+
+        // MerpayCancelReturnにはsearchTradeMerpayで事前取得したMerpayInquiryCodeが必須
+        // (GMOテスト環境での実疎通で確認済み。無いとM01005001等の複合エラーになる)。
+        const searchRes = await searchTradeMerpay(shops.gmo_shop_code, shops.gmo_shop_password, orderData.gmo_order_id!);
+        if (!searchRes.success || !searchRes.merpayInquiryCode) {
+          throw new Error(`メルペイ決済情報の照会に失敗しました: ${searchRes.errInfo}`);
+        }
+
+        // Amountは注文の合計金額(amount)ではなく、実際にメルペイへ請求した金額
+        // (会社負担分を差し引いたuser_burden_amount)と一致させる必要がある(PayPayと同様の想定。
+        // GMOテスト環境での実疎通は同額での成功のみ確認済み、不一致時の挙動は未検証)。
+        const merpayRes = await merpayCancelReturn(
+          orderData.merpay_access_id,
+          orderData.merpay_access_password,
+          shops.gmo_shop_code,
+          shops.gmo_shop_password,
+          orderData.gmo_order_id!,
+          orderData.user_burden_amount!,
+          searchRes.merpayInquiryCode
+        );
+        if (!merpayRes.success) {
+          throw new Error(`メルペイ決済のキャンセルに失敗しました: ${merpayRes.errInfo}`);
         }
       }
     }
@@ -965,6 +1065,110 @@ export const completePaypayOrder = async (orderId: string): Promise<ApiResponse<
 
     // GMOテスト環境での実疎通で確認済み: 即時売上完了時は Status=CAPTURE。
     // (仮売上/実売上運用の場合にSALESが返るかは未検証だが、念のため許容しておく)
+    const isPaymentSucceeded = searchRes.status === 'CAPTURE' || searchRes.status === 'SALES';
+
+    /* 決済待ち行をVALID/取消へ確定(PENDING_PAYMENTのままの行のみ更新=楽観的排他)
+    ------------------------------------------------------------------ */
+    const { error: updateError } = await client
+      .from('t_order')
+      .update<t_order>(
+        isPaymentSucceeded
+          ? { order_status_type: OrderStatusType.VALID }
+          : { order_status_type: OrderStatusType.SYSTEM_CANCEL }
+      )
+      .eq('id', orderRow.id)
+      .eq('order_status_type', OrderStatusType.PENDING_PAYMENT);
+
+    if (updateError) {
+      throw new CustomError(
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '注文確定' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
+      );
+    }
+
+    return { success: true, data: { succeeded: isPaymentSucceeded } };
+  } catch (e: unknown) {
+    console.error(e);
+    if (e instanceof CustomError) {
+      return {
+        success: false,
+        error: e,
+      };
+    }
+    return {
+      success: false,
+      error: ErrorCodes.INTERNAL_SERVER_ERROR,
+    };
+  }
+};
+
+/**
+ * completeMerpayOrder
+ * メルペイからのリダイレクト帰還(RetURLコールバック)を処理する。
+ * completePaypayOrderと対称な実装(コールバックのパラメータ自体は信用せず、
+ * searchTradeMerpayでサーバー間の真の決済結果を確認してから、対象注文行をVALID/取消の
+ * いずれかへ確定させる。楽観的排他はPayPayと同様)。
+ *
+ * @param {string} orderId - メルペイ取引のOrderID(insertOrderで発行したmerpayOrderId)
+ * @returns {Promise<ApiResponse<{ succeeded: boolean }>>}
+ */
+export const completeMerpayOrder = async (orderId: string): Promise<ApiResponse<{ succeeded: boolean }>> => {
+  const client = await createClient();
+
+  try {
+    if (!orderId) {
+      throw new CustomError(ErrorCodes.MERPAY_SESSION_EXPIRED);
+    }
+
+    /* 対象の決済待ち注文行を取得
+    ------------------------------------------------------------------ */
+    const { data: orderRow, error: orderRowError } = await client
+      .from('t_order')
+      .select(
+        `
+        id,
+        merpay_access_id,
+        merpay_access_password,
+        t_shops (
+          gmo_shop_code,
+          gmo_shop_password
+        )
+      `
+      )
+      .eq('gmo_order_id', orderId)
+      .eq('order_status_type', OrderStatusType.PENDING_PAYMENT)
+      .maybeSingle();
+
+    if (orderRowError) {
+      throw new CustomError(
+        ErrorCodes.DB_QUERY_FAILED.code,
+        '決済結果の確認' + ErrorCodes.DB_QUERY_FAILED.message,
+        ErrorCodes.DB_QUERY_FAILED.status
+      );
+    }
+
+    if (!orderRow) {
+      // 既に確定済み(2重通知)、またはTTL経過で失効済み。どちらも処理不要のため成功扱いとする。
+      return { success: true, data: { succeeded: false } };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const shops = orderRow.t_shops as any;
+    if (!shops?.gmo_shop_code || !shops?.gmo_shop_password || !orderRow.merpay_access_id) {
+      throw new CustomError(ErrorCodes.INTERNAL_SERVER_ERROR);
+    }
+
+    /* サーバー間で真の決済結果を確認(コールバックのパラメータ自体は信用しない)
+    ------------------------------------------------------------------ */
+    const searchRes = await searchTradeMerpay(shops.gmo_shop_code, shops.gmo_shop_password, orderId);
+
+    if (!searchRes.success) {
+      throw new CustomError(ErrorCodes.MERPAY_INQUIRY_FAILED);
+    }
+
+    // PayPayではStatus=CAPTUREが成功だった。メルペイも同じ値が返る想定だが未検証
+    // (仮売上/実売上運用の場合にSALESが返るかも未検証だが、念のため許容しておく)。
     const isPaymentSucceeded = searchRes.status === 'CAPTURE' || searchRes.status === 'SALES';
 
     /* 決済待ち行をVALID/取消へ確定(PENDING_PAYMENTのままの行のみ更新=楽観的排他)

@@ -52,6 +52,16 @@ export const ErrorCodes = {
     message: 'お支払いのセッションが有効期限切れです。もう一度注文をやり直してください。',
     status: 400,
   },
+  MERPAY_PAYMENT_FAILED: {
+    code: 'E400-10',
+    message: 'メルペイでのお支払いが完了しませんでした。もう一度お試しください。',
+    status: 400,
+  },
+  MERPAY_SESSION_EXPIRED: {
+    code: 'E400-11',
+    message: 'お支払いのセッションが有効期限切れです。もう一度注文をやり直してください。',
+    status: 400,
+  },
 
   // --- 401系: 認証が必要 ---
   INVALID_CREDENTIALS: {
@@ -145,6 +155,11 @@ export const ErrorCodes = {
   PAYPAY_INQUIRY_FAILED: {
     code: 'E500-06',
     message: 'PayPay決済状況の確認に失敗しました。時間をおいて再度お試しください。',
+    status: 500,
+  },
+  MERPAY_INQUIRY_FAILED: {
+    code: 'E500-07',
+    message: 'メルペイ決済状況の確認に失敗しました。時間をおいて再度お試しください。',
     status: 500,
   },
 } as const;

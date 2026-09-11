@@ -60,6 +60,8 @@ export type EditPaymentInitData = {
   credit_flag: SelectType;
   /** PaypayFlag ※0:非/1:可 */
   paypay_flag: SelectType;
+  /** MerpayFlag ※0:非/1:可 */
+  merpay_flag: SelectType;
 };
 
 export type CreditCardData = {
@@ -87,6 +89,8 @@ export type UserAndCompaniesEmploymentStatus = {
     credit_flag?: string;
     /** PaypayFlag ※0:非/1:可 */
     paypay_flag?: string;
+    /** MerpayFlag ※0:非/1:可 */
+    merpay_flag?: string;
   };
 };
 /** SaveCard レスポンス */

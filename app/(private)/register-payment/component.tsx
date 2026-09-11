@@ -203,6 +203,7 @@ export const PaymentComponent = (): JSX.Element => {
             deduction_flag={data.deduction_flag}
             credit_flag={data.credit_flag}
             paypay_flag={data.paypay_flag}
+            merpay_flag={data.merpay_flag}
             error={errors.paymentType}
           />
         </>

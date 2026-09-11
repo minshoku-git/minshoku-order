@@ -1,7 +1,7 @@
 import { fetcher } from '@/app/_lib/fetcher';
 import { ApiRequest, ApiResponse } from '@/app/_types/types';
 
-import { CancelOrderRequest, OrderFormValues, OrderInitRequest, OrderInitResponse, PaypayRedirectInfo } from './types';
+import { CancelOrderRequest, OrderFormValues, OrderInitRequest, OrderInitResponse, RedirectPaymentInfo } from './types';
 
 /**
  * getOrderInitFetcher
@@ -39,12 +39,12 @@ export const preOrderFetcher = async (condition: ApiRequest<OrderFormValues> | n
  * orderFetcher
  * PayPayの場合、`data` に PayPay画面へのリダイレクト情報(startUrl等)が入る。
  * @param {ApiRequest<OrderFormValues>} condition
- * @returns {Promise<ApiResponse<PaypayRedirectInfo | null>>}
+ * @returns {Promise<ApiResponse<RedirectPaymentInfo | null>>}
  */
 export const orderFetcher = async (
   condition: ApiRequest<OrderFormValues> | null
-): Promise<ApiResponse<PaypayRedirectInfo | null>> => {
-  return fetcher<ApiResponse<PaypayRedirectInfo | null>>('/api/order/order', {
+): Promise<ApiResponse<RedirectPaymentInfo | null>> => {
+  return fetcher<ApiResponse<RedirectPaymentInfo | null>>('/api/order/order', {
     method: 'POST',
     body: JSON.stringify(condition),
     headers: {
