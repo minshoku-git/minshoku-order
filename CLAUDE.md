@@ -135,7 +135,7 @@ Zod スキーマは `_lib/types.ts` に置き、フォーム用とAPI境界用�
 
 #### PayPay決済（`app/(private)/order/_lib/paypayApi.ts`）
 
-GMO Payment Gatewayの「PayPay（都度決済）」を、既存のクレジットカードと同じGMO加盟店契約（ShopID/ShopPass）で利用する。クレジットカードと違い、ユーザーがPayPay画面へ**リダイレクトして承認するまで決済が確定しない非同期フロー**になるため、新設した `OrderStatusType.PENDING_PAYMENT`（決済待ち）ステータスと `PAYPAY_PENDING_TTL_MINUTES`（`app/_config/constants.ts`、10分）による在庫の仮確保・自動失効を組み合わせて実装している（`insertOrder`/`preOrder`/`completePaypayOrder`、`app/(private)/order/_lib/function.ts`）。
+GMO Payment Gatewayの「PayPay（都度決済）」を、既存のクレジットカードと同じGMO加盟店契約（ShopID/ShopPass）で利用する。クレジットカードと違い、ユーザーがPayPay画面へ**リダイレクトして承認するまで決済が確定しない非同期フロー**になるため、新設した `OrderStatusType.PENDING_PAYMENT`（決済待ち）ステータスと `PAYMENT_PENDING_TTL_MINUTES`（`app/_config/constants.ts`、10分。PayPay/メルペイ共通のリダイレクト決済向けTTL）による在庫の仮確保・自動失効を組み合わせて実装している（`insertOrder`/`preOrder`/`completePaypayOrder`、`app/(private)/order/_lib/function.ts`）。
 
 **フロー**: `entryTranPaypay`(取引登録) → `execTranPaypay`(決済実行、`StartURL`/`Token`取得) → クライアント側で`StartURL`へ`AccessID`+`Token`を**隠しフォームでPOST**送信しPayPay画面へ遷移 → 決済完了後GMOが`RetURL`へ通知 → `app/api/order/paypay-return/route.ts`が`searchTradePaypay`でサーバー間の真の結果を確認 → 注文確定(`VALID`)/失効(`SYSTEM_CANCEL`)。
 
@@ -158,6 +158,32 @@ GMOテスト環境の加盟店設定（ショップ管理コンソール）で�
 - 離脱・TTL失効: `PENDING_PAYMENT`行が`PAYPAY_PENDING_TTL_MINUTES`(10分)を超えた場合に、在庫集計・重複注文チェックの両方から正しく除外されることをDBレベルで確認済み
 - 同時注文の競合: 在庫1のメニューに対する同時注文で、`FOR UPDATE`ロックにより後発の注文が正しくブロックされ、過剰販売が起きないことを実際の並行トランザクションで確認済み
 - **未検証**: 本番のGMO契約設定（PayPay都度決済の売上区分が「即時売上」になっているか）。本番投入前に、本番用GMO管理コンソールで確認すること
+
+#### メルペイ決済（`app/(private)/order/_lib/merpayApi.ts`）
+
+PayPayに続く第3の決済方法として、GMO Payment Gateway経由の「メルペイ（都度決済）」を追加。アーキテクチャはPayPayとほぼ同一（`OrderStatusType.PENDING_PAYMENT`＋`PAYMENT_PENDING_TTL_MINUTES`による在庫の仮確保・自動失効、`insertOrder`/`cancelOrder`にPayPayと並列の分岐を追加、`completeMerpayOrder`をPayPayの`completePaypayOrder`と対称に新設）。既存のPayPayコード自体は変更せず、対称な新規ファイル・新規分岐として追加している。
+
+会社ごとの利用可否は`t_companies_employment_status.merpay_flag`（`paypay_flag`と同じ仕組み。管理画面の企業詳細画面でチェックボックス設定）で制御する。
+
+**フロー**: `entryTranMerpay`(取引登録) → `execTranMerpay`(決済実行、`StartURL`/`Token`取得) → クライアント側で`StartURL`へ`AccessID`+`Token`を隠しフォームでPOST送信しメルカリアプリへ遷移 → 決済完了後GMOが`RetURL`へ通知 → `app/api/order/merpay-return/route.ts`が`searchTradeMerpay`でサーバー間の真の結果を確認 → 注文確定(`VALID`)/失効(`SYSTEM_CANCEL`)。
+
+**GMOの公開ドキュメント（docs.gmo-pg.com/mulpay）およびGMOテスト環境での実疎通で判明した、PayPayとの差分**:
+
+| 項目                        | 内容                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ExecTranMerpay.idPass`     | `RetURL`に加えて`ItemCategoryId`（商品カテゴリID、4桁数字）が必須。公開ドキュメントは単一店舗の場合`StoreID`/`StoreName`も必須としているが、実疎通の結果`ItemCategoryId`のみで成功することを確認した。`StoreID`/`StoreName`を付与する場合、`StoreName`に日本語(UTF-8)を含めると`M01872013`エラーになる（GMO側がShift-JISバイト列を期待していると推測。本リポジトリにShift-JISエンコードライブラリが無いため、実装では`StoreID`/`StoreName`自体を送らない方式にしている） |
+| `ItemCategoryId`            | `1010`（GMOの商品カテゴリ一覧上は「レディースファッション」系だが、値の受理自体は確認済み）を暫定値として`MERPAY_ITEM_CATEGORY_ID`（`app/_config/constants.ts`）に設定。食品/飲食系のより適切なコードがあるか、GMOサポートに要確認                                                                                                                                                                                                                                       |
+| `SearchTradeMulti.idPass`   | メルペイは`PayType=43`（PayPayは`45`）。成功時`Status=CAPTURE`（即時売上）                                                                                                                                                                                                                                                                                                                                                                                               |
+| `MerpayCancelReturn.idPass` | PayPayの`PaypayCancelReturn`とは異なり、金額パラメータは`CancelAmount`/`CancelTax`ではなく`Amount`/`Tax`。さらに、事前に`SearchTradeMulti`で取得した`MerpayInquiryCode`の指定が必須（無いと`M01005001`等の複合エラーになる）。`AccessID`/`AccessPass`は`entryTranMerpay`時点のものをそのまま使ってよい                                                                                                                                                                   |
+| コールバック                | PayPayと同じく、ユーザーのブラウザがJSで自動生成する隠しフォームが`RetURL`へPOSTし、`ShopID`/`OrderID`/`Status`(`CAPTURE`等)/`TranDate`/`CheckString`/`ErrCode`/`ErrInfo`を含めて送ってくる。PayPayと同様これらのパラメータは信用せず、`RetURL`に自前で埋め込んだ`?orderId=...`と`SearchTradeMulti`で真の結果を確認する                                                                                                                                                  |
+
+GMOテスト環境には、`MerpayStart.idPass`のレスポンスから`MerpayStartStub.idPass`（決済シミュレーター画面）→`MerpayPaymentUrlStub.idPass`（`決済する`/`キャンセルする`/`エラーにする`の3ボタン）→`MerpayRsltRcv.idPass`という、PayPayの`PaypayDirectStartStub`系列に相当するテスト用スタブ導線がある。
+
+**検証済みの範囲**（2026-09時点、stg環境）:
+
+- GMOテスト環境への直接リクエストによる一連の疎通（取引登録→決済実行→スタブでの決済完了→取引状態照会→キャンセル/返金）は全てスクリプトで実疎通確認済み
+- **未検証**: 実際のブラウザ操作による注文→メルペイ決済→結果画面のE2E確認（本アプリのUIを通した動作確認はまだ行っていない）
+- **未検証**: 本番のGMO契約設定（即時売上モードになっているか、本番のメルペイ契約自体の有効化状況）
 
 ## コーディング規約
 
