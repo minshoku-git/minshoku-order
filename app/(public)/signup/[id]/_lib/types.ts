@@ -46,6 +46,7 @@ export const SignUpSchema = z
     /** ユーザー名カナ */
     user_name_kana: z
       .string()
+      .trim()
       .nonempty({ message: formatString(MSG_REQUIRED, 'ユーザー名(カナ)') })
       .regex(new RegExp(REG_ZENKAKU_KANA), '全角カナで入力してください。')
       .max(256, formatString(MSG_MAX, 'ユーザー名(カナ)', '256')),
