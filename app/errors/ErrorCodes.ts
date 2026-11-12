@@ -48,6 +48,27 @@ export const ErrorCodes = {
     message: '登録用のリンクが正しくありません。会社から案内されたURLをもう一度ご確認ください。',
     status: 400,
   },
+  PAYMENT_TYPE_NOT_ALLOWED: {
+    code: 'E400-13',
+    message: '選択された支払い方法はご利用いただけません。支払い方法を選択し直してください。',
+    status: 400,
+  },
+  PAYMENT_ALREADY_REGISTERED: {
+    code: 'E400-14',
+    message: '支払い方法は既に登録済みです。変更する場合は「支払い方法の変更」画面から行ってください。',
+    status: 400,
+  },
+  ORDER_PAYMENT_TYPE_NOT_ALLOWED: {
+    code: 'E400-15',
+    message:
+      'ご登録の支払い方法は現在ご利用いただけません。「支払い方法の変更」画面で支払い方法を変更してから、もう一度ご注文ください。',
+    status: 400,
+  },
+  CREDITCARD_NOT_SELECTED: {
+    code: 'E400-16',
+    message: 'クレジットカードを選択するか、新しいカードを登録してください。',
+    status: 400,
+  },
 
   // --- 401系: 認証が必要 ---
   INVALID_CREDENTIALS: {

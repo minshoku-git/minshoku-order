@@ -91,5 +91,11 @@ export type UserData = {
     employment_status_name: string;
     /** 負担額 */
     set_meal_burden?: number;
+    /** 給与天引き（会社精算）Flag ※0:不可/1:可 */
+    deduction_flag?: string;
+    /** クレジットカードFlag ※0:不可/1:可 */
+    credit_flag?: string;
+    /** PayPayFlag ※0:不可/1:可 */
+    paypay_flag?: string;
   };
 };

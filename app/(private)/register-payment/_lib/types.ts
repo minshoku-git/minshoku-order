@@ -8,7 +8,8 @@ import { PaymentType, SelectType } from '@/app/_types/enum';
 export const UserPaymentSchema = z
   .object({
     /** 支払い種別 */
-    paymentType: z.nativeEnum(PaymentType), // z.enum から z.nativeEnum に修正（列挙型の場合）
+    // 初期値は未選択（''）。未選択のまま送信された場合はこのメッセージを表示する
+    paymentType: z.nativeEnum(PaymentType, { error: '支払い方法を選択してください。' }),
     /** クレジットカード番号 */
     creditcard: z.string().optional(),
     /** GMO-PGトークン */
@@ -20,7 +21,7 @@ export const UserPaymentSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['creditcard'],
-        message: '登録済みのクレジットカード番号を選択してください。',
+        message: '「新しいクレジットカードを登録する」を押して、カード情報を入力してください。',
       });
     }
   });

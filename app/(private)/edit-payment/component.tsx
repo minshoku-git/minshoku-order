@@ -12,6 +12,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
 import { useApiQuery } from '@/app/_lib/hooks/query/useApiQuery';
+import { isPaymentTypeAllowed } from '@/app/_lib/utils/paymentType';
 import { PaymentType } from '@/app/_types/enum';
 import { ApiRequest } from '@/app/_types/types';
 import { PaymentForm } from '@/app/_ui/components/organisms/paymentForm';
@@ -59,7 +60,7 @@ export const EditPaymentComponent = (): JSX.Element => {
     reValidateMode: 'onSubmit',
     resolver: zodResolver(EditPaymentSchema),
     defaultValues: {
-      paymentType: PaymentType.SALAEY_DEDUCTIONS,
+      paymentType: '' as PaymentType,
       creditcard: '',
     },
   });
@@ -81,7 +82,8 @@ export const EditPaymentComponent = (): JSX.Element => {
 
     setCreditCardOptions(data.creditCardDatas);
     reset({
-      paymentType: data.currentPaymentType ?? PaymentType.SALAEY_DEDUCTIONS,
+      // 現在の支払方法が会社で許可されていない場合（例: 会社精算不可なのに会社精算）は未選択にして選び直してもらう
+      paymentType: (isPaymentTypeAllowed(data.currentPaymentType, data) ? data.currentPaymentType : '') as PaymentType,
       creditcard: data.currentCardDataId ?? '', 
     });
     // reset は stable なので依存配列に入れてもループしませんが、data の安定化が鍵です
@@ -211,6 +213,7 @@ export const EditPaymentComponent = (): JSX.Element => {
           credit_flag={data.credit_flag}
           paypay_flag={data.paypay_flag}
           error={errors.paymentType as any}
+          creditcardError={errors.creditcard as any}
         />
       )}
     </>

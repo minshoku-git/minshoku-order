@@ -37,7 +37,10 @@ type Props = {
     /** クレジットカードFlag ※0:非/1:可 */
     credit_flag: SelectType
     onError?: (errors: any) => void
+    /** 支払い方法（paymentType）のバリデーションエラー */
     error: FieldError | undefined
+    /** クレジットカード選択（creditcard）のバリデーションエラー */
+    creditcardError?: FieldError | undefined
 }
 
 /**
@@ -157,10 +160,10 @@ export const PaymentForm = (props: Props): JSX.Element => {
                 </RadioGroup>
             )}
         />
-        {/* バリデーションエラーメッセージの表示 */}
-        {props.error && (
+        {/* バリデーションエラーメッセージの表示（クレジットカード未選択） */}
+        {props.creditcardError && (
             <Typography sx={{ color: '#d32f2f', fontSize: '0.75rem', mt: 1 }}>
-                {props.error.message}
+                {props.creditcardError.message}
             </Typography>
         )}
     </Box>
@@ -172,6 +175,12 @@ export const PaymentForm = (props: Props): JSX.Element => {
                         )}
                     />
                     <Divider sx={{ my: 2 }} />
+                    {/* バリデーションエラーメッセージの表示（支払い方法未選択） */}
+                    {props.error && (
+                        <Typography sx={{ color: '#d32f2f', fontSize: '0.875rem', textAlign: 'center' }}>
+                            {props.error.message}
+                        </Typography>
+                    )}
                     <Box display="flex" alignItems="center" justifyContent="center" sx={{ mt: 2 }}>
                         <Btn label={props.isRegister ? '支払い方法を登録' : '支払い方法を更新'} isSubmit={true} />
                     </Box>
