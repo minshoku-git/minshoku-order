@@ -42,6 +42,12 @@ export const ErrorCodes = {
     message: '注文期限を超過しています。再度確認してください。',
     status: 400,
   },
+  // E400-08〜11 は v0.0.0 ブランチ（PayPay/メルペイ）で使用済みのため欠番
+  INVALID_SIGNUP_LINK: {
+    code: 'E400-12',
+    message: '登録用のリンクが正しくありません。会社から案内されたURLをもう一度ご確認ください。',
+    status: 400,
+  },
 
   // --- 401系: 認証が必要 ---
   INVALID_CREDENTIALS: {
