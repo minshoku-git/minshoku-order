@@ -261,11 +261,11 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
     /* 認証メール送信
   　------------------------------------------------------------------ */
     if (isCompanyDomain) {
-      // TODO: URL差し替え
+      // 認証メールの戻り先は環境ごとの注文アプリのURL（本番: order.minshoku.jp / ステージング: stg-order-minshoku.vercel.app）
       const { error: signUpError } = await supabase.auth.signUp({
         email: req.user_email,
         password: req.signup_password,
-        options: { emailRedirectTo: 'https://order.minshoku.jp/pre-registration/' + signUpEncryptReq },
+        options: { emailRedirectTo: process.env.APP_URL_DEV + '/pre-registration/' + signUpEncryptReq },
       });
 
       if (signUpError) {
@@ -323,8 +323,16 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
   }
 };
 
+/**
+ * 承認依頼メールの本文を作成する。
+ * 承認・否認の画面は管理画面（/decision-result）にあるため、リンク先は管理画面のURL（ADMIN_URL_DEV）にする。
+ *
+ * @param {ApprovalRequestMessageDetails} details - 申請内容（userId は暗号化済みのトークン）
+ * @returns {string} メール本文
+ */
 const generateApprovalRequestMessage = (details: ApprovalRequestMessageDetails): string => {
   const { date, userName, userNameKana, userEmail, companyName, branchName, userId } = details;
+  const adminUrl = process.env.ADMIN_URL_DEV;
 
   return `
 運営ご担当者様
@@ -346,11 +354,11 @@ ${date}
 
 ■ 承認
 承認される場合は、以下のURLにアクセスしてください。
-https://order.minshoku.jp/decision-result/0?token=${userId}
+${adminUrl}/decision-result/0?token=${userId}
 
 ■ 否認
 否認される場合は、以下のURLにアクセスしてください。
-https://order.minshoku.jp/decision-result/1?token=${userId}
+${adminUrl}/decision-result/1?token=${userId}
 
 ――――――――――――――――
 
