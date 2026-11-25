@@ -39,11 +39,19 @@ npm run fix                # prettier --write . → eslint --fix
 
 ## 環境変数（`.env.local`）
 
-**本番でも `_DEV` サフィックス付きの変数名を参照している**（`SUPABASE_URL_DEV` / `SUPABASE_ANON_DEV` / `SUPABASE_NAME_DEV`）。サフィックスなしの `SUPABASE_URL` / `SUPABASE_ANON` 等も `.env.local` に定義されているが、コード側（`app/_lib/supabase/server.ts`, `app/_lib/supabase/middleware.ts`, `next.config.ts`）は参照していない。新しい変数を足すときはこの既存の命名に合わせる。
+### 環境の対応表
 
-その他: `SUPABASE_DB_CONNECTION_STRING`（`pg` 直結・トランザクション用）、`SUPABASE_DB_SCHEMA`（**public ではない**、supabase-js は `db:{schema}`、pg は接続後に `SET search_path TO ...`）、`SUPABASE_STORAGE`（バケット名）、`ENCRYPTION_KEY` / `BUFFER_KEY`（**定義されているだけで未使用** — `app/_lib/encryption/crypto.ts` はハードコードされた鍵/IVを使っている）、`GOOGLE_MAIL_USER` / `GOOGLE_APP_PASSWORD`（Nodemailer）。
+| 環境 | URL | デプロイ元 | Supabase プロジェクトID | GMO |
+|---|---|---|---|---|
+| 本番 | 注文 `order.minshoku.jp` / 管理 `master.minshoku.jp` | `main` への push | `jmjamrvyocmcaakoxcan` | 本番 `p01.mul-pay.jp` |
+| ステージング | Vercel プレビュー（URLはデプロイごとに変わる） | `v{n}.{n}.{n}`（通常 `v0.0.0`）への push | `mnmcuxvhqtgitcvgggtw` | テスト `pt01.mul-pay.jp` |
+| ローカル | `http://localhost:3000` | - | `mnmcuxvhqtgitcvgggtw`（ステージングと共用） | テスト `pt01.mul-pay.jp` |
 
-**ローカルの `.env.local` の値と本番Vercel環境変数は食い違うことがある**（実例: `SUPABASE_STORAGE` がローカルでは `shop-images` だが本番は `public`）。本番の値を確認する必要がある場合は推測せず `vercel link` → `vercel env pull --environment=production <file>` で取得すること。
+**`.env.local` には開発・テスト用の値だけを置く**（`npm run dev` で自動的に読み込まれるため、本番の値を置くとローカル実行で本番DB・本番決済を触ってしまう）。本番やステージングの値を確認する必要がある場合は推測せず `vercel env pull --environment=production <file>`（または `preview`）で一時ファイルに取得し、使用後に削除する。`GMO_*` などの Secret 型の変数は pull しても値は読めない。
+
+**本番でも `_DEV` サフィックス付きの変数名を参照している**（`SUPABASE_URL_DEV` / `SUPABASE_ANON_DEV` / `SUPABASE_NAME_DEV`）。新しい変数を足すときはこの既存の命名に合わせる。例外として、**`pg` 直結（書き込み）用はサフィックスなしの `SUPABASE_DB_CONNECTION_STRING`** を参照している（管理画面 `../minshoku` は `SUPABASE_DB_CONNECTION_STRING_DEV`）。ローカルではこの2つを同じ dev の値にすること。
+
+その他: `SUPABASE_DB_SCHEMA`（全環境 `public`。supabase-js は `db:{schema}`、pg は接続後に `SET search_path TO ...`）、`SUPABASE_STORAGE`（バケット名。全環境 `shop-images`）、`ENCRYPTION_KEY` / `BUFFER_KEY`（**定義されているだけで未使用** — `app/_lib/encryption/crypto.ts` はハードコードされた鍵/IVを使っている）、`GOOGLE_MAIL_USER` / `GOOGLE_APP_PASSWORD`（Nodemailer。全環境で同じ送信元）、`APP_URL_DEV`（パスワード再設定メールの戻り先）。
 
 ## アーキテクチャ
 
@@ -126,7 +134,7 @@ Zod スキーマは `_lib/types.ts` に置き、フォーム用とAPI境界用�
 
 ### 外部連携
 
-- **GMO Payment**（`app/(private)/order/_lib/gmoApi.ts`）: クレジットカード決済。**本番エンドポイント `https://p01.mul-pay.jp` を直接使用**（ステージング用 `pt01.mul-pay.jp` はコメントアウトで残っている）。
+- **GMO Payment**（`app/(private)/order/_lib/gmoApi.ts`）: クレジットカード決済。`main` は**本番エンドポイント `https://p01.mul-pay.jp` を直接使用**（テスト用 `pt01.mul-pay.jp` はコメントアウトで残っている）。`v0.0.0` では環境変数 `GMO_BASE_URL` / `GMO_SITE_ID` / `GMO_SITE_PASS` / `NEXT_PUBLIC_GMO_TOKEN_JS_URL` で切り替える形に変わっている。
 - **Nodemailer**（`app/_lib/mailer/`）: 通知メール送信。
 
 ## コーディング規約
