@@ -1,9 +1,21 @@
+// Noto Sans JP / Roboto はパッケージ同梱のフォントファイルを使う（next/font/google はビルドのたびに
+// Google から取得するため、取得の一時エラーでビルドが失敗していた）。
+// - Noto Sans JP: globals.css の --font-noto-sans-jp で参照
+// - Roboto: MUI の標準フォント（font-family: Roboto, Helvetica, Arial）として、テーマ外の部品（ログイン画面など）で使われる
+import '@fontsource/noto-sans-jp/300.css';
+import '@fontsource/noto-sans-jp/400.css';
+import '@fontsource/noto-sans-jp/500.css';
+import '@fontsource/noto-sans-jp/700.css';
+import '@fontsource/roboto/300.css';
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/500.css';
+import '@fontsource/roboto/700.css';
 import './globals.css';
 import './_ui/components/layouts/App.scss';
 
 import type { Metadata } from 'next';
 
-import { moboBold, notoSansJp } from './_config/fonts';
+import { moboBold } from './_config/fonts';
 import { AppLayoutContent } from './_ui/components/layouts/AppLayoutContent';
 
 export const metadata: Metadata = {
@@ -39,7 +51,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className={`${notoSansJp.variable} ${moboBold.variable}`}>
+      <body className={moboBold.variable}>
         <AppLayoutContent>{children}</AppLayoutContent>
       </body>
     </html>

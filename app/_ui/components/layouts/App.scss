@@ -5,9 +5,8 @@
 // ⬇️ 変更: CSS変数（--font-noto-sans-jp）を参照するように変更します。
 //          （もし全要素に適用するならbodyタグの指定があれば*は不要になることもあります）
 * {
-  // layout.tsxで body の className に適用されている CSS 変数を指定します。
-  // layout.tsx: body className={notoSansJp.variable}
-  // _ui/fonts.ts: variable: '--font-noto-sans-jp'
+  // globals.css の :root で定義している CSS 変数を指定します。
+  // フォント本体は layout.tsx で @fontsource/noto-sans-jp を読み込んでいます。
   font-family: var(--font-noto-sans-jp), sans-serif;
 }
 
