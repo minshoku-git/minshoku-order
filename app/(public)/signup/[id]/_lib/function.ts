@@ -255,11 +255,11 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
     /* 認証メール送信
   　------------------------------------------------------------------ */
     if (isCompanyDomain) {
-      // TODO: URL差し替え
+      // 認証メールの戻り先は環境ごとの注文アプリのURL（本番: order.minshoku.jp / ステージング: stg-order-minshoku.vercel.app）
       const { error: signUpError } = await supabase.auth.signUp({
         email: req.user_email,
         password: req.signup_password,
-        options: { emailRedirectTo: 'https://order.minshoku.jp/pre-registration/' + signUpEncryptReq },
+        options: { emailRedirectTo: process.env.APP_URL_DEV + '/pre-registration/' + signUpEncryptReq },
       });
 
       if (signUpError) {
