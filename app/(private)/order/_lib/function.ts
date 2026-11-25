@@ -24,6 +24,8 @@ import { CustomError } from '@/app/errors/customError';
 import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 import { getLoginUserDetail } from '../../../_lib/getLoginUser/getLoginUserDetail';
+import { UserData } from '../../../_lib/getLoginUser/types';
+import { isPaymentTypeAllowed } from '../../../_lib/utils/paymentType';
 import { alterTranGmo, entryTranGmo, execTranGmo } from './gmoApi';
 import { entryTranMerpay, execTranMerpay, merpayCancelReturn, searchTradeMerpay } from './merpayApi';
 import { entryTranPaypay, execTranPaypay, paypayCancelReturn, searchTradePaypay } from './paypayApi';
@@ -42,6 +44,21 @@ import {
  * 在庫消費・重複注文チェックの対象から除外する(PayPay/メルペイ共通)。
  */
 const getPendingPaymentCutoff = (now: Date): Date => new Date(now.getTime() - PAYMENT_PENDING_TTL_MINUTES * 60_000);
+
+/**
+ * assertOrderPaymentTypeAllowed
+ * ユーザーに登録された支払方法が、所属する雇用形態で許可されているかを確認する。
+ * 許可されていない場合（例: 会社精算不可の会社なのに会社精算で登録されている）は、
+ * 決済されないまま注文が確定するのを防ぐため、注文をエラーにする。
+ * @param {UserData} user - ログインユーザー情報
+ * @returns {void}
+ */
+const assertOrderPaymentTypeAllowed = (user: UserData): void => {
+  if (!isPaymentTypeAllowed(user.payment_type, user.t_companies_employment_status)) {
+    console.error(`許可されていない支払方法での注文を拒否しました（user_id:${user.id} payment_type:${user.payment_type}）`);
+    throw new CustomError(ErrorCodes.ORDER_PAYMENT_TYPE_NOT_ALLOWED);
+  }
+};
 
 /**
  * getOrderInit
@@ -318,6 +335,7 @@ export const preOrder = async (values: ApiRequest<OrderFormValues>): Promise<Api
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
     const user = await getLoginUserDetail(client);
+    assertOrderPaymentTypeAllowed(user);
 
     /* スケジュール情報取得とテーブルロック
   　------------------------------------------------------------------ */
@@ -454,6 +472,7 @@ export const insertOrder = async (
     /* ユーザー情報取得
     ------------------------------------------------------------------ */
     const user = await getLoginUserDetail(client);
+    assertOrderPaymentTypeAllowed(user);
 
     // DBから最新のカード情報を再取得
     const { data: userData } = await client

@@ -59,7 +59,11 @@ export const getLoginUserDetail = async (client: SupabaseClient<any>): Promise<U
       ),  
       t_companies_employment_status!inner(
         employment_status_name,
-        set_meal_burden
+        set_meal_burden,
+        deduction_flag,
+        credit_flag,
+        paypay_flag,
+        merpay_flag
       )`
       )
       .eq('user_email', user.email)

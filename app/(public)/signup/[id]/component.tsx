@@ -15,10 +15,12 @@ import { InputItem } from '@/app/_ui/components/molecules/InputItem';
 import { SelectItem } from '@/app/_ui/components/molecules/SelectItem';
 import UserCustomModal from '@/app/_ui/components/organisms/UserCustomModal';
 import { useProcessing } from '@/app/_ui/state/processing/processingContext';
+import { CustomError } from '@/app/errors/customError';
+import { ErrorCodes } from '@/app/errors/ErrorCodes';
 
 import { SignUpFetcher, SignUpInitDataFetcher } from './_lib/fetcher';
-import { TermsComponent } from './_lib/terms';
 import { PrivacyComponent } from './_lib/privacy';
+import { TermsComponent } from './_lib/terms';
 import {
   SignUpFormValues,
   SignUpInitData,
@@ -46,6 +48,8 @@ export const SignUpComponent = (): JSX.Element => {
   /* useState - 初期表示情報
   ------------------------------------------------------------------ */
   const [initData, setInitData] = useState<SignUpInitData | null>();
+  /** 初期表示情報の取得に失敗した場合のエラーコード */
+  const [initErrorCode, setInitErrorCode] = useState<string | null>(null);
   /* useState - 登録結果
   ------------------------------------------------------------------ */
   const [IsCompleted, setIsCompleted] = useState<boolean>(false);
@@ -102,7 +106,8 @@ export const SignUpComponent = (): JSX.Element => {
       return;
     }
     if (error) {
-      router.replace('/login');
+      // ログイン画面（新規登録ボタンが無い）へは移動させず、この画面でエラー内容と対処を案内する
+      setInitErrorCode(error instanceof CustomError ? error.code : ErrorCodes.INTERNAL_SERVER_ERROR.code);
       return;
     }
     setInitData(data)
@@ -179,7 +184,27 @@ export const SignUpComponent = (): JSX.Element => {
                 基本情報／新規会員登録
               </Typography>
             </Box>
-            <Typography variant="body1">会員登録に必要な情報をご入力・ご選択ください。</Typography>
+            {initErrorCode === ErrorCodes.INVALID_SIGNUP_LINK.code && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'error.main' }}>
+                  登録用のリンクが正しくありません。
+                </Typography>
+                <Typography variant="body1" sx={{ mt: 1 }}>
+                  URLが途中で切れていたり、余計な文字が付いていたりする可能性があります。
+                </Typography>
+                <Typography variant="body1" sx={{ mt: 1 }}>
+                  お手数ですが、会社のご担当者さまから案内されたURLをもう一度ご確認のうえ、そのURLから開き直してください。
+                </Typography>
+              </Box>
+            )}
+            {initErrorCode && initErrorCode !== ErrorCodes.INVALID_SIGNUP_LINK.code && (
+              <Typography variant="body1" sx={{ mt: 2, color: 'error.main' }}>
+                会社情報の取得に失敗しました。時間をおいて、もう一度このページを開き直してください。
+              </Typography>
+            )}
+            {!initErrorCode && (
+              <Typography variant="body1">会員登録に必要な情報をご入力・ご選択ください。</Typography>
+            )}
             {initData && <>
               <Box sx={{ mt: 2 }}>
                 <form noValidate onSubmit={handleSubmit(signUpHandler)}>

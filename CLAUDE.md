@@ -41,11 +41,21 @@ npm run fix                # prettier --write . → eslint --fix
 
 ## 環境変数（`.env.local`）
 
-**本番でも `_DEV` サフィックス付きの変数名を参照している**（`SUPABASE_URL_DEV` / `SUPABASE_ANON_DEV` / `SUPABASE_NAME_DEV`）。サフィックスなしの `SUPABASE_URL` / `SUPABASE_ANON` 等も `.env.local` に定義されているが、コード側（`app/_lib/supabase/server.ts`, `app/_lib/supabase/middleware.ts`, `next.config.ts`）は参照していない。新しい変数を足すときはこの既存の命名に合わせる。
+### 環境の対応表
 
-その他: `SUPABASE_DB_CONNECTION_STRING`（`pg` 直結・トランザクション用）、`SUPABASE_DB_SCHEMA`（**public ではない**、supabase-js は `db:{schema}`、pg は接続後に `SET search_path TO ...`）、`SUPABASE_STORAGE`（バケット名）、`ENCRYPTION_KEY` / `BUFFER_KEY`（**定義されているだけで未使用** — `app/_lib/encryption/crypto.ts` はハードコードされた鍵/IVを使っている）、`GOOGLE_MAIL_USER` / `GOOGLE_APP_PASSWORD`（Nodemailer）。
+| 環境 | URL | デプロイ元 | Supabase プロジェクトID | GMO |
+|---|---|---|---|---|
+| 本番 | 注文 `order.minshoku.jp` / 管理 `master.minshoku.jp` | `main` への push | `jmjamrvyocmcaakoxcan` | 本番 `p01.mul-pay.jp` |
+| ステージング | 注文 `stg-order-minshoku.vercel.app` / 管理 `stg-master-minshoku.vercel.app`（`v0.0.0` のみ。ほかの `v{n}.{n}.{n}` はデプロイごとのURL） | `v{n}.{n}.{n}`（通常 `v0.0.0`）への push | `mnmcuxvhqtgitcvgggtw` | テスト `pt01.mul-pay.jp` |
+| ローカル | `http://localhost:3000` | - | `mnmcuxvhqtgitcvgggtw`（ステージングと共用） | テスト `pt01.mul-pay.jp` |
 
-**ローカルの `.env.local` の値と本番Vercel環境変数は食い違うことがある**（実例: `SUPABASE_STORAGE` がローカルでは `shop-images` だが本番は `public`）。本番の値を確認する必要がある場合は推測せず `vercel link` → `vercel env pull --environment=production <file>` で取得すること。
+**`.env.local` には開発・テスト用の値だけを置く**（`npm run dev` で自動的に読み込まれるため、本番の値を置くとローカル実行で本番DB・本番決済を触ってしまう）。本番やステージングの値を確認する必要がある場合は推測せず `vercel env pull --environment=production <file>`（または `preview`）で一時ファイルに取得し、使用後に削除する。`GMO_*` などの Secret 型の変数は pull しても値は読めない。
+
+**本番でも `_DEV` サフィックス付きの変数名を参照している**（`SUPABASE_URL_DEV` / `SUPABASE_ANON_DEV` / `SUPABASE_NAME_DEV`）。新しい変数を足すときはこの既存の命名に合わせる。例外として、**`pg` 直結（書き込み）用はサフィックスなしの `SUPABASE_DB_CONNECTION_STRING`** を参照している（管理画面 `../minshoku` は `SUPABASE_DB_CONNECTION_STRING_DEV`）。ローカルではこの2つを同じ dev の値にすること。
+
+その他: `SUPABASE_DB_SCHEMA`（全環境 `public`。supabase-js は `db:{schema}`、pg は接続後に `SET search_path TO ...`）、`SUPABASE_STORAGE`（バケット名。全環境 `shop-images`）、`ENCRYPTION_KEY` / `BUFFER_KEY`（**定義されているだけで未使用** — `app/_lib/encryption/crypto.ts` はハードコードされた鍵/IVを使っている）、`GOOGLE_MAIL_USER` / `GOOGLE_APP_PASSWORD`（Nodemailer。全環境で同じ送信元）、`APP_URL_DEV`（パスワード再設定・新規登録の確認メールの戻り先。ステージングは `https://stg-order-minshoku.vercel.app`）、`ADMIN_URL_DEV`（承認依頼メールの承認・否認リンク先＝管理画面のURL。本番 `https://master.minshoku.jp` / ステージング・ローカル `https://stg-master-minshoku.vercel.app`）。
+
+ステージングの固定URLは、`.github/workflows/vercel-preview.yaml` の最後で `v0.0.0` のデプロイにだけ `vercel alias set` で割り当てている（独自ドメイン `stg-order.minshoku.jp` は DNS 未登録のため、当面 `vercel.app` のアドレスを使用）。
 
 **GMO Payment Gateway**（`GMO_BASE_URL` / `GMO_SITE_ID` / `GMO_SITE_PASS` / `NEXT_PUBLIC_GMO_TOKEN_JS_URL`）は、Vercelの Production/Preview で値を出し分けている（`SUPABASE_URL_DEV`/`SUPABASE_STORAGE` と同じ「同じ変数名でVercel環境ごとに値を変える」パターン）。Production=GMO本番（`p01.mul-pay.jp`）、Preview=GMOテスト環境（`pt01.mul-pay.jp`、`v{n}.{n}.{n}`ブランチのデプロイに対応）。ローカルの`.env.local`もPreview/dev Supabaseと対でテスト環境の値にしてある。`app/(private)/order/_lib/gmoApi.ts`・`app/(private)/register-payment/_lib/gmoApi.ts`・`app/(private)/edit-payment/_lib/gmoApi.ts`の3ファイルがこれらを参照する（以前はファイル内にハードコード＋コメントアウトでの手動切り替えだったが環境変数化した）。`ShopID`/`ShopPass`（`t_shops.gmo_shop_code`/`gmo_shop_password`）は元々DB管理なのでこの対象外。
 

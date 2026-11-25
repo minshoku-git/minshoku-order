@@ -1,6 +1,6 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
-import { decrypt, encrypt } from '@/app/_lib/encryption/crypto';
+import { decryptToken, encrypt } from '@/app/_lib/encryption/crypto';
 import { sendMail } from '@/app/_lib/mailer/mailer';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import {
@@ -43,9 +43,11 @@ export const getSignUpInitData = async (
   try {
     /* 復号化
     ------------------------------------------------------------------ */
-    const decryptToken: string = decrypt(token.token);
-    const req: SignUpDecrypt = JSON.parse(decryptToken);
+    const req = decryptToken<SignUpDecrypt>(token.token, ErrorCodes.INVALID_SIGNUP_LINK);
     console.log('復号化結果:' + req.t_companies_id);
+    if (!req.t_companies_id) {
+      throw new CustomError(ErrorCodes.INVALID_SIGNUP_LINK);
+    }
 
     /* 会社情報取得
     ------------------------------------------------------------------ */
@@ -64,6 +66,11 @@ export const getSignUpInitData = async (
       .single();
 
     const { data, error } = (await query) as PostgrestSingleResponse<t_companies>;
+    // 該当する会社が無い（PGRST116: 0件）＝リンク自体が誤っている
+    if (error?.code === 'PGRST116') {
+      console.error('リンクの会社IDに該当する会社がありません:' + req.t_companies_id);
+      throw new CustomError(ErrorCodes.INVALID_SIGNUP_LINK);
+    }
     if (error) {
       console.error('query error', error);
       throw new CustomError(
@@ -177,8 +184,7 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
 
     /* 復号化
     ------------------------------------------------------------------ */
-    const decryptToken: string = decrypt(req.token);
-    const decryptRes: SignUpDecrypt = JSON.parse(decryptToken);
+    const decryptRes = decryptToken<SignUpDecrypt>(req.token, ErrorCodes.INVALID_SIGNUP_LINK);
     console.log('復号化結果:' + decryptRes.t_companies_id);
 
     /* 暗号化
@@ -317,8 +323,16 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
   }
 };
 
+/**
+ * 承認依頼メールの本文を作成する。
+ * 承認・否認の画面は管理画面（/decision-result）にあるため、リンク先は管理画面のURL（ADMIN_URL_DEV）にする。
+ *
+ * @param {ApprovalRequestMessageDetails} details - 申請内容（userId は暗号化済みのトークン）
+ * @returns {string} メール本文
+ */
 const generateApprovalRequestMessage = (details: ApprovalRequestMessageDetails): string => {
   const { date, userName, userNameKana, userEmail, companyName, branchName, userId } = details;
+  const adminUrl = process.env.ADMIN_URL_DEV;
 
   return `
 運営ご担当者様
@@ -340,11 +354,11 @@ ${date}
 
 ■ 承認
 承認される場合は、以下のURLにアクセスしてください。
-https://order.minshoku.jp/decision-result/0?token=${userId}
+${adminUrl}/decision-result/0?token=${userId}
 
 ■ 否認
 否認される場合は、以下のURLにアクセスしてください。
-https://order.minshoku.jp/decision-result/1?token=${userId}
+${adminUrl}/decision-result/1?token=${userId}
 
 ――――――――――――――――
 

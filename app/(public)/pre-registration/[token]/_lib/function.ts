@@ -1,6 +1,6 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
-import { decrypt } from '@/app/_lib/encryption/crypto';
+import { decrypt, decryptToken } from '@/app/_lib/encryption/crypto';
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
 import { t_user } from '@/app/_lib/supabase/tableTypes';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
@@ -34,9 +34,11 @@ export const preregister = async (values: ApiRequest<NextPageInitRequest>): Prom
 
     /* 復号化
     ------------------------------------------------------------------ */
-    const decryptToken: string = decrypt(req.token);
-    const decryptRes: NextPageDecrypt = JSON.parse(decryptToken);
+    const decryptRes = decryptToken<NextPageDecrypt>(req.token, ErrorCodes.INVALID_RECOVERY_LINK);
     console.log('復号化結果:' + decryptRes.id);
+    if (!decryptRes.id) {
+      throw new CustomError(ErrorCodes.INVALID_RECOVERY_LINK);
+    }
 
     /* ユーザー情報取得
     ------------------------------------------------------------------ */

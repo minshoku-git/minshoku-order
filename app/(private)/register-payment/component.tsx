@@ -10,6 +10,7 @@ import { SubmitHandler, useForm } from 'react-hook-form-mui';
 import { QUERY_KEYS } from '@/app/_lib/hooks/query/queryKeys';
 import { useApiMutation } from '@/app/_lib/hooks/query/useApiMutation';
 import { useApiQuery } from '@/app/_lib/hooks/query/useApiQuery';
+import { isPaymentTypeAllowed } from '@/app/_lib/utils/paymentType';
 import { PaymentType } from '@/app/_types/enum';
 import { ApiRequest, ApiResponse, CreditCardData } from '@/app/_types/types';
 import { PaymentForm } from '@/app/_ui/components/organisms/paymentForm';
@@ -53,7 +54,8 @@ export const PaymentComponent = (): JSX.Element => {
     reValidateMode: 'onSubmit',
     resolver: zodResolver(UserPaymentSchema),
     defaultValues: {
-      paymentType: PaymentType.SALAEY_DEDUCTIONS,
+      // 未選択から始める（以前は会社精算が初期値で、選択肢が非表示の会社でも会社精算で登録されていた）
+      paymentType: '' as PaymentType,
       creditcard: '',
     },
   });
@@ -150,7 +152,8 @@ export const PaymentComponent = (): JSX.Element => {
 
     setCreditCardOptions(data.creditCardDatas);
     reset({
-      paymentType: (data.currentPaymentType as PaymentType) ?? PaymentType.SALAEY_DEDUCTIONS,
+      // 会社が許可している支払方法の場合のみ初期選択する（未登録・許可外は未選択）
+      paymentType: (isPaymentTypeAllowed(data.currentPaymentType, data) ? data.currentPaymentType : '') as PaymentType,
       // undefined を防ぎ、常に controlled な状態を維持する
       creditcard: data.currentCardDataId ?? '',
     });
@@ -205,6 +208,7 @@ export const PaymentComponent = (): JSX.Element => {
             paypay_flag={data.paypay_flag}
             merpay_flag={data.merpay_flag}
             error={errors.paymentType}
+            creditcardError={errors.creditcard}
           />
         </>
       )}

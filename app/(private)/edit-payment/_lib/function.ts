@@ -1,6 +1,7 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
+import { isPaymentTypeAllowed, PaymentTypeFlags } from '@/app/_lib/utils/paymentType';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
 import { getNow } from '@/app/_lib/utils/getDateTime';
 import { PaymentType, SelectType, UsageStatus, UserRegistrationStatus } from '@/app/_types/enum';
@@ -115,11 +116,35 @@ export const updatePaymentType = async (values: ApiRequest<EditPaymentFormValues
     // ユーザー情報の取得（id を取得して MemberID のベースにする）
     const { data: userData, error: fetchError } = await supabase
       .from('t_user')
-      .select('id, credit_member_id')
+      .select(
+        `id,
+         credit_member_id,
+         t_companies_employment_status!inner(
+           deduction_flag,
+           credit_flag,
+           paypay_flag,
+           merpay_flag
+         )`
+      )
       .eq('user_email', email)
       .single();
 
     if (fetchError || !userData) throw new Error('ユーザー情報の取得に失敗しました');
+
+    /* 事前チェック（GMOへのカード登録より前に行う）
+    ------------------------------------------------------------------ */
+    // 会社（雇用形態）が許可していない支払方法は受け付けない
+    const flags = userData.t_companies_employment_status as unknown as PaymentTypeFlags;
+    if (!isPaymentTypeAllowed(req.paymentType, flags)) {
+      throw new CustomError(ErrorCodes.PAYMENT_TYPE_NOT_ALLOWED);
+    }
+    // クレジットカードの場合は、登録済みカードの選択か、新規カードの情報（トークン）が必須
+    if (
+      req.paymentType === PaymentType.CREDITCARD &&
+      (!req.creditcard || (req.creditcard === 'new' && !req.token))
+    ) {
+      throw new CustomError(ErrorCodes.CREDITCARD_NOT_SELECTED);
+    }
 
     // ★ 常に id を 12桁の0埋めにしたものを MemberID として採用する
     // これにより、DBに既に古い形式の ID があっても、今回の更新で新しい形式に上書きされます。
@@ -168,6 +193,9 @@ export const updatePaymentType = async (values: ApiRequest<EditPaymentFormValues
   } catch (e: any) {
     await pgClient.query('ROLLBACK');
     console.error('[updatePaymentType] Error:', e.message);
+    if (e instanceof CustomError) {
+      return { success: false, error: e };
+    }
     return { success: false, error: { code: 'UPDATE_ERROR', message: e.message } };
   } finally {
     await pgClient.end();

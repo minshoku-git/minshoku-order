@@ -21,7 +21,6 @@ export const login = async (req: ApiRequest<UserLoginFormValues>): Promise<ApiRe
   const { email, password } = req.request;
 
   console.log('email:', email);
-  console.log('password:', password);
 
   try {
     // 1.ユーザー情報取得

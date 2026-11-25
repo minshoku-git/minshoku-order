@@ -8,7 +8,8 @@ import { PaymentType, SelectType } from '@/app/_types/enum';
 export const EditPaymentSchema = z
   .object({
     /** 支払い種別 */
-    paymentType: z.nativeEnum(PaymentType),
+    // 現在の支払方法が会社で許可されていない場合は未選択（''）で表示する。未選択のまま送信された場合はこのメッセージを表示する
+    paymentType: z.nativeEnum(PaymentType, { error: '支払い方法を選択してください。' }),
     /** * クレジットカードID、または 'new' 
      * ★ポイント: ここで .min(1) を使うと、給与天引きの時もエラーになるため
      * ここは .optional() または単なる .string() に留めます。

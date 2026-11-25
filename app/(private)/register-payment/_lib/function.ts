@@ -1,6 +1,7 @@
 import { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 import { createClient, createPgClient } from '@/app/_lib/supabase/server';
+import { isPaymentTypeAllowed, PaymentTypeFlags } from '@/app/_lib/utils/paymentType';
 import { rollbackWithLog } from '@/app/_lib/supabase/transaction';
 import { getNow } from '@/app/_lib/utils/getDateTime';
 import { PaymentType, SelectType, UsageStatus, UserRegistrationStatus } from '@/app/_types/enum';
@@ -105,12 +106,39 @@ export const registerPaymentType = async (values: ApiRequest<UserPaymentFormValu
     // 1. ユーザーIDを取得して12桁のMemberIDを生成
     const { data: userData } = await supabase
       .from('t_user')
-      .select('id')
+      .select(
+        `id,
+         user_registration_status,
+         t_companies_employment_status!inner(
+           deduction_flag,
+           credit_flag,
+           paypay_flag,
+           merpay_flag
+         )`
+      )
       .eq('user_email', authData.user.email)
       .single();
 
     if (!userData) throw new Error('ユーザーが見つかりません');
     const memberId = String(userData.id).padStart(12, '0'); // ★12桁0埋め
+
+    /* 1-2. 事前チェック（GMOへのカード登録より前に行う）
+    ------------------------------------------------------------------ */
+    // 支払方法の登録待ちでない（登録済み）場合は、GMOにカードだけが登録されてDB更新が失敗する
+    // （＝カードが重複登録される）ため、GMOを呼ぶ前に止める。
+    // ※2枚目以降のカード追加は「支払い方法の変更」画面で行う。
+    if (userData.user_registration_status !== UserRegistrationStatus.WAITING_PAYMENT_SETUP) {
+      throw new CustomError(ErrorCodes.PAYMENT_ALREADY_REGISTERED);
+    }
+    // 会社（雇用形態）が許可していない支払方法は受け付けない
+    const flags = userData.t_companies_employment_status as unknown as PaymentTypeFlags;
+    if (!isPaymentTypeAllowed(req.paymentType, flags)) {
+      throw new CustomError(ErrorCodes.PAYMENT_TYPE_NOT_ALLOWED);
+    }
+    // クレジットカードの場合は、新規カードの情報（トークン）が必須
+    if (req.paymentType === PaymentType.CREDITCARD && !req.token) {
+      throw new CustomError(ErrorCodes.CREDITCARD_NOT_SELECTED);
+    }
 
     let finalCardSeq = '';
 
@@ -165,6 +193,9 @@ export const registerPaymentType = async (values: ApiRequest<UserPaymentFormValu
   } catch (e: any) {
     await pgClient.query('ROLLBACK');
     console.error('Registration failed:', e);
+    if (e instanceof CustomError) {
+      return { success: false, error: e };
+    }
     return { success: false, error: { code: 'REGISTER_ERROR', message: e.message } };
   } finally {
     await pgClient.end();
