@@ -166,6 +166,8 @@ export type ApprovalRequestMessageDetails = {
   companyName: string;
   /** 支店名 */
   branchName: string;
-  /** ユーザーID */
+  /** 部署名 */
+  departmentName: string;
+  /** ユーザーID（暗号化済みのトークン） */
   userId: string;
 };

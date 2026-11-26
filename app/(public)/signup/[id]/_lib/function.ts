@@ -277,6 +277,20 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
         );
       }
     } else {
+      /* Select - 会社名・支店名・部署名（承認依頼メールに記載）
+  　  ------------------------------------------------------------------ */
+      const companySql = `
+        SELECT c.company_name, c.branch_name, d.department_name
+        FROM t_companies c
+        LEFT JOIN t_companies_department d ON d.id = $2 AND d.t_companies_id = c.id
+        WHERE c.id = $1`;
+      const companyResult = await pgClient.query<{
+        company_name: string | null;
+        branch_name: string | null;
+        department_name: string | null;
+      }>(companySql, [decryptRes.t_companies_id, Number(req.t_companies_department_id)]);
+      const companyRow = companyResult.rows[0];
+
       /* 承認依頼メール送信
   　  ------------------------------------------------------------------ */
       const message = generateApprovalRequestMessage({
@@ -284,8 +298,9 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
         userName: req.user_name,
         userNameKana: req.user_name_kana,
         userEmail: req.user_email,
-        companyName: req.t_companies_department_id,
-        branchName: '',
+        companyName: companyRow?.company_name ?? '',
+        branchName: companyRow?.branch_name ?? '',
+        departmentName: companyRow?.department_name ?? '',
         userId: signUpEncryptReq,
       });
 
@@ -331,7 +346,7 @@ export const insertUserProfile = async (values: ApiRequest<SignUpRequest>): Prom
  * @returns {string} メール本文
  */
 const generateApprovalRequestMessage = (details: ApprovalRequestMessageDetails): string => {
-  const { date, userName, userNameKana, userEmail, companyName, branchName, userId } = details;
+  const { date, userName, userNameKana, userEmail, companyName, branchName, departmentName, userId } = details;
   const adminUrl = process.env.ADMIN_URL_DEV;
 
   return `
@@ -346,8 +361,9 @@ ${date}
 
 ■ ユーザー情報  
 ・お名前：${userName}(${userNameKana}) 様
-・会社名：${companyName}  
-・部署名：${branchName}  
+・会社名：${companyName}
+・支店名：${branchName}
+・部署名：${departmentName}
 ・メールアドレス：${userEmail}
 
 ――――――――――――――――
